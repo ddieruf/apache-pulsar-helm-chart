@@ -1,0 +1,38 @@
+## @section Pulsar global settings
+## @descriptionStart
+## These are global values that all sub charts will inherit
+## @descriptionEnd
+##
+global:
+  ## @param global.imageRegistry [string,nullable] The image registry used by all charts.
+  ##
+  imageRegistry: "docker.io"
+
+  ## @param global.imagePullSecrets [array,nullable] A collection of image pull secrets used to retrieve images.
+  ##
+  imagePullSecrets: []
+
+  ## @param global.storageClass [string,nullable] The storage class used by all sub charts when using persistence.
+  ##
+  storageClass: "default"
+
+  ## @param global.kubeVersion [string,nullable] Override Kubernetes version
+  ##
+  kubeVersion: ""
+
+  ## @param global.clusterDomain [string,nullable] Default Kubernetes cluster domain
+  ##
+  clusterDomain: cluster.local
+
+  ## @param global.namespaceOverride [string,nullable] Override the release namespace
+  ##
+  namespaceOverride: ""
+
+  ## @param global.commonLabels [array,nullable] Labels to add to all deployed objects
+  ##
+  commonLabels:
+    app.kubernetes.io/part-of: apache-pulsar
+
+  ## @param global.commonAnnotations [nullable] Annotations to add to all deployed objects
+  ##
+  commonAnnotations: {}

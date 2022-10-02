@@ -1,4 +1,16 @@
-# apache-pulsar-helm-chart
-My attempt to reimagine deploying an Apache Pulsar cluster into K8s
+# Apache Pulsar Kubernetes Helm Charts
 
-At the moment this branch is empty because I'm still working on the MVP. When a bare minimum chart is ready I'll update this branch.
+This functionality is in alpha and absolutely will change.
+
+## Usage
+
+[Helm](https://helm.sh) must be installed to use the charts.
+Please refer to Helm's [documentation](https://helm.sh/docs/) to get started.
+
+Once Helm is set up properly, add the repo as follows:
+
+```console
+helm repo add ddieruf https://ddieruf.github.io/helm-charts
+```
+
+You can then run `helm search repo ddieruf` to see the charts.

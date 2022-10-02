@@ -1,0 +1,16 @@
+apiVersion: v2
+type: library
+version: "0.1.0"
+appVersion: "0.1.0"
+description: A cloned Library Helm Chart from Bitnami common for grouping common logic between charts and overriding some templates. This chart is not deployable by itself.
+maintainers:
+  - name: David Dieruf
+    email: david@dierufventures.com
+name: common
+dependencies:
+  - name: common
+    alias: bitnamiCommon
+    repository: https://charts.bitnami.com/bitnami
+    version: "2.0.2"
+    tags:
+      - bitnami-common

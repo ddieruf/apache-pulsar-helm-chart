@@ -1,0 +1,12 @@
+apiVersion: v2
+description: Apache Pulsar Helm chart for Kubernetes
+name: apache-pulsar
+version: "0.1.0"
+appVersion: "0.1.0"
+type: application
+maintainers:
+  - name: David Dieruf
+    email: david@dierufventures.com
+dependencies:
+  - name: common
+    version: "0.1.0"
