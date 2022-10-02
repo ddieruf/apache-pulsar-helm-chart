@@ -1,0 +1,50 @@
+suite: Test meta-data-store service
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/metaDataStore/templates/service-headless.yaml
+tests:
+  - it: should be correct document
+    asserts:
+      - containsDocument:
+          kind: Service
+          apiVersion: v1
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          ccc: ddd
+      metaDataStore:
+        service:
+          annotations:
+            somethingelse: somewherelese
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              ccc: ddd
+              somethingelse: somewherelese
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: meta-data-store
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: meta-data-store
+              app.kubernetes.io/part-of: pulsar-luna
+              helm.sh/chart: metaDataStore-0.1.0
+            name: meta-data-store-headless
+            namespace: xx
+
+  - it: should select the correct pod
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/component: meta-data-store
+            app.kubernetes.io/instance: zz
+            app.kubernetes.io/name: meta-data-store

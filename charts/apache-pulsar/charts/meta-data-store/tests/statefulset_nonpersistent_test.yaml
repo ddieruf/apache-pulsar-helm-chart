@@ -1,0 +1,86 @@
+suite: Test meta-data-store statefulset
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/metaDataStore/templates/statefulset-non-persistent.yaml
+  - charts/metaDataStore/templates/configmap.yaml
+tests:
+  - it: should be correct document
+    asserts:
+      - containsDocument:
+          kind: StatefulSet
+          apiVersion: apps/v1
+    template: charts/metaDataStore/templates/statefulset-non-persistent.yaml
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          something: somewhere
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              something: somewhere
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: meta-data-store
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: meta-data-store
+              app.kubernetes.io/part-of: pulsar-luna
+              helm.sh/chart: metaDataStore-0.1.0
+            name: meta-data-store-statefulset-non-persistent
+            namespace: xx
+    template: charts/metaDataStore/templates/statefulset-non-persistent.yaml
+
+  - it: should have correct template metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          something: somewhere
+      restartOnConfigMapChange: true
+    asserts:
+      - equal:
+          path: spec.template.metadata
+          value:
+            annotations:
+              checksum/configuration: 6c614cf14740f9efd8d0671698633e333822210181d0a35deeca194ddc361f49
+            labels:
+              app.kubernetes.io/component: meta-data-store
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: meta-data-store
+              helm.sh/chart: metaDataStore-0.1.0
+    template: charts/metaDataStore/templates/statefulset-non-persistent.yaml
+
+  - it: should have default volumes
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /pulsar/data
+            name: data
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /pulsar/logs
+            name: logs
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /pulsar/data/conf
+            name: meta-data-store-config
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /pulsar/data
+            name: pulsar-environment
+        any: true
+    template: charts/metaDataStore/templates/statefulset-non-persistent.yaml

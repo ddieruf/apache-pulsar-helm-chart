@@ -1,0 +1,43 @@
+{{- $configValues := omit .Values.global.metaDataStore.config "extraConfigValues" -}}
+
+{{- $_ := set $configValues "clientPort" .Values.service.ports.client -}}
+{{- $_ := set $configValues "secureClientPort" "" -}}
+{{- $_ := set $configValues "dataDir" .Values.persistence.mountPath -}}
+
+{{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
+  {{- $_ := set $configValues "clientPort" "" -}}
+  {{- $_ := set $configValues "secureClientPort" .Values.service.ports.clientTls -}}
+{{- end -}}
+
+{{- $component := "meta-data-store" -}}
+{{- $name := (printf "%s-configuration" (include "meta-data-store.name" $)) -}}
+
+{{- $formattedValues := dict -}}
+{{- range $key, $val := $configValues -}}
+  {{- if or (eq (typeOf $val) "float64") (eq (typeOf $val) "int") }}
+    {{- $_ := set $formattedValues $key (int $val | toString) -}}
+  {{- else if (eq (typeOf $val) "string") }}
+    {{- $_ := set $formattedValues $key ((toString $val) | replace "\"" "" | trim) -}}
+  {{- else }}
+    {{- $_ := set $formattedValues $key (toString $val) -}}
+  {{- end }}
+{{- end -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "meta-data-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+data:
+  zookeeper.conf: |-
+    {{ range $key,$val := $formattedValues}}
+    {{ printf "%s=%s" $key $val }}{{- end }}
+    {{- if .Values.config.extraConfigValues -}}
+    {{ range $key,$val := .Values.config.extraConfigValues }}
+    {{ printf "%s=%s" $key (toString $val) }}{{- end }}
+    {{- end -}}

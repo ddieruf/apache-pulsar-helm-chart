@@ -1,0 +1,676 @@
+globalData:
+  ## @skip globalData.nameOverride
+  ## [string,nullable] String to partially override common.names.name
+  ##
+  nameOverride: ""
+
+  ## @skip globalData.fullnameOverride
+  ## [string,nullable] String to fully override common.names.fullname
+  ##
+  fullnameOverride: ""
+
+  ## @param globalData.replicas The number of meta data stores to deploy
+  ##
+
+  replicas: 3
+  ## @param globalData.nonPersistentReplicas Number of non-persistent Meta Data Store nodes. Used as floating Meta Data Store to maintain quorum in AZ failures
+  ##
+  nonPersistentReplicas: 0
+
+## @section Image parameters
+## @descriptionStart
+## @descriptionEnd
+##
+image:
+
+  ## @param image.registry [string,nullable] Component image registry
+  ##
+  registry: ""
+
+  ## @param image.repository [string,nullable] Component image repository
+  ##
+  repository: "datastax/lunastreaming"
+
+  ## @param image.tag [string,nullable] Component image tag (immutable tags are recommended)
+  ##
+  tag: "latest"
+
+  ## @param image.pullPolicy Component image pull policy
+  ## Specify a imagePullPolicy
+  ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+  ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+  ##
+  pullPolicy: IfNotPresent
+
+  ## @param image.pullSecrets [array,nullable] Specify docker-registry secret names as an array
+  ## Optionally specify an array of imagePullSecrets.
+  ## Secrets must be manually created in the namespace.
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ## e.g:
+  ## pullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
+  pullSecrets: []
+
+## @section Certificate Resources
+## @descriptionStart
+## Configure the component's certificate
+## @descriptionEnd
+##
+certificateResources:
+
+  ## @param certificateResources.tlsSecretName [string,nullable]
+  ##
+  tlsSecretName: null
+
+  ## @param certificateResources.jksPasswordSecretName [string,nullable]
+  ##
+  jksPasswordSecretName: null
+
+  ## @extra certificateResources.certificateRequest Refer to the [CertificateSpec](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec) for more info about these values.
+  ##
+  certificateRequest:
+
+    ## @param certificateResources.certificateRequest.renewBefore How long before the currently issued certificate’s expiry cert-manager should renew the certificate
+    ##
+    renewBefore: 60days
+
+    ## @param certificateResources.certificateRequest.duration The requested ‘duration’ (i.e. lifetime) of the Certificate
+    ##
+    duration: 90days
+
+    ##
+    ##
+    subject:
+
+      ## @param certificateResources.certificateRequest.subject.organizations [array,nullable] Organizations to be used on the Certificate
+      ##
+      organizations: []
+
+    ## @param certificateResources.certificateRequest.privateKey [object,nullable] Options to control private keys used for the Certificate
+    ##
+    privateKey: {}
+
+    ## @param certificateResources.certificateRequest.issuerRef [object,nullable] IssuerRef is a reference to the issuer for this certificate
+    ##
+    issuerRef: {}
+
+## @section Pulsar Environment Configuration
+## @descriptionStart
+
+## @descriptionEnd
+##
+pulsarEnv:
+  ## @param pulsarEnv.bookieGc JVM settings for bookie garbage collection
+  ##
+  bookieGc: "--XX:+UseG1GC"
+  ## @param pulsarEnv.gc JVM settings for garbage collection
+  ##
+  gc: "-XX:+UseG1GC"
+  ## @param pulsarEnv.mem JVM memory settings
+  ##
+  mem: "-Xms1g -Xmx1g -Dcom.sun.management.jmxremote -Djute.maxbuffer=10485760"
+  ##
+  ##
+  log4j:
+    ## @param pulsarEnv.log4j.formatMsgNoLookups Disables message pattern lookups globally when set to true. This is equivalent to defining all message patterns using %m{nolookups}.
+    ##
+    formatMsgNoLookups: true
+  ## pulsarEnv.loggingLevels
+  ##
+  loggingLevels:
+    ## @param pulsarEnv.loggingLevels.root Applies the PULSAR_LOG_ROOT_LEVEL env var and pulsar.log.root.level JVM option
+    ##
+    root: "error"
+    ## @param pulsarEnv.loggingLevels.pulsar Applies the PULSAR_LOG_LEVEL env var
+    ##
+    pulsar: "error"
+  ## @param pulsarEnv.extraOpts A collection of extra options to be passed to the jvm. Format each as the entire key/value, ie: "-Dzookeeper.tcpKeepAlive=true"
+  ##
+  extraOpts:
+    - "-Dzookeeper.tcpKeepAlive=true"
+    - "-Dzookeeper.clientTcpKeepAlive=true"
+
+  ## @param pulsarEnv.extraClasspath A collection of extra paths for the pulsar classpath. Include just the folder or file path, no delimiter.
+  ##
+  extraClasspath: []
+
+## @section Meta data store configuration
+## @descriptionStart
+## Configure meta data store settings. Refer to the [project's documentation](https://pulsar.apache.org/docs/next/reference-configuration-zookeeper) for a full spec.
+##
+## > Note, the values not documented here are set by the parent chart
+## @descriptionEnd
+##
+config:
+  ## @param config.tickTime The tick is the basic unit of time in ZooKeeper, measured in milliseconds and used to regulate things like heartbeats and timeouts. tickTime is the length of a single tick.
+  ##
+  tickTime: 2000
+  ## @param config.initLimit The maximum time, in ticks, that the leader ZooKeeper server allows follower ZooKeeper servers to successfully connect and sync. The tick time is set in milliseconds using the tickTime parameter.
+  ##
+  initLimit: 10
+  ## @param config.syncLimit The maximum time, in ticks, that a follower ZooKeeper server is allowed to sync with other ZooKeeper servers. The tick time is set in milliseconds using the tickTime parameter.
+  ##
+  syncLimit: 5
+  ## @skip config.dataDir
+  ## The location where ZooKeeper will store in-memory database snapshots as well as the transaction log of updates to the database.
+  ##
+  dataDir:
+  ## @skip config.clientPort
+  ## The port on which the ZooKeeper server will listen for connections.
+  ##
+  clientPort:
+  ## @skip config.secureClientPort
+  ## The secure port on which the ZooKeeper server will listen for connections.
+  ##
+  secureClientPort:
+  ## @param config.admin.enableServer The port at which the admin listens.
+  ##
+  admin.enableServer: TRUE
+  ## @param config.admin.serverPort The port at which the admin listens.
+  ##
+  admin.serverPort: 9990
+  ## @param config.autopurge.snapRetainCount In ZooKeeper, auto purge determines how many recent snapshots of the database stored in dataDir to retain within the time interval specified by autopurge.purgeInterval (while deleting the rest).
+  ##
+  autopurge.snapRetainCount: 3
+  ## @param config.autopurge.purgeInterval The time interval, in hours, by which the ZooKeeper database purge task is triggered. Setting to a non-zero number will enable auto purge; setting to 0 will disable. Read this guide before enabling auto purge.
+  ##
+  autopurge.purgeInterval: 1
+  ## @param config.forceSync [string] Requires updates to be synced to media of the transaction log before finishing processing the update. If this option is set to 'no', ZooKeeper will not require updates to be synced to the media. WARNING: it's not recommended to run a production ZK cluster with forceSync disabled.
+  ##
+  forceSync: yes
+  ## @param config.maxClientCnxns The maximum number of client connections. Increase this if you need to handle more ZooKeeper clients.
+  ##
+  maxClientCnxns: 60
+  ## @param config.sslQuorum Enable Quorum TLS on each node
+  ##
+  sslQuorum: FALSE
+  ## @param config.portUnification Specifies that the client port should accept SSL connections (using the same configuration as the secure client port).
+  ##
+  portUnification: FALSE
+  ## @param config.metricsProvider.className Metrics provider class name
+  ##
+  metricsProvider.className: org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider
+  ## @param config.metricsProvider.httpPort Metrics port
+  ##
+  metricsProvider.httpPort: 8000
+  ## @param config.metricsProvider.exportJvmInfo Include JVM info with metrics
+  ##
+  metricsProvider.exportJvmInfo: TRUE
+  ## @param config.extraConfigValues [nullable] Additional config values
+  ##
+  extraConfigValues: {}
+
+## @section Service parameters
+## @descriptionStart
+## Meta Data Store application controller service parameters
+## @descriptionEnd
+##
+service:
+
+  ## @param service.type Meta Data Store service type
+  ##
+  type: ClusterIP
+
+  ## @param service.ports.server Meta Data Store server service port
+  ## @param service.ports.leaderElection Meta Data Store leader election service port
+  ## @param service.ports.client Meta Data Store client service port
+  ## @param service.ports.clientTls Meta Data Store secure client service port
+  ports:
+    server: 2888
+    leaderElection: 3888
+    client: 2181
+    clientTls: 2182
+
+  ## Node ports to expose
+  ## @param service.nodePorts.client Node port for the Meta Data Store external connections
+  ## @param service.nodePorts.clientTls Node port for the Meta Data Store external secure connections
+  ## NOTE: choose port between <30000-32767>
+  ##
+  nodePorts:
+    client: 32181
+    clientTls: 32182
+
+  ## @param service.clusterIP [string,nullable] Component application controller service Cluster IP
+  ## e.g.:
+  ## clusterIP: None
+  ##
+  clusterIP: ""
+
+  ## @param service.loadBalancerSourceRanges [array,nullable] Component application controller service Load Balancer sources
+  ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+  ## e.g:
+  ## loadBalancerSourceRanges:
+  ##   - 10.10.10.0/24
+  ##
+  loadBalancerSourceRanges: []
+
+  ## @param service.externalTrafficPolicy [string,nullable] Component application controller service external traffic policy
+  ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+  ##
+  externalTrafficPolicy: Cluster
+
+  ## @param service.annotations Additional custom annotations for Beam application controller service
+  ##
+  annotations: {}
+
+  ## @param service.extraPorts Extra ports to expose (normally used with the `sidecar` value)
+  ##
+  extraPorts: []
+
+  ## @param service.sessionAffinity [string,nullable] Session Affinity for Kubernetes service, can be "None" or "ClientIP"
+  ## If "ClientIP", consecutive client requests will be directed to the same Pod
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+  ##
+  sessionAffinity: None
+
+  ## @param service.sessionAffinityConfig [object,nullable] Additional settings for the sessionAffinity
+  ## sessionAffinityConfig:
+  ##   clientIP:
+  ##     timeoutSeconds: 300
+  sessionAffinityConfig: {}
+
+## ServiceAccount configuration for the Meta Data Store server
+## @param serviceAccount.create Specifies whether a ServiceAccount should be created
+## @param serviceAccount.name The name of the ServiceAccount to use.
+## @param serviceAccount.automountServiceAccountToken Automount service account token for the server service account
+## @param serviceAccount.annotations Annotations for service account. Evaluated as a template. Only used if `create` is `true`.
+##
+serviceAccount:
+  create: true
+  ## If not set and create is true, a name is generated using the common.names.fullname template
+  name: ""
+  automountServiceAccountToken: true
+  annotations: {}
+
+## @param podDisruptionBudget.enabled Enable the disruption budget
+## @param podDisruptionBudget.maxUnavailable When enabled the maximum allowed unavailable for matchLabel objects
+## @param podDisruptionBudget.minAvailable When enabled the minimum allowed unavailable for matchLabel objects
+##
+podDisruptionBudget:
+  enabled: true
+  maxUnavailable: 1
+  minAvailable: 1
+
+## @section Other Parameters
+
+## @param podManagementPolicy StatefulSet controller supports relax its ordering guarantees while preserving its uniqueness and identity guarantees. There are two valid pod management policies: OrderedReady and Parallel
+## ref: https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#pod-management-policy
+##
+podManagementPolicy: Parallel
+
+## @param updateStrategy.type Meta Data Store statefulset strategy type
+## @param updateStrategy.rollingUpdate Meta Data Store statefulset rolling update configuration parameters
+## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+##
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate: {}
+
+## @param podLabels Extra labels for Meta Data Store pods
+## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+##
+podLabels: {}
+
+## @param podAnnotations Extra annotations for Meta Data Store pods
+## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+##
+podAnnotations: {}
+
+## @param hostAliases Meta Data Store pods host aliases
+## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+##
+hostAliases: []
+
+## @param hostNetwork Specify if host network should be enabled for Meta Data Store pods
+##
+hostNetwork: false
+
+## @param hostIPC Specify if host IPC should be enabled for Meta Data Store pods
+##
+hostIPC: false
+
+## @param schedulerName Name of the k8s scheduler (other than default)
+## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+##
+schedulerName: ""
+
+## @param affinity Affinity for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+## Note: podAffinityPreset, podAntiAffinityPreset, and  nodeAffinityPreset will be ignored when it's set
+##
+affinity: {}
+
+## @param podAffinityPreset Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+##
+podAffinityPreset: ""
+
+## @param podAntiAffinityPreset Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+##
+podAntiAffinityPreset: hard
+
+## Node affinity preset
+## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+##
+nodeAffinityPreset:
+  ## @param nodeAffinityPreset.type Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+  ##
+  type: ""
+  ## @param nodeAffinityPreset.key Node label key to match Ignored if `affinity` is set.
+  ## E.g.
+  ## key: "kubernetes.io/e2e-az-name"
+  ##
+  key: ""
+  ## @param nodeAffinityPreset.values Node label values to match. Ignored if `affinity` is set.
+  ## E.g.
+  ## values:
+  ##   - e2e-az1
+  ##   - e2e-az2
+  ##
+  values: []
+
+## @param nodeSelector Node labels for pod assignment
+## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+##
+nodeSelector: {}
+
+## @param tolerations Tolerations for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+##
+tolerations: []
+
+## @param topologySpreadConstraints Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template
+## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
+##
+topologySpreadConstraints: []
+
+## @param terminationGracePeriodSeconds Seconds the pod needs to gracefully terminate
+## ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#hook-handler-execution
+##
+terminationGracePeriodSeconds: 60
+
+## @param priorityClassName Name of the existing priority class to be used by Meta Data Store pods
+## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+##
+priorityClassName: ""
+
+## Meta Data Store pods' Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+## @param podSecurityContext.enabled Enable security context for the pods
+## @param podSecurityContext.fsGroup Set Meta Data Store pod's Security Context fsGroup
+##
+podSecurityContext:
+  enabled: true
+  fsGroup: 1001
+
+## Meta Data Store containers' Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+## @param containerSecurityContext.enabled Enable Meta Data Store containers' Security Context
+## @param containerSecurityContext.runAsUser Set Meta Data Store containers' Security Context runAsUser
+## @param containerSecurityContext.runAsNonRoot Set Meta Data Store containers' Security Context runAsNonRoot
+## e.g:
+##   containerSecurityContext:
+##     enabled: true
+##     capabilities:
+##       drop: ["NET_RAW"]
+##     readOnlyRootFilesystem: true
+##
+containerSecurityContext:
+  enabled: true
+  runAsUser: 1001
+  runAsNonRoot: true
+
+## @param containerCommand Override the container image ENTRYPOINT. Leave blank to use image default (if set)
+##
+containerCommand:
+  - "/pulsar/bin/pulsar zookeeper"
+
+## @param containerArgs Override the container image CMD. Leave blank to use image default (if set)
+##
+containerArgs: []
+
+## @param extraEnvVars Extra environment variables to add to the provisioning pod
+## e.g:
+## extraEnvVars:
+##   - name: SOME_VALUE
+##     value: "10"
+##
+extraEnvVars: []
+
+## @param extraEnvVarsCM ConfigMap with extra environment variables
+##
+extraEnvVarsCM: ""
+
+## @param extraEnvVarsSecret Secret with extra environment variables
+##
+extraEnvVarsSecret: ""
+
+## @param initContainers Add additional Add init containers to the Meta Data Store pod(s)
+## e.g:
+## initContainers:
+##   - name: your-image-name
+##     image: your-image
+##     imagePullPolicy: Always
+##     ports:
+##       - name: portname
+##         containerPort: 1234
+##
+initContainers: []
+
+containerPorts:
+  ## @param containerPorts.server Meta Data Store server container port
+  ##
+  server: 2888
+  ## @param containerPorts.leaderElection Meta Data Store leader election container port
+  ##
+  leaderElection: 3888
+  ## @param containerPorts.client Meta Data Store client container port
+  ##
+  client: 2181
+  ## @param containerPorts.clientTls Meta Data Store secure client container port
+  ##
+  clientTls: 2182
+
+## @section Persistence parameters
+
+## Enable persistence using Persistent Volume Claims
+## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+##
+persistence:
+
+  ## @param persistence.mountPath Mount path of Pulsar home
+  ##
+  mountPath: /pulsar/data
+
+  ## @param persistence.size PVC storage size
+  ##
+  size: 5Gi
+  
+  ## @param persistence.storageClass PVC Storage Class for Kafka data volume
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ## set, choosing the default provisioner.
+  ##
+  storageClass:
+
+  ## @param persistence.existingClaim A manually managed Persistent Volume and Claim
+  ## If defined, PVC must be created manually before volume will be bound
+  ## The value is evaluated as a template
+  ##
+  existingClaim: ""
+
+  ## @param persistence.accessModes Persistent Volume Access Modes
+  ##
+  accessModes:
+    - ReadWriteOnce
+
+  ## @param persistence.annotations Annotations for the PVC
+  ##
+  annotations: {}
+
+  ## @param persistence.selector Selector to match an existing Persistent Volume. If set, the PVC can't have a PV dynamically provisioned for it
+  ## selector:
+  ##   matchLabels:
+  ##     app: my-app
+  ##
+  selector: {}
+
+## Enable log persistence using Persistent Volume Claims
+## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+##
+logPersistence:
+
+  ## @param logPersistence.mountPath Mount path of Pulsar home
+  ##
+  mountPath: /pulsar/logs
+
+  ## @param logPersistence.size PVC storage size
+  ##
+  size: 5Gi
+  
+  ## @param logPersistence.storageClass PVC Storage Class for Kafka data volume
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ## set, choosing the default provisioner.
+  ##
+  storageClass:
+
+  ## @param logPersistence.existingClaim A manually managed Persistent Volume and Claim
+  ## If defined, PVC must be created manually before volume will be bound
+  ## The value is evaluated as a template
+  ##
+  existingClaim: ""
+
+  ## @param logPersistence.accessModes Persistent Volume Access Modes
+  ##
+  accessModes:
+    - ReadWriteOnce
+
+  ## @param logPersistence.annotations Annotations for the PVC
+  ##
+  annotations: {}
+
+  ## @param logPersistence.selector Selector to match an existing Persistent Volume. If set, the PVC can't have a PV dynamically provisioned for it
+  ## selector:
+  ##   matchLabels:
+  ##     app: my-app
+  ##
+  selector: {}
+
+## @section Pod Liveness & Readyness
+
+## Configure extra options for Meta Data Store containers' liveness, readiness and startup probes
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+## @param livenessProbe.enabled Enable livenessProbe on Meta Data Store containers
+## @param livenessProbe.exec.command Process to monitor ofr liveness
+## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+## @param livenessProbe.successThreshold Success threshold for livenessProbe
+##
+livenessProbe:
+  enabled: true
+  exec:
+    command:
+    - timeout
+    - "30"
+    - "bin/pulsar-zookeeper-ruok.sh"
+  initialDelaySeconds: 20
+  periodSeconds: 30
+  timeoutSeconds: 30
+  failureThreshold: 10
+  successThreshold: 1
+
+## @param readinessProbe.enabled Enable readinessProbe on Meta Data Store containers
+## @param readinessProbe.exec.command Process to monitor for readiness
+## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+## @param readinessProbe.successThreshold Success threshold for readinessProbe
+##
+readinessProbe:
+  enabled: true
+  exec:
+    command:
+    - timeout
+    - "30"
+    - "bin/pulsar-zookeeper-ruok.sh"
+  initialDelaySeconds: 20
+  periodSeconds: 30
+  timeoutSeconds: 30
+  failureThreshold: 10
+  successThreshold: 1
+
+## @param startupProbe.enabled Enable startupProbe on Meta Data Store containers
+## @param startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+## @param startupProbe.periodSeconds Period seconds for startupProbe
+## @param startupProbe.timeoutSeconds Timeout seconds for startupProbe
+## @param startupProbe.failureThreshold Failure threshold for startupProbe
+## @param startupProbe.successThreshold Success threshold for startupProbe
+##
+startupProbe:
+  enabled: false
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 1
+  failureThreshold: 15
+  successThreshold: 1
+
+## @param lifecycleHooks lifecycleHooks for the Meta Data Store container to automate configuration before or after startup
+##
+lifecycleHooks: {}
+
+## Meta Data Store resource requests and limits
+## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+## @param resources.limits The resources limits for the container
+## @param resources.requests.memory The requested memory resources for the container
+## @param resources.requests.cpu The requested cpu resources for the container
+##
+resources:
+  limits: {}
+  requests:
+    memory: 1Gi
+    cpu: 0.3
+
+## @param extraVolumes Optionally specify extra list of additional volumes for the Meta Data Store pod(s)
+## e.g:
+## extraVolumes:
+##   - name: certs
+##     secret:
+##       secretName: admin-console-tls
+##
+##   - name: token-superuser
+##     secret:
+##       secretName: token-superuser
+##
+extraVolumes: []
+
+## @param extraVolumeMounts Optionally specify extra list of additional volumeMounts for the Meta Data Store container(s)
+## extraVolumeMounts:
+##    - name: certs
+##      readOnly: true
+##      mountPath: /pulsar/certs
+
+##    - mountPath: "/pulsar/token-superuser"
+##      name: token-superuser
+##      readOnly: true
+##
+extraVolumeMounts: []
+
+## @param sidecars Add additional sidecar containers to the Meta Data Store pod(s)
+## e.g:
+## sidecars:
+##   - name: your-image-name
+##     image: your-image
+##     imagePullPolicy: Always
+##     ports:
+##       - name: portname
+##         containerPort: 1234
+##
+sidecars: []

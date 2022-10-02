@@ -1,0 +1,39 @@
+{{- $extraOpts := default list .Values.pulsarEnv.extraOpts -}}
+
+{{- if .Values.pulsarEnv.log4j.formatMsgNoLookups -}}
+{{- $extraOpts = append $extraOpts (printf "-Dlog4j2.formatMsgNoLookups=%s" .Values.pulsarEnv.log4j.formatMsgNoLookups) -}}
+{{- end -}}
+
+{{- $extraOpts = append $extraOpts (printf "-Dpulsar.log.root.level=%s" (default "error" .Values.pulsarEnv.loggingLevels.root)) -}}
+
+{{- if eq (include "common.tls.require-secure-inter" $) "true" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStorePassword=/pulsar/jks-password" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStorePassword=/pulsar/jks-password" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStore=/pulsar/keystore.jks" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStore=/pulsar/truststore.jks" -}}
+{{- end -}}
+
+{{- $component := "meta-data-store" -}}
+{{- $name := (printf "%s-pulsar_env" (include "meta-data-store.name" $)) -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "meta-data-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+data:
+  pulsar_env.sh: |-
+    {{- if .Values.pulsarEnv.extraClasspath }}
+    $PULSAR_EXTRA_CLASSPATH={{ join ";" .Values.pulsarEnv.extraClasspath | quote }}
+    {{- end }}
+    $PULSAR_EXTRA_OPTS={{ join " " $extraOpts | quote }}
+    $PULSAR_MEM: {{ .Values.pulsarEnv.mem | quote }}
+    $PULSAR_GC: {{ .Values.pulsarEnv.gc | quote }}
+    $PULSAR_LOG_LEVEL: {{ (default "error" .Values.pulsarEnv.loggingLevels.pulsar) | quote }}
+    $PULSAR_LOG_ROOT_LEVEL: {{ (default "error" .Values.pulsarEnv.loggingLevels.root) | quote }}
+    $BOOKIE_GC: {{ .Values.pulsarEnv.bookieGc | quote }}

@@ -1,0 +1,33 @@
+{{- $component := "meta-data-store" -}}
+{{- $name := (printf "%s-headless" (include "meta-data-store.name" .)) -}}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "meta-data-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- if .Values.service.annotations }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.service.annotations "context" $ ) | nindent 4 }}
+    {{- end }}
+spec:
+  clusterIP: none
+  ports:
+    {{- if .Values.service.ports.server }}
+    - name: server
+      port: {{ .Values.service.ports.server }}
+      targetPort: server
+      protocol: TCP
+    {{- end }}
+    {{- if .Values.service.ports.leaderElection }}
+    - name: leaderElection
+      port: {{ .Values.service.ports.leaderElection }}
+      targetPort: leaderElection
+      protocol: TCP
+    {{- end }}
+  selector: {{ include "common.labels.matchLabels" (dict "name" (include "meta-data-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
