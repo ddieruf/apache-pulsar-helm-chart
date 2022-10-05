@@ -1,4 +1,30 @@
-This will be where everything gets explained
+This will be where everything gets explained. It's too early to do it.
+
+## Components
+
+| Supported       | To Do                  |
+|-----------------|------------------------|
+| Meta Data Store | Data Store             |
+ |                 | Pulsar Broker          |
+|                 | Pulsar Proxy           |
+|                 | DS Bastion             |
+|                 | DS Admin Console       |
+|                 | DS Burnell             |
+|                 | DS Beam                |
+|                 | Pulsar Websocket       |
+|                 | Pulsar Function Worker |
+|                 | Auto Recovery          |
+|                 | Pulsar SQL             |
+|                 | Zoonavigator           |
+
+## Features
+
+| Supported                  | To Do                  |
+|----------------------------|------------------------|
+| Unit testing               | Edge TLS               |
+| Inter-chart communications | Inter-component TLS    |
+| Generate parameters readme | Integration testing    |
+|                            | Component certificates |
 
 ## Parameters
 
@@ -10,7 +36,7 @@ These are global values that all sub charts will inherit
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------- | --------------- |
 | `global.imageRegistry`             | The image registry used by all charts.                                                                   | `docker.io`     |
 | `global.imagePullSecrets`          | A collection of image pull secrets used to retrieve images.                                              | `[]`            |
-| `global.storageClass`              | The storage class used by all sub charts when using persistence.                                         | `default`       |
+| `global.storageClass`              | The storage class used by all sub charts when using persistence.                                         | `local-path`    |
 | `global.kubeVersion`               | Override Kubernetes version                                                                              | `""`            |
 | `global.clusterDomain`             | Default Kubernetes cluster domain                                                                        | `cluster.local` |
 | `global.namespaceOverride`         | Override the release namespace                                                                           | `""`            |

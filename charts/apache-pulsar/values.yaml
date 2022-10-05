@@ -45,8 +45,3 @@ global:
   ##
   interComponentTls:
     enabled: false
-
-metaDataStore:
-  image:
-    repository: "datastax/lunastreaming"
-    tag: "2.10_2.1"
