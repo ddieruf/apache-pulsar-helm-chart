@@ -133,13 +133,12 @@ config:
   ## The secure port on which the ZooKeeper server will listen for connections.
   ##
   secureClientPort:
-  ## @param config.admin.enableServer The port at which the admin listens.
+  ## @param config.admin.enableServer Enable administrative interface.
   ##
   admin.enableServer: TRUE
-  ## @skip config.admin.serverPort
-  ## The port at which the admin listens.
+  ## @param config.admin.serverPort The port at which the admin listens.
   ##
-  admin.serverPort:
+  admin.serverPort: 8080
   ## @param config.autopurge.snapRetainCount In ZooKeeper, auto purge determines how many recent snapshots of the database stored in dataDir to retain within the time interval specified by autopurge.purgeInterval (while deleting the rest).
   ##
   autopurge.snapRetainCount: 3
