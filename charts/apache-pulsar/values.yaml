@@ -36,3 +36,17 @@ global:
   ## @param global.commonAnnotations [nullable] Annotations to add to all deployed objects
   ##
   commonAnnotations: {}
+
+  ## @param global.secureClusterEdge Only allow secure ports to be opened at the edge of the Pulsar cluster (also force TLS in all ingresses)
+  ##
+  secureClusterEdge: false
+
+  ## @param global.interComponentTls.enabled Only allow communication over secure ports between all cluster components
+  ##
+  interComponentTls:
+    enabled: false
+
+metaDataStore:
+  image:
+    repository: "datastax/lunastreaming"
+    tag: "2.10_2.1"

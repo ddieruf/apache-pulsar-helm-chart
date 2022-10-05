@@ -15,7 +15,7 @@ metadata:
     {{ include "common.tplvalues.render" ( dict "value" .Values.service.annotations "context" $ ) | nindent 4 }}
     {{- end }}
 spec:
-  clusterIP: none
+  clusterIP: "None"
   ports:
     {{- if .Values.service.ports.server }}
     - name: server
@@ -24,9 +24,9 @@ spec:
       protocol: TCP
     {{- end }}
     {{- if .Values.service.ports.leaderElection }}
-    - name: leaderElection
+    - name: leader-election
       port: {{ .Values.service.ports.leaderElection }}
-      targetPort: leaderElection
+      targetPort: leader-election
       protocol: TCP
     {{- end }}
   selector: {{ include "common.labels.matchLabels" (dict "name" (include "meta-data-store.name" .) "context" $ ) | nindent 4 }}

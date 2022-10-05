@@ -23,6 +23,4 @@ spec:
   selector:
     matchLabels: {{ (include "common.labels.matchLabels" (dict "name" (include "meta-data-store.name" $) "context" $ )) | nindent 6 }}
       app.kubernetes.io/component: {{ $component | quote }}
-  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
-
 {{- end -}}

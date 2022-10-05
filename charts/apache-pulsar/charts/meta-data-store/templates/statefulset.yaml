@@ -1,6 +1,10 @@
+{{- if gt (int .Values.globalData.replicas) 0 -}}
 {{- $component := "meta-data-store" -}}
 {{- $name := (printf "%s-statefulset" (include "meta-data-store.name" $)) -}}
 {{- $secureOnlyPorts := (eq (include "common.tls.require-secure-inter" .) "true") -}}
+
+{{- $dataMountName := "data" -}}
+{{- $logsMountName := "logs" -}}
 
 apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
 kind: StatefulSet
@@ -18,7 +22,7 @@ spec:
   selector:
     matchLabels: {{ (include "common.labels.matchLabels" (dict "name" (include "meta-data-store.name" $) "context" $ )) | nindent 6 }}
       app.kubernetes.io/component: {{ $component | quote }}
-  serviceName: {{ printf "%s-headless" (include "meta-data-store.name" .) }}
+  serviceName: {{ printf "%s-headless" (include "meta-data-store.name" .) | quote }}
   updateStrategy: {{ include "common.tplvalues.render" (dict "value" .Values.updateStrategy "context" $ ) | nindent 4 }}
   template:
     metadata:
@@ -67,13 +71,24 @@ spec:
       {{- if .Values.podSecurityContext.enabled }}
       securityContext: {{ omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "meta-data-store.serviceAccountName" . }}
-      {{- if .Values.initContainers }}
+      serviceAccountName: {{ include "meta-data-store.serviceAccountName" . | quote }}
       initContainers:
+        - name: install
+          image: busybox:latest
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name #export INDEX=${node.name##*-}
+          command: [ "sh", "-c", "echo ${POD_NAME##*-} >> /work/myid" ]
+          volumeMounts:
+            - name: {{ $dataMountName | quote}}
+              mountPath: "/work"
+      {{- if .Values.initContainers }}
         {{ include "common.tplvalues.render" ( dict "value" .Values.initContainers "context" $ ) | nindent 8 }}
       {{- end }}
       containers:
-        - name: meta-data-store
+        - name: "meta-data-store"
           image: {{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
           imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
           {{- if .Values.containerSecurityContext.enabled }}
@@ -138,40 +153,29 @@ spec:
         {{ include "common.tplvalues.render" (dict "value" .Values.sidecars "context" $) | nindent 8 }}
         {{- end }}
           volumeMounts:
-            - name: data
+            - name: {{ $dataMountName | quote}}
               mountPath: {{ .Values.persistence.mountPath }}
-            - name: logs
+            - name: {{ $logsMountName | quote }}
               mountPath: {{ .Values.logPersistence.mountPath }}
-            - name: meta-data-store-config
-              mountPath: {{ .Values.persistence.mountPath }}/conf
-            - name: pulsar-environment
-              mountPath: {{ .Values.persistence.mountPath }}
+            - name: conf
+              mountPath: {{ .Values.pulsarEnv.confPath }}
             {{- if .Values.extraVolumeMounts }}
             {{ include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" $) | nindent 10 }}
             {{- end }}
       volumes:
 {{- if .Values.persistence.existingClaim }}
-        - name: data
+        - name: {{ $dataMountName | quote}}
           persistentVolumeClaim:
             claimName: {{ printf "%s" (tpl .Values.persistence.existingClaim .) }}
 {{- end }}
 {{- if .Values.logPersistence.existingClaim }}
-        - name: logs
+        - name: {{ $logsMountName | quote }}
           persistentVolumeClaim:
             claimName: {{ printf "%s" (tpl .Values.logPersistence.existingClaim .) }}
 {{- end }}
-        - name: meta-data-store-config
+        - name: conf
           configMap:
             name: {{ printf "%s-configuration" (include "meta-data-store.name" .) }}
-            items:
-            - key: zookeeper.conf
-              path: zookeeper.conf
-        - name: pulsar-environment
-          configMap:
-            name: {{ printf "%s-pulsar_env" (include "meta-data-store.name" .) }}
-            items:
-            - key: pulsar_env.sh
-              path: pulsar_env.sh
         {{- if .Values.extraVolumes }}
         {{ include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
         {{- end }}
@@ -180,7 +184,7 @@ spec:
 {{- end }}
 {{- if not .Values.persistence.existingClaim }}
       - metadata:
-          name: data
+          name: {{ $dataMountName | quote }}
           {{- if .Values.persistence.annotations }}
           annotations: {{ include "common.tplvalues.render" (dict "value" .Values.persistence.annotations "context" $) | nindent 10 }}
           {{- end }}
@@ -199,7 +203,7 @@ spec:
 {{- end }}
 {{- if not .Values.logPersistence.existingClaim }}
       - metadata:
-          name: logs
+          name: {{ $logsMountName | quote }}
           {{- if .Values.logPersistence.annotations }}
           annotations: {{ include "common.tplvalues.render" (dict "value" .Values.logPersistence.annotations "context" $) | nindent 10 }}
           {{- end }}
@@ -215,4 +219,5 @@ spec:
           {{- if .Values.logPersistence.selector }}
           selector: {{ include "common.tplvalues.render" (dict "value" .Values.logPersistence.selector "context" $) | nindent 10 }}
           {{- end }}
+{{- end }}
 {{- end }}

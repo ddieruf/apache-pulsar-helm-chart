@@ -11,8 +11,8 @@ globalData:
 
   ## @param globalData.replicas The number of meta data stores to deploy
   ##
-
   replicas: 3
+
   ## @param globalData.nonPersistentReplicas Number of non-persistent Meta Data Store nodes. Used as floating Meta Data Store to maintain quorum in AZ failures
   ##
   nonPersistentReplicas: 0
@@ -33,7 +33,7 @@ image:
 
   ## @param image.tag [string,nullable] Component image tag (immutable tags are recommended)
   ##
-  tag: "latest"
+  tag: "2.10_2.0"
 
   ## @param image.pullPolicy Component image pull policy
   ## Specify a imagePullPolicy
@@ -52,88 +52,57 @@ image:
   ##
   pullSecrets: []
 
-## @section Certificate Resources
-## @descriptionStart
-## Configure the component's certificate
-## @descriptionEnd
-##
-certificateResources:
-
-  ## @param certificateResources.tlsSecretName [string,nullable]
-  ##
-  tlsSecretName: null
-
-  ## @param certificateResources.jksPasswordSecretName [string,nullable]
-  ##
-  jksPasswordSecretName: null
-
-  ## @extra certificateResources.certificateRequest Refer to the [CertificateSpec](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec) for more info about these values.
-  ##
-  certificateRequest:
-
-    ## @param certificateResources.certificateRequest.renewBefore How long before the currently issued certificate’s expiry cert-manager should renew the certificate
-    ##
-    renewBefore: 60days
-
-    ## @param certificateResources.certificateRequest.duration The requested ‘duration’ (i.e. lifetime) of the Certificate
-    ##
-    duration: 90days
-
-    ##
-    ##
-    subject:
-
-      ## @param certificateResources.certificateRequest.subject.organizations [array,nullable] Organizations to be used on the Certificate
-      ##
-      organizations: []
-
-    ## @param certificateResources.certificateRequest.privateKey [object,nullable] Options to control private keys used for the Certificate
-    ##
-    privateKey: {}
-
-    ## @param certificateResources.certificateRequest.issuerRef [object,nullable] IssuerRef is a reference to the issuer for this certificate
-    ##
-    issuerRef: {}
-
 ## @section Pulsar Environment Configuration
 ## @descriptionStart
 
 ## @descriptionEnd
 ##
 pulsarEnv:
-  ## @param pulsarEnv.bookieGc JVM settings for bookie garbage collection
+  ## @param pulsarEnv.confPath The full path where configuration files are held
   ##
-  bookieGc: "--XX:+UseG1GC"
-  ## @param pulsarEnv.gc JVM settings for garbage collection
+  confPath: /pulsar/conf
+  ## @param pulsarEnv.gc A collection of JVM settings garbage collection settings
   ##
-  gc: "-XX:+UseG1GC"
-  ## @param pulsarEnv.mem JVM memory settings
+  gc:
+    - "-XX:+UseG1GC"
+    - "-XX:MaxGCPauseMillis=10"
+    - "-XX:+ParallelRefProcEnabled"
+    - "-XX:+UnlockExperimentalVMOptions"
+    - "-XX:+DoEscapeAnalysis"
+    - "-XX:ParallelGCThreads=32"
+    - "-XX:ConcGCThreads=32"
+    - "-XX:G1NewSizePercent=50"
+    - "-XX:+DisableExplicitGC"
+  ## @param pulsarEnv.mem A collection of JVM memory settings
   ##
-  mem: "-Xms1g -Xmx1g -Dcom.sun.management.jmxremote -Djute.maxbuffer=10485760"
+  mem:
+    - "-Xms2g"
+    - "-Xmx2g"
+    - "-XX:MaxDirectMemorySize=4g"
   ##
-  ##
-  log4j:
-    ## @param pulsarEnv.log4j.formatMsgNoLookups Disables message pattern lookups globally when set to true. This is equivalent to defining all message patterns using %m{nolookups}.
-    ##
-    formatMsgNoLookups: true
-  ## pulsarEnv.loggingLevels
   ##
   loggingLevels:
-    ## @param pulsarEnv.loggingLevels.root Applies the PULSAR_LOG_ROOT_LEVEL env var and pulsar.log.root.level JVM option
+    ## @param pulsarEnv.loggingLevels.root Applies the pulsar.log.root.level JVM option
     ##
     root: "error"
     ## @param pulsarEnv.loggingLevels.pulsar Applies the PULSAR_LOG_LEVEL env var
     ##
-    pulsar: "error"
-  ## @param pulsarEnv.extraOpts A collection of extra options to be passed to the jvm. Format each as the entire key/value, ie: "-Dzookeeper.tcpKeepAlive=true"
+    pulsar: "info"
+  ## @param pulsarEnv.extraOpts A collection of extra options to be passed to the jvm. Format each as the entire key/value
   ##
   extraOpts:
     - "-Dzookeeper.tcpKeepAlive=true"
     - "-Dzookeeper.clientTcpKeepAlive=true"
-
+    - "-Dpulsar.allocator.exit_on_oom=true"
+    - "-Dio.netty.recycler.maxCapacity.default=1000"
+    - "-Dio.netty.recycler.linkCapacity=1024"
+    - "-Dlog4j2.formatMsgNoLookups=true"
   ## @param pulsarEnv.extraClasspath A collection of extra paths for the pulsar classpath. Include just the folder or file path, no delimiter.
   ##
   extraClasspath: []
+  ## @param pulsarEnv.stopTimeout Time to wait for an instance to stop before getting forceful
+  ##
+  stopTimeout: 5
 
 ## @section Meta data store configuration
 ## @descriptionStart
@@ -167,9 +136,10 @@ config:
   ## @param config.admin.enableServer The port at which the admin listens.
   ##
   admin.enableServer: TRUE
-  ## @param config.admin.serverPort The port at which the admin listens.
+  ## @skip config.admin.serverPort
+  ## The port at which the admin listens.
   ##
-  admin.serverPort: 9990
+  admin.serverPort:
   ## @param config.autopurge.snapRetainCount In ZooKeeper, auto purge determines how many recent snapshots of the database stored in dataDir to retain within the time interval specified by autopurge.purgeInterval (while deleting the rest).
   ##
   autopurge.snapRetainCount: 3
@@ -198,6 +168,46 @@ config:
   ##
   metricsProvider.exportJvmInfo: TRUE
   ## @param config.extraConfigValues [nullable] Additional config values
+  ##
+  extraConfigValues: {}
+
+## Meta data store global configuration
+##
+globalConfig:
+  ## @param globalConfig.tickTime The number of milliseconds of each tick
+  ##
+  tickTime: 2000
+  ## @param globalConfig.initLimit The number of ticks that the initial synchronization phase can take
+  ##
+  initLimit: 10
+  ## @param globalConfig.syncLimit The number of ticks that can pass between sending a request and getting an acknowledgement
+  ##
+  syncLimit: 5
+  ## @skip globalConfig.dataDir
+  ## The directory where the snapshot is stored
+  ##
+  dataDir:
+  ## @skip globalConfig.clientPort
+  ## The port at which the clients will connect
+  ##
+  clientPort:
+  ## @param globalConfig.admin.enableServer Weather to enable the admin server option
+  ##
+  admin.enableServer: true
+  ## @skip globalConfig.admin.serverPort
+  ## The port at which the admin will listen
+  ##
+  admin.serverPort:
+  ## @param globalConfig.maxClientCnxns the maximum number of client connections. Increase this if you need to handle more clients
+  ##
+  maxClientCnxns: 60
+  ## @param globalConfig.autopurge.purgeInterval Purge task interval in hours. Set to "0" to disable auto purge feature. , be sure to read the [maintenance section](http://zookeeper.apache.org/doc/current/zookeeperAdmin.html#sc_maintenance) of the administrator guide before turning on autopurge
+  ##
+  autopurge.purgeInterval: 1
+  ## @param globalConfig.autopurge.snapRetainCount The number of snapshots to retain in dataDir
+  ##
+  autopurge.snapRetainCount: 3
+  ## @param globalConfig.extraConfigValues [nullable] Additional config values
   ##
   extraConfigValues: {}
 
@@ -289,8 +299,8 @@ serviceAccount:
 ##
 podDisruptionBudget:
   enabled: true
-  maxUnavailable: 1
-  minAvailable: 1
+  maxUnavailable:
+  minAvailable: 2
 
 ## @section Other Parameters
 
@@ -424,8 +434,7 @@ containerSecurityContext:
 
 ## @param containerCommand Override the container image ENTRYPOINT. Leave blank to use image default (if set)
 ##
-containerCommand:
-  - "/pulsar/bin/pulsar zookeeper"
+containerCommand: ["sh", "-c", "/pulsar/bin/pulsar zookeeper"]
 
 ## @param containerArgs Override the container image CMD. Leave blank to use image default (if set)
 ##
@@ -480,9 +489,13 @@ containerPorts:
 ##
 persistence:
 
-  ## @param persistence.mountPath Mount path of Pulsar home
+  ## @param persistence.mountPath Mount path to store meta data
   ##
-  mountPath: /pulsar/data
+  mountPath: /pulsar/data/zookeeper
+
+  ## @param persistence.mountPathForGlobal Mount path of the global data store (where snapshots are stored)
+  ##
+  mountPathForGlobal: /pulsar/data/global-zookeeper
 
   ## @param persistence.size PVC storage size
   ##

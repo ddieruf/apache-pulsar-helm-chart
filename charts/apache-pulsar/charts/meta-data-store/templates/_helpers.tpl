@@ -2,7 +2,7 @@
 Expand the name of the meta data store chart.
 */}}
 {{- define "meta-data-store.name" -}}
-  {{- default "meta-data-store" .Values.global.dataStore.nameOverride | trunc 63 | trimSuffix "-" -}}
+  {{- default "meta-data-store" .Values.global.metaDataStore.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
@@ -11,10 +11,10 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 If release name contains chart name it will be used as a full name.
 */}}
 {{- define "meta-data-store.fullname" -}}
-  {{- if .Values.global.dataStore.fullnameOverride -}}
-    {{- .Values.global.dataStore.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+  {{- if .Values.global.metaDataStore.fullnameOverride -}}
+    {{- .Values.global.metaDataStore.fullnameOverride | trunc 63 | trimSuffix "-" -}}
   {{- else -}}
-    {{- $name := default "meta-data-store" .Values.global.dataStore.nameOverride -}}
+    {{- $name := default "meta-data-store" .Values.global.metaDataStore.nameOverride -}}
     {{- if contains $name .Release.Name -}}
       {{- .Release.Name | trunc 63 | trimSuffix "-" -}}
     {{- else -}}
@@ -34,7 +34,7 @@ Create a fully qualified app name adding the installation's namespace.
  Create the name of the service account to use
  */}}
 {{- define "meta-data-store.serviceAccountName" -}}
-  {{- printf "%s-service" (default (include "meta-data-store.fullname" .) .Values.serviceAccount.name) -}}
+  {{- printf "%s-service" (default (include "meta-data-store.name" .) .Values.serviceAccount.name) -}}
 {{- end -}}
 
 {{/*
@@ -109,35 +109,53 @@ but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else 
 {{- end -}}
 
 {{/*
- Create the name of the service account to use
+ Create the name of the service account to use in the format: {pod-hostname}.{headless-service-name}.{namespace}.svc.{cluster-domain}:{server-port}:{leader-election-port}
+For more information about headless services with statefulsets and K8s DNS - https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
 
- usage: {{ include "meta-data-store.instance-address" (dict "instanceIndex" 0 "context" $) }}
+ usage: {{ include "meta-data-store.instance-address" (dict "instanceIndex" 0 "instanceNamePrefix" "meta-data-store-statefulset" "context" $) }}
  */}}
 {{- define "meta-data-store.instance-address" -}}
   {{- $instanceIndex := .instanceIndex -}}
-  {{- printf "%s-%d.%s.pod.%s:%d" (include "meta-data-store.name" .context)
+  {{- $instanceNamePrefix := .instanceNamePrefix -}}
+  {{- printf "%s-%d.%s.%s.svc.%s:%d:%d" $instanceNamePrefix
                                   $instanceIndex
+                                  (printf "%s-headless" (include "meta-data-store.name" .context))
                                   (include "common.names.namespace" .context)
                                   .context.Values.global.clusterDomain
-                                  (.context.Values.global.metaDataStore.service.ports.server | int) -}}
+                                  (.context.Values.global.metaDataStore.service.ports.server | int)
+                                  (.context.Values.global.metaDataStore.service.ports.leaderElection | int) -}}
 {{- end -}}
 
 {{/*
+ Get a dict of all meta data server addresses
+
  usage: {{ include "meta-data-store.cluster-addresses" $ }}
+ returns:
+  {
+    0: "server0-fqdn",
+    1: "server1-fqdn",
+    2: "server2-fqdn"
+    ...
+  }
  */}}
 {{- define "meta-data-store.cluster-addresses" -}}
-  {{- $adresses := list -}}
+  {{- $addresses := dict -}}
   {{- $replicas := (default 0 (.Values.global.metaDataStore.replicas | int)) -}}
   {{- $nonPersistentReplicas := (default 0 (.Values.global.metaDataStore.nonPersistentReplicas | int)) -}}
   {{- $totalServers := add $replicas $nonPersistentReplicas -}}
 
-  {{- range $i := untilStep 0 $replicas 1 -}}
-    {{- $adresses = append $adresses (include "meta-data-store.instance-address" (dict "instanceIndex" $i "context" $)) -}}
+  {{- range $i := until $replicas -}}
+    {{- $address := (include "meta-data-store.instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset" (include "meta-data-store.name" $)) "context" $)) }}
+    {{- $_ := set $addresses (toString $i) $address }}
   {{- end -}}
 
-  {{- range $r := untilStep $replicas (sub $totalServers 1 | int) 1 -}}
-    {{- $adresses = append $adresses (include "meta-data-store.instance-address" (dict "instanceIndex" $r "context" $)) -}}
+  {{- $i := 0 }}
+  {{- range $r := untilStep $replicas ($totalServers | int) 1 -}}
+    {{- $address := (include "meta-data-store.instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset-non-persistent" (include "meta-data-store.name" $)) "context"
+    $)) -}}
+    {{- $_ := set $addresses (toString $r) $address }}
+    {{- $i = (add $i 1) -}}
   {{- end -}}
 
-  {{- join "," $adresses -}}
+  {{- $addresses | toJson -}}
 {{- end -}}

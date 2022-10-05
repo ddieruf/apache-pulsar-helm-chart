@@ -1,2 +1,6 @@
 *.tgz
 .idea/
+
+*.lock
+
+output.yaml

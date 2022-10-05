@@ -1,27 +1,36 @@
 {{- $configValues := omit .Values.global.metaDataStore.config "extraConfigValues" -}}
+{{- $globalConfigValues := omit .Values.global.metaDataStore.globalConfig "extraConfigValues" -}}
 
 {{- $_ := set $configValues "clientPort" .Values.service.ports.client -}}
-{{- $_ := set $configValues "secureClientPort" "" -}}
 {{- $_ := set $configValues "dataDir" .Values.persistence.mountPath -}}
+{{- $_ := set $configValues "admin.serverPort" .Values.service.ports.server -}}
+
+{{- $_ := set $globalConfigValues "clientPort" .Values.service.ports.client -}}
+{{- $_ := set $globalConfigValues "dataDir" .Values.persistence.mountPathForGlobal -}}
+{{- $_ := set $globalConfigValues "admin.serverPort" .Values.service.ports.server -}}
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
-  {{- $_ := set $configValues "clientPort" "" -}}
   {{- $_ := set $configValues "secureClientPort" .Values.service.ports.clientTls -}}
+  {{- $_ := set $globalConfigValues "secureClientPort" .Values.service.ports.clientTls -}}
+{{- end -}}
+
+{{- range $idx,$address := (include "meta-data-store.cluster-addresses" $ | fromJson) -}}
+  {{- $_ := set $configValues (printf "server.%s" $idx) $address -}}
+{{- end -}}
+
+{{- $extraOpts := default list .Values.pulsarEnv.extraOpts -}}
+
+{{- $extraOpts = append $extraOpts (printf "-Dpulsar.log.root.level=%s" (default "error" .Values.pulsarEnv.loggingLevels.root)) -}}
+
+{{- if eq (include "common.tls.require-secure-inter" $) "true" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStorePassword=/pulsar/jks-password" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStorePassword=/pulsar/jks-password" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStore=/pulsar/keystore.jks" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStore=/pulsar/truststore.jks" -}}
 {{- end -}}
 
 {{- $component := "meta-data-store" -}}
 {{- $name := (printf "%s-configuration" (include "meta-data-store.name" $)) -}}
-
-{{- $formattedValues := dict -}}
-{{- range $key, $val := $configValues -}}
-  {{- if or (eq (typeOf $val) "float64") (eq (typeOf $val) "int") }}
-    {{- $_ := set $formattedValues $key (int $val | toString) -}}
-  {{- else if (eq (typeOf $val) "string") }}
-    {{- $_ := set $formattedValues $key ((toString $val) | replace "\"" "" | trim) -}}
-  {{- else }}
-    {{- $_ := set $formattedValues $key (toString $val) -}}
-  {{- end }}
-{{- end -}}
 
 apiVersion: v1
 kind: ConfigMap
@@ -34,10 +43,41 @@ metadata:
   annotations:
     {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
 data:
-  zookeeper.conf: |-
-    {{ range $key,$val := $formattedValues}}
-    {{ printf "%s=%s" $key $val }}{{- end }}
-    {{- if .Values.config.extraConfigValues -}}
-    {{ range $key,$val := .Values.config.extraConfigValues }}
-    {{ printf "%s=%s" $key (toString $val) }}{{- end }}
-    {{- end -}}
+  zookeeper.conf: |
+    {{- include "common.formatting.toToml" (dict "configValues" $configValues "context" $) | nindent 4 -}}
+    {{ if .Values.config.extraConfigValues }}
+    {{- include "common.formatting.toToml" (dict "configValues" .Values.config.extraConfigValues "context" $) | nindent 4 -}}
+    {{ end }}
+  global_zookeeper.conf: |
+    {{- include "common.formatting.toToml" (dict "configValues" $globalConfigValues "context" $) | nindent 4 -}}
+    {{ if .Values.globalConfig.extraConfigValues }}
+    {{- include "common.formatting.toToml" (dict "configValues" .Values.globalConfig.extraConfigValues "context" $) | nindent 4 -}}
+    {{ end }}
+  pulsar_env.sh: |
+    {{- if .Values.pulsarEnv.extraClasspath }}
+    PULSAR_EXTRA_CLASSPATH={{ join ";" .Values.pulsarEnv.extraClasspath | quote }}
+    {{- end }}
+    PULSAR_EXTRA_OPTS={{ join " " $extraOpts | quote }}
+    {{- if .Values.pulsarEnv.gc }}
+    PULSAR_GC={{ join " " .Values.pulsarEnv.gc | quote }}
+    {{- end }}
+    {{- if .Values.pulsarEnv.mem }}
+    PULSAR_MEM={{ join " " .Values.pulsarEnv.mem | quote }}
+    {{- end }}
+    #PULSAR_LOG_CONF=
+    PULSAR_LOG_DIR={{ .Values.logPersistence.mountPath }}
+    #PULSAR_BROKER_CONF=
+    #PULSAR_BOOKKEEPER_CONF=
+    PULSAR_ZK_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "zookeeper.conf" }}
+    PULSAR_GLOBAL_ZK_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "global_zookeeper.conf" }}
+    #PULSAR_PID_DIR=
+    PULSAR_STOP_TIMEOUT={{.Values.pulsarEnv.stopTimeout}}
+    # Garbage collection log.
+    IS_JAVA_8=`java -version 2>&1 |grep version|grep '"1\.8'`
+    # java version has space, use [[ -n $PARAM ]] to judge if variable exists
+    if [[ -n $IS_JAVA_8 ]]; then
+      PULSAR_GC_LOG=${PULSAR_GC_LOG:-"-Xloggc:logs/pulsar_gc_%p.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=20M"}
+    else
+    # After jdk 9, gc log param should config like this. Ignoring version less than jdk 8
+      PULSAR_GC_LOG=${PULSAR_GC_LOG:-"-Xlog:gc*:logs/pulsar_gc_%p.log:time,uptime:filecount=10,filesize=20M"}
+    fi
