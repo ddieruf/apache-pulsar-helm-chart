@@ -32,32 +32,27 @@ tests:
               app.kubernetes.io/instance: zz
               app.kubernetes.io/managed-by: Helm
               app.kubernetes.io/name: meta-data-store
-              app.kubernetes.io/part-of: pulsar-luna
+              app.kubernetes.io/part-of: apache-pulsar
               helm.sh/chart: metaDataStore-0.1.0
             name: meta-data-store-statefulset
             namespace: xx
     template: charts/metaDataStore/templates/statefulset.yaml
 
-  - it: should have correct template metadata
+  - it: should have correct template metadata labels
     set:
       global:
         commonLabels:
           aaa: bbb
-        commonAnnotations:
-          something: somewhere
       restartOnConfigMapChange: true
     asserts:
       - equal:
-          path: spec.template.metadata
+          path: spec.template.metadata.labels
           value:
-            annotations:
-              checksum/configuration: 6c614cf14740f9efd8d0671698633e333822210181d0a35deeca194ddc361f49
-            labels:
-              app.kubernetes.io/component: meta-data-store
-              app.kubernetes.io/instance: zz
-              app.kubernetes.io/managed-by: Helm
-              app.kubernetes.io/name: meta-data-store
-              helm.sh/chart: metaDataStore-0.1.0
+            app.kubernetes.io/component: meta-data-store
+            app.kubernetes.io/instance: zz
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: meta-data-store
+            helm.sh/chart: metaDataStore-0.1.0
     template: charts/metaDataStore/templates/statefulset.yaml
 
   - it: should have default storage
@@ -65,7 +60,7 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].volumeMounts
           content:
-            mountPath: /pulsar/data
+            mountPath: /pulsar/data/zookeeper
             name: data
       - contains:
           path: spec.template.spec.containers[0].volumeMounts
@@ -75,38 +70,6 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].volumeMounts
           content:
-            mountPath: /pulsar/data/conf
-            name: meta-data-store-config
-      - contains:
-          path: spec.template.spec.containers[0].volumeMounts
-          content:
-            mountPath: /pulsar/data
-            name: pulsar-environment
-        any: true
-      - contains:
-          path: spec.volumeClaimTemplates
-          content:
-            metadata:
-              name: data
-            spec:
-              accessModes:
-                - ReadWriteOnce
-              resources:
-                requests:
-                  storage: 5Gi
-              storageClassName: default
-        any: true
-      - contains:
-          path: spec.volumeClaimTemplates
-          content:
-            metadata:
-              name: logs
-            spec:
-              accessModes:
-                - ReadWriteOnce
-              resources:
-                requests:
-                  storage: 5Gi
-              storageClassName: default
-        any: true
+            mountPath: /pulsar/conf
+            name: conf
     template: charts/metaDataStore/templates/statefulset.yaml

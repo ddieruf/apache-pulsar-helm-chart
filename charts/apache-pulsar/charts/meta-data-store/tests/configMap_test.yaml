@@ -30,10 +30,33 @@ tests:
               app.kubernetes.io/instance: zz
               app.kubernetes.io/managed-by: Helm
               app.kubernetes.io/name: meta-data-store
-              app.kubernetes.io/part-of: pulsar-luna
+              app.kubernetes.io/part-of: apache-pulsar
               helm.sh/chart: metaDataStore-0.1.0
             name: meta-data-store-configuration
             namespace: xx
+
+  - it: should have correct server addresses
+    set:
+      global:
+        interComponentTls:
+          enabled: false
+        metaDataStore:
+          replicas: 2
+          nonPersistentReplicas: 1
+          service:
+            ports:
+              server: 123
+              leaderElection: 567
+    asserts:
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "server.0=meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:123:567"
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "server.1=meta-data-store-statefulset-1.meta-data-store-headless.xx.svc.cluster.local:123:567"
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "server.2=meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.cluster.local:123:567"
 
   - it: should have no tls
     set:
@@ -50,8 +73,8 @@ tests:
           path: data.zookeeper\.conf
           pattern: "clientPort=123"
       - matchRegex:
-          path: data.zookeeper\.conf
-          pattern: "secureClientPort="
+          path: data.global_zookeeper\.conf
+          pattern: "clientPort=123"
 
   - it: should have tls enabled
     set:
@@ -66,9 +89,9 @@ tests:
     asserts:
       - matchRegex:
           path: data.zookeeper\.conf
-          pattern: "clientPort="
+          pattern: "secureClientPort=567"
       - matchRegex:
-          path: data.zookeeper\.conf
+          path: data.global_zookeeper\.conf
           pattern: "secureClientPort=567"
 
   - it: should allow additional config data
@@ -85,3 +108,37 @@ tests:
       - matchRegex:
           path: data.zookeeper\.conf
           pattern: "cccc=123"
+
+  - it: should allow additional global config data
+    set:
+      metaDataStore:
+        globalConfig:
+          extraConfigValues:
+            aaaa: bbbb
+            cccc: "123"
+    asserts:
+      - matchRegex:
+          path: data.global_zookeeper\.conf
+          pattern: "aaaa=bbbb"
+      - matchRegex:
+          path: data.global_zookeeper\.conf
+          pattern: "cccc=123"
+
+  - it: should have extra opts for ssl
+    set:
+      global:
+        interComponentTls:
+          enabled: true
+    asserts:
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Djavax.net.ssl.trustStorePassword=/pulsar/jks-password"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Djavax.net.ssl.keyStorePassword=/pulsar/jks-password"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Djavax.net.ssl.keyStore=/pulsar/keystore.jks"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Djavax.net.ssl.trustStore=/pulsar/truststore.jks"

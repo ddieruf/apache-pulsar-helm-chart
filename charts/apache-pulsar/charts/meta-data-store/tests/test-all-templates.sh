@@ -18,7 +18,7 @@ cmdBase="helm unittest . -3"
 #######################################
 #       Tests
 #######################################
-pushd "./luna-chart"
+pushd "./charts/apache-pulsar"
   cmd="${cmdBase}"
   for file in $(find ./charts/meta-data-store/tests -name '*.yaml'); do
     cmd="${cmd} -f ${file}"

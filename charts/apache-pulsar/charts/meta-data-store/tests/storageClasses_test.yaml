@@ -53,8 +53,8 @@ tests:
               app.kubernetes.io/component: meta-data-store
               app.kubernetes.io/instance: zz
               app.kubernetes.io/managed-by: Helm
-              app.kubernetes.io/name: data-store
-              app.kubernetes.io/part-of: pulsar-luna
+              app.kubernetes.io/name: meta-data-store
+              app.kubernetes.io/part-of: apache-pulsar
               helm.sh/chart: metaDataStore-0.1.0
             name: meta-data-store
             namespace: xx
