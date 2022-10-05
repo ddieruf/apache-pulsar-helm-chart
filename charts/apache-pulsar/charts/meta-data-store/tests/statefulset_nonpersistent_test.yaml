@@ -7,6 +7,11 @@ templates:
   - charts/metaDataStore/templates/configmap.yaml
 tests:
   - it: should be correct document
+    set:
+      metaDataStore:
+        globalData:
+          replicas: 0
+          nonPersistentReplicas: 2
     asserts:
       - containsDocument:
           kind: StatefulSet
@@ -20,6 +25,10 @@ tests:
           aaa: bbb
         commonAnnotations:
           something: somewhere
+      metaDataStore:
+        globalData:
+          replicas: 0
+          nonPersistentReplicas: 2
     asserts:
       - equal:
           path: metadata
@@ -45,7 +54,10 @@ tests:
           aaa: bbb
         commonAnnotations:
           something: somewhere
-      restartOnConfigMapChange: true
+      metaDataStore:
+        globalData:
+          replicas: 0
+          nonPersistentReplicas: 2
     asserts:
       - equal:
           path: spec.template.metadata.labels
@@ -58,6 +70,11 @@ tests:
     template: charts/metaDataStore/templates/statefulset-non-persistent.yaml
 
   - it: should have default volumes
+    set:
+      metaDataStore:
+        globalData:
+          replicas: 0
+          nonPersistentReplicas: 2
     asserts:
       - contains:
           path: spec.template.spec.containers[0].volumeMounts
