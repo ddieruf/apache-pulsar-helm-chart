@@ -3,18 +3,16 @@
 
 {{- $_ := set $configValues "clientPort" .Values.service.ports.client -}}
 {{- $_ := set $configValues "dataDir" .Values.persistence.mountPath -}}
-{{- $_ := set $configValues "admin.serverPort" .Values.service.ports.server -}}
 
 {{- $_ := set $globalConfigValues "clientPort" .Values.service.ports.client -}}
 {{- $_ := set $globalConfigValues "dataDir" .Values.persistence.mountPathForGlobal -}}
-{{- $_ := set $globalConfigValues "admin.serverPort" .Values.service.ports.server -}}
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
   {{- $_ := set $configValues "secureClientPort" .Values.service.ports.clientTls -}}
   {{- $_ := set $globalConfigValues "secureClientPort" .Values.service.ports.clientTls -}}
 {{- end -}}
 
-{{- range $idx,$address := (include "meta-data-store.cluster-addresses" $ | fromJson) -}}
+{{- range $idx,$address := (include "meta-data-store.quorum-cluster-addresses" $ | fromJson) -}}
   {{- $_ := set $configValues (printf "server.%s" $idx) $address -}}
 {{- end -}}
 

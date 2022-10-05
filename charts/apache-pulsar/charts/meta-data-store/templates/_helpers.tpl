@@ -112,9 +112,9 @@ but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else 
  Create the name of the service account to use in the format: {pod-hostname}.{headless-service-name}.{namespace}.svc.{cluster-domain}:{server-port}:{leader-election-port}
 For more information about headless services with statefulsets and K8s DNS - https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
 
- usage: {{ include "meta-data-store.instance-address" (dict "instanceIndex" 0 "instanceNamePrefix" "meta-data-store-statefulset" "context" $) }}
+ usage: {{ include "meta-data-store.headless-instance-address" (dict "instanceIndex" 0 "instanceNamePrefix" "meta-data-store-statefulset" "context" $) }}
  */}}
-{{- define "meta-data-store.instance-address" -}}
+{{- define "meta-data-store.quorum-instance-address" -}}
   {{- $instanceIndex := .instanceIndex -}}
   {{- $instanceNamePrefix := .instanceNamePrefix -}}
   {{- printf "%s-%d.%s.%s.svc.%s:%d:%d" $instanceNamePrefix
@@ -127,31 +127,81 @@ For more information about headless services with statefulsets and K8s DNS - htt
 {{- end -}}
 
 {{/*
- Get a dict of all meta data server addresses
+ Create the name of the service account to use in the format: {pod-hostname}.{service-name}.{namespace}.svc.{cluster-domain}:{client-port}
 
- usage: {{ include "meta-data-store.cluster-addresses" $ }}
+ usage: {{ include "meta-data-store.svc-instance-address" (dict "instanceIndex" 0 "instanceNamePrefix" "meta-data-store-statefulset" "context" $) }}
+ */}}
+{{- define "meta-data-store.svc-instance-address" -}}
+  {{- $instanceIndex := .instanceIndex -}}
+  {{- $instanceNamePrefix := .instanceNamePrefix -}}
+  {{- printf "%s-%d.%s.%s.svc.%s:%d" $instanceNamePrefix
+                                  $instanceIndex
+                                  (printf "%s-service" (include "meta-data-store.name" .context))
+                                  (include "common.names.namespace" .context)
+                                  .context.Values.global.clusterDomain
+                                  (.context.Values.global.metaDataStore.service.ports.client | int) -}}
+{{- end -}}
+
+{{/*
+ Get a dict of all meta data server addresses for quorum (headless) communications
+
+ usage: {{ include "meta-data-store.server-cluster-addresses" $ }}
  returns:
   {
-    0: "server0-fqdn",
-    1: "server1-fqdn",
-    2: "server2-fqdn"
+    0: {pod-hostname}-0.{headless-service-name}.{namespace}.svc.{cluster-domain}:{server-port}:{leader-election-port},
+    1: {pod-hostname}-1.{headless-service-name}.{namespace}.svc.{cluster-domain}:{server-port}:{leader-election-port},
+    2: {pod-hostname}-2.{headless-service-name}.{namespace}.svc.{cluster-domain}:{server-port}:{leader-election-port}
     ...
   }
  */}}
-{{- define "meta-data-store.cluster-addresses" -}}
+{{- define "meta-data-store.quorum-cluster-addresses" -}}
   {{- $addresses := dict -}}
   {{- $replicas := (default 0 (.Values.global.metaDataStore.replicas | int)) -}}
   {{- $nonPersistentReplicas := (default 0 (.Values.global.metaDataStore.nonPersistentReplicas | int)) -}}
   {{- $totalServers := add $replicas $nonPersistentReplicas -}}
 
   {{- range $i := until $replicas -}}
-    {{- $address := (include "meta-data-store.instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset" (include "meta-data-store.name" $)) "context" $)) }}
+    {{- $address := (include "meta-data-store.quorum-instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset" (include "meta-data-store.name" $)) "context" $)) }}
     {{- $_ := set $addresses (toString $i) $address }}
   {{- end -}}
 
   {{- $i := 0 }}
   {{- range $r := untilStep $replicas ($totalServers | int) 1 -}}
-    {{- $address := (include "meta-data-store.instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset-non-persistent" (include "meta-data-store.name" $)) "context"
+    {{- $address := (include "meta-data-store.quorum-instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset-non-persistent" (include "meta-data-store.name" $)) "context"
+    $)) -}}
+    {{- $_ := set $addresses (toString $r) $address }}
+    {{- $i = (add $i 1) -}}
+  {{- end -}}
+
+  {{- $addresses | toJson -}}
+{{- end -}}
+
+{{/*
+ Get a dict of all meta data server addresses for client communications
+
+ usage: {{ include "meta-data-store.client-cluster-addresses" $ }}
+ returns:
+  {
+    0: {pod-hostname}-0.{service-name}.{namespace}.svc.{cluster-domain}:{client-port},
+    1: {pod-hostname}-1.{service-name}.{namespace}.svc.{cluster-domain}:{client-port},
+    2: {pod-hostname}-2.{service-name}.{namespace}.svc.{cluster-domain}:{client-port},
+    ...
+  }
+ */}}
+{{- define "meta-data-store.client-cluster-addresses" -}}
+  {{- $addresses := dict -}}
+  {{- $replicas := (default 0 (.Values.global.metaDataStore.replicas | int)) -}}
+  {{- $nonPersistentReplicas := (default 0 (.Values.global.metaDataStore.nonPersistentReplicas | int)) -}}
+  {{- $totalServers := add $replicas $nonPersistentReplicas -}}
+
+  {{- range $i := until $replicas -}}
+    {{- $address := (include "meta-data-store.svc-instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset" (include "meta-data-store.name" $)) "context" $)) }}
+    {{- $_ := set $addresses (toString $i) $address }}
+  {{- end -}}
+
+  {{- $i := 0 }}
+  {{- range $r := untilStep $replicas ($totalServers | int) 1 -}}
+    {{- $address := (include "meta-data-store.svc-instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset-non-persistent" (include "meta-data-store.name" $)) "context"
     $)) -}}
     {{- $_ := set $addresses (toString $r) $address }}
     {{- $i = (add $i 1) -}}
