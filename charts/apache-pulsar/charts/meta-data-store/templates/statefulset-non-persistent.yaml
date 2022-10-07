@@ -1,7 +1,21 @@
 {{- if gt (int .Values.globalData.nonPersistentReplicas) 0 -}}
 {{- $component := "meta-data-store" -}}
 {{- $name := (printf "%s-statefulset-non-persistent" (include "meta-data-store.name" $)) -}}
-{{- $secureOnlyPorts := (eq (include "common.tls.require-secure-inter" .) "true") -}}
+{{- $secureOnlyPorts := false -}}
+{{- $extraVolMounts := default list .Values.extraVolumeMounts -}}
+{{- $extraVols := default list .Values.extraVolumes -}}
+
+{{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
+  {{- $secureOnlyPorts = true -}}
+  {{- $tlsSecretName := coalesce .Values.certificateResources.tlsSecretName (printf "%s-tls" (include "meta-data-store.name" .)) -}}
+  {{- $jksPassSecretName := coalesce .Values.certificateResources.jksPasswordSecretName (printf "%s-jks" (include "meta-data-store.name" .)) -}}
+
+  {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.certs" . | fromJson) -}}
+  {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.jks" . | fromJson) -}}
+
+  {{- $extraVols = append $extraVols (include "common.tls.volumes.certs" (dict "tlsSecretName" $tlsSecretName "context" $) | fromJson) -}}
+  {{- $extraVols = append $extraVols (include "common.tls.volumes.jks-store" (dict "jksPasswordSecretName" $jksPassSecretName "tlsSecretName" $tlsSecretName "context" $) | fromJson) -}}
+{{- end -}}
 
 apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
 kind: StatefulSet
@@ -120,7 +134,7 @@ spec:
               containerPort: {{ .Values.containerPorts.client }}
             {{- end }}
             {{- if and $secureOnlyPorts .Values.containerPorts.clientTls }}
-            - name: clientTls
+            - name: client-tls
               containerPort: {{ .Values.containerPorts.clientTls }}
             {{- end }}
             {{- if .Values.containerPorts.server }}
@@ -150,14 +164,14 @@ spec:
         {{ include "common.tplvalues.render" (dict "value" .Values.sidecars "context" $) | nindent 8 }}
         {{- end }}
           volumeMounts:
-            - name: data
+            - name: "data"
               mountPath: {{ .Values.persistence.mountPath }}
-            - name: logs
+            - name: "logs"
               mountPath: {{ .Values.logPersistence.mountPath }}
-            - name: conf
+            - name: "conf"
               mountPath: {{ .Values.pulsarEnv.confPath }}
-            {{- if .Values.extraVolumeMounts }}
-            {{ include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" $) | nindent 10 }}
+            {{- if $extraVolMounts }}
+            {{ include "common.tplvalues.render" (dict "value" $extraVolMounts "context" $) | nindent 12 }}
             {{- end }}
       volumes:
         - name: data
@@ -167,7 +181,7 @@ spec:
         - name: conf
           configMap:
             name: {{ printf "%s-configuration" (include "meta-data-store.name" .) }}
-        {{- if .Values.extraVolumes }}
-        {{ include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
+        {{- if $extraVols }}
+        {{ include "common.tplvalues.render" (dict "value" $extraVols "context" $) | nindent 8 }}
         {{- end }}
 {{- end -}}

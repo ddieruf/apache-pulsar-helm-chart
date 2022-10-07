@@ -11,7 +11,7 @@ globalData:
 
   ## @param globalData.replicas The number of meta data stores to deploy
   ##
-  replicas: 3
+  replicas: 2
 
   ## @param globalData.nonPersistentReplicas Number of non-persistent Meta Data Store nodes. Used as floating Meta Data Store to maintain quorum in AZ failures
   ##
@@ -209,6 +209,53 @@ globalConfig:
   ## @param globalConfig.extraConfigValues [nullable] Additional config values
   ##
   extraConfigValues: {}
+
+## @section Certificate Resources
+## @descriptionStart
+## Configure the component's certificate
+## @descriptionEnd
+##
+certificateResources:
+
+  ## @param certificateResources.tlsSecretName [string,nullable]
+  ##
+  tlsSecretName: null
+
+  ## @param certificateResources.jksPasswordSecretName [string,nullable]
+  ##
+  jksPasswordSecretName: null
+
+  ## @extra certificateResources.certificateRequest Refer to the [CertificateSpec](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec) for more info about these values.
+  ##
+  certificateRequest:
+
+    ## @param certificateResources.certificateRequest.renewBefore How long before the currently issued certificate’s expiry cert-manager should renew the certificate. Default is 2/3 of the duration.
+    ##
+    renewBefore:
+
+    ## @param certificateResources.certificateRequest.duration The requested ‘duration’ (i.e. lifetime) of the Certificate. Default is 90 days
+    ##
+    duration:
+
+    ##
+    ##
+    subject:
+
+      ## @param certificateResources.certificateRequest.subject.organizations [array,nullable] Organizations to be used on the Certificate
+      ##
+      organizations: []
+
+    ## @param certificateResources.certificateRequest.privateKey [object,nullable] Options to control private keys used for the Certificate
+    ##
+    privateKey: #{}
+      algorithm: RSA
+      size: 2048
+
+    ## @param certificateResources.certificateRequest.issuerRef [object,nullable] IssuerRef is a reference to the issuer for this certificate
+    ##
+    issuerRef: #{}
+      name: dieruf.local-issuer
+      kind: ClusterIssuer
 
 ## @section Service parameters
 ## @descriptionStart

@@ -1,0 +1,126 @@
+suite: Test meta-data-store certificate
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/metaDataStore/templates/certificate.yaml
+  - charts/metaDataStore/templates/jks_secret.yaml
+tests:
+  - it: should be correct certificate document
+    set:
+      global:
+        interComponentTls:
+          enabled: true
+    asserts:
+      - containsDocument:
+          kind: Certificate
+          apiVersion: cert-manager.io/v1
+    template: charts/metaDataStore/templates/certificate.yaml
+
+  - it: should be correct secret document
+    set:
+      global:
+        interComponentTls:
+          enabled: true
+      metaDataStore:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+    asserts:
+      - containsDocument:
+          kind: Secret
+          apiVersion: v1
+    template: charts/metaDataStore/templates/jks_secret.yaml
+
+  - it: should have correct certificate metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          ccc: ddd
+        interComponentTls:
+          enabled: true
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              ccc: ddd
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: meta-data-store
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: meta-data-store
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: metaDataStore-0.1.0
+            name: meta-data-store-certificate
+            namespace: xx
+    template: charts/metaDataStore/templates/certificate.yaml
+
+  - it: should have correct secret metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          ccc: ddd
+        interComponentTls:
+          enabled: true
+      metaDataStore:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+      asserts:
+        - equal:
+            path: metadata
+            value:
+              annotations:
+                ccc: ddd
+              labels:
+                aaa: bbb
+                app.kubernetes.io/component: meta-data-store
+                app.kubernetes.io/instance: zz
+                app.kubernetes.io/managed-by: Helm
+                app.kubernetes.io/name: meta-data-store
+                app.kubernetes.io/part-of: pulsar-luna
+                helm.sh/chart: metaDataStore-0.1.0
+              name: meta-data-store-jks
+              namespace: xx
+      template: charts/metaDataStore/templates/jks_secret.yaml
+
+  - it: should build correct certificate request
+    template: charts/metaDataStore/templates/certificate.yaml
+    set:
+      global:
+        clusterDomain: domain.com
+        interComponentTls:
+          enabled: true
+      metaDataStore:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: cert-issuer
+              kind: ClusterIssuer
+    asserts:
+      - equal:
+          path: spec.commonName
+          value: zz-meta-data-store
+      - contains:
+          path: spec.dnsNames
+          content:
+            '*.meta-data-store-headless.xx.svc.domain.com'
+      - contains:
+          path: spec.dnsNames
+          content:
+            127.0.0.1
+      - contains:
+          path: spec.dnsNames
+          content:
+            localhost
+      - equal:
+          path: spec.secretName
+          value: meta-data-store-tls

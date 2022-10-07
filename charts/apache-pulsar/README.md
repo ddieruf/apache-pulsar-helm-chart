@@ -19,15 +19,14 @@ This will be where everything gets explained. It's too early to do it.
 
 ## Features
 
-| Supported                  | To Do                   |
-|----------------------------|-------------------------|
-| Unit testing               | Edge TLS                |
-| Inter-chart communications | Inter-component TLS     |
-| Generate parameters readme | Integration testing     |
-|                            | Component certificates  |
-|                            | Observability (metrics) |
-|                            | Authentications         |
-|                            | Authorizations          |
+| Supported                        | To Do                   |
+|----------------------------------|-------------------------|
+| Unit testing                     | Edge TLS (encryption)   |
+| Inter-chart communications       | Integration testing     |
+| Generate parameters readme       | Observability (metrics) |
+| Inter-component TLS (encryption) | Authentications         |
+| Component certificates           | Authorizations          |
+|                                  | Lifecycle Jobs          |
 
 ## Parameters
 

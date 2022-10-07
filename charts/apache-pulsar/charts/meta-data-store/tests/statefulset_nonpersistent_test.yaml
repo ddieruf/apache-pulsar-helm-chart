@@ -70,6 +70,7 @@ tests:
     template: charts/metaDataStore/templates/statefulset-non-persistent.yaml
 
   - it: should have default volumes
+    template: charts/metaDataStore/templates/statefulset-non-persistent.yaml
     set:
       metaDataStore:
         globalData:
@@ -94,4 +95,58 @@ tests:
             mountPath: /pulsar/conf
             name: conf
         any: true
+
+  - it: should add jks stores and cert with TLS
     template: charts/metaDataStore/templates/statefulset-non-persistent.yaml
+    set:
+      global:
+        interComponentTls:
+          enabled: true
+      metaDataStore:
+        globalData:
+          replicas: 0
+          nonPersistentReplicas: 2
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: jks
+            projected:
+              sources:
+                - secret:
+                    name: meta-data-store-tls
+                    items:
+                      - key: truststore.jks
+                        path: truststore.jks
+                      - key: keystore.jks
+                        path: keystore.jks
+                - secret:
+                    name: meta-data-store-jks
+                    items:
+                      - key: jks-password
+                        path: jks-password
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: certs
+            secret:
+              secretName: meta-data-store-tls
+              items:
+                - key: ca.crt
+                  path: ca.crt
+                - key: tls.key
+                  path: tls.key
+                - key: tls.crt
+                  path: tls.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: certs
+            mountPath: /pulsar/certs
+            readOnly: true
+      - contains:
+            path: spec.template.spec.containers[0].volumeMounts
+            content:
+              name: jks
+              mountPath: /pulsar/jks
+              readOnly: true

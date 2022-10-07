@@ -43,7 +43,6 @@ tests:
       global:
         commonLabels:
           aaa: bbb
-      restartOnConfigMapChange: true
     asserts:
       - equal:
           path: spec.template.metadata.labels
@@ -73,3 +72,54 @@ tests:
             mountPath: /pulsar/conf
             name: conf
     template: charts/metaDataStore/templates/statefulset.yaml
+
+  - it: should add jks stores and cert with TLS
+    template: charts/metaDataStore/templates/statefulset.yaml
+    set:
+      global:
+        interComponentTls:
+          enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: jks
+            projected:
+              sources:
+              - secret:
+                  items:
+                  - key: truststore.jks
+                    path: truststore.jks
+                  - key: keystore.jks
+                    path: keystore.jks
+                  name: meta-data-store-tls
+              - secret:
+                  items:
+                  - key: jks-password
+                    path: jks-password
+                  name: meta-data-store-jks
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: certs
+            secret:
+              secretName: meta-data-store-tls
+              items:
+                - key: ca.crt
+                  path: ca.crt
+                - key: tls.key
+                  path: tls.key
+                - key: tls.crt
+                  path: tls.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: certs
+            mountPath: /pulsar/certs
+            readOnly: true
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: jks
+            mountPath: /pulsar/jks
+            readOnly: true

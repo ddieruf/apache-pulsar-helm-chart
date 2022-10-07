@@ -34,86 +34,59 @@ Usage:
 {{- end -}}
 
 {{/*
-The jksPassword volume mount
+The jks volume mount
 
 Usage:
-{{ include "common.tls.volumeMounts.jksPassword" . }}
+{{ include "common.tls.volumeMounts.jks" . }}
 
 */}}
-{{- define "common.tls.volumeMounts.jksPassword" -}}
-  {{- (dict "name" "jksPassword" "readOnly" true "mountPath" "/pulsar") | toJson -}}
+{{- define "common.tls.volumeMounts.jks" -}}
+  {{- (dict "name" "jks" "readOnly" true "mountPath" "/pulsar/jks") | toJson -}}
 {{- end -}}
 
 {{/*
-The jksStore volume mount
+Get the needed volumes for TLS certificate
 
 Usage:
-{{ include "common.tls.volumeMounts.jksStore" . }}
-
-*/}}
-{{- define "common.tls.volumeMounts.jksStore" -}}
-  {{- (dict "name" "jksStore" "readOnly" true "mountPath" "/pulsar") | toJson -}}
-{{- end -}}
-
-{{/*
-Get the needed volumes for TLS certs
-
-Usage:
-{{ include "common.tls.volumes.certs" (dict "certificateSecretName" "component-name-tls" "context" $) .}}
+{{ include "common.tls.volumes.certs" (dict "tlsSecretName" "component-name-tls" "context" $) .}}
 
 Params:
-  - certificateSecretName - String - Required - Name of the TLS secret where the certificate is stored.
+  - tlsSecretName - String - Required - Name of the TLS secret where the certificate is stored.
 */}}
 {{- define "common.tls.volumes.certs" -}}
-  {{- $certificateSecretName := .certificateSecretName -}}
+  {{- $tlsSecretName := .tlsSecretName -}}
 
-  {{- if not $certificateSecretName -}}
-    {{- fail "Provide certificateSecretName when using common.certs.volume" -}}
+  {{- if not $tlsSecretName -}}
+    {{- fail "Provide tlsSecretName when using common.tls.volumes.certs" -}}
   {{- end -}}
 
-  {{- (dict "name" "certs" "secret" (dict "secretName" $certificateSecretName "items" (list (dict "key" "ca.crt" "path" "ca.crt") (dict "key" "key.crt" "path" "key.crt") (dict "key" "cer.crt"
-  "path" "cer.crt")))) | toJson -}}
+  {{- (dict "name" "certs" "secret" (dict "secretName" $tlsSecretName "items" (list (dict "key" "ca.crt" "path" "ca.crt") (dict "key" "tls.key" "path" "tls.key") (dict "key" "tls.crt" "path" "tls.crt")))) | toJson -}}
 {{- end -}}
 
 {{/*
-Get the needed volumes for TLS jksStore
+Get the needed volumes for jks store
 
 Usage:
-{{ include "common.tls.volumes.jksStore" (dict "certificateSecretName" "component-name-tls" "context" $) .}}
+{{ include "common.tls.volumes.jks-store" (dict "jksPasswordSecretName" "meta-data-store-jks" "tlsSecretName" "meta-data-store-tls" "context" $) | fromJson }}
 
 Params:
-  - certificateSecretName - String - Required - Name of the TLS secret where the certificate is stored.
+  - volumeName - String - Required - The nanme of the volume
+  - jksPasswordSecretName - String - Required - The name of the secret object with the jks password
+  - tlsSecretName - String - Required - The name of the TLS secret with the jks stores
   - context - Context - Required - Parent context.
 */}}
-{{- define "common.tls.volumes.jksStore" -}}
-  {{- $certificateSecretName := .certificateSecretName -}}
+{{- define "common.tls.volumes.jks-store" -}}
+  {{- $tlsSecretName := .tlsSecretName -}}
+  {{- $jksPasswordSecretName := .jksPasswordSecretName -}}
 
-  {{- if not $certificateSecretName -}}
-    {{- fail "Provide certificateSecretName when using common.certs.volume" -}}
+  {{- if not $tlsSecretName -}}
+    {{- fail "Provide tlsSecretName when using common.tls.volumes.jks-store" -}}
+  {{- end -}}
+  {{- if not $jksPasswordSecretName -}}
+    {{- fail "Provide jksPasswordSecretName when using common.tls.volumes.jks-store" -}}
   {{- end -}}
 
-  {{- (dict "name" "jksStore" "secret" (dict "secretName" $certificateSecretName "items" (list (dict "key" "truststore.jks" "path" "truststore.jks") (dict "key" "keystore.jks" "path" "keystore.jks")))) | toJson -}}
-{{- end -}}
-
-{{/*
-Get the needed volumes for jksPassword
-
-Usage:
-{{ include "common.tls.volumes.jksPassword" (dict "jksPasswordSecretName" "component-name-jks" "context" $) .}}
-
-Params:
-  - jksPasswordSecretName - String - Optional - If JKS is included (includeJks=true) then this is required. The name of the opaque secret used to create the JKS stores.
-  - context - Context - Required - Parent context.
-
-If including JKS the provided jksPasswordSecretName needs to have a data of "jks-password".
-
-*/}}
-{{- define "common.tls.volumes.jksPassword" -}}
-  {{- $jksPassSecretName := .jksPasswordSecretName -}}
-
-  {{- if not $jksPassSecretName -}}
-    {{- fail "Provide jksPassSecretName when using common.tls.volumes.jksPassword" -}}
-  {{- end -}}
-
-  {{- (dict "name" "jksPassword" "secret" (dict "secretName" $jksPassSecretName "items" (list (dict "key" "jks-password" "path" "jks-password")))) | toJson -}}
+  {{- $stores := (dict "secret" (dict "name" $tlsSecretName "items" (list (dict "key" "truststore.jks" "path" "truststore.jks") (dict "key" "keystore.jks" "path" "keystore.jks")))) -}}
+  {{- $jksPassword := (dict "secret" (dict "name" $jksPasswordSecretName "items" (list (dict "key" "jks-password" "path" "jks-password")))) -}}
+  {{- (dict "name" "jks" "projected" (dict "sources" (list $stores $jksPassword))) | toJson -}}
 {{- end -}}

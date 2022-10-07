@@ -7,9 +7,38 @@
 {{- $_ := set $globalConfigValues "clientPort" .Values.service.ports.client -}}
 {{- $_ := set $globalConfigValues "dataDir" .Values.persistence.mountPathForGlobal -}}
 
+{{- $_ := unset $configValues "secureClientPort" -}}
+{{- $_ := unset $globalConfigValues "secureClientPort" -}}
+
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
+  {{/*  Todo: Ideally only the secure port is open but the liveness probe is hardcoded to 2181
+  {{- $_ := unset $configValues "clientPort" -}}
+  */}}
   {{- $_ := set $configValues "secureClientPort" .Values.service.ports.clientTls -}}
   {{- $_ := set $globalConfigValues "secureClientPort" .Values.service.ports.clientTls -}}
+  {{- $_ := set $configValues "leader.closeSocketAsync" "true" -}}
+  {{- $_ := set $configValues "learner.closeSocketAsync" "true" -}}
+  {{- $_ := set $configValues "serverCnxnFactory" "org.apache.zookeeper.server.NettyServerCnxnFactory" -}}
+
+  {{- if gt (add .Values.globalData.replicas .Values.globalData.nonPersistentReplicas) 1 -}}
+    {{- $_ := set $configValues "sslQuorum" "true" -}}
+    {{- $_ := set $configValues "ssl.quorum.trustStore.type" "JKS" -}}
+    {{/*  Todo: Zookeeper is using a reverse DNS lookup to decide hostname, which resolves with ip addressing, which the certificate has n o provision for. To set this to "true", core dns needs some tweaking read more: https://github.com/strimzi/strimzi-kafka-operator/issues/3111  */}}
+    {{- $_ := set $configValues "ssl.quorum.hostnameVerification" "false" -}}
+    {{- $_ := set $configValues "ssl.quorum.keyStore.location" "/pulsar/jks/keystore.jks" -}}
+    {{- $_ := set $configValues "ssl.quorum.keyStore.passwordPath" "/pulsar/jks/jks-password" -}}
+    {{- $_ := set $configValues "ssl.quorum.trustStore.location" "/pulsar/jks/truststore.jks" -}}
+    {{- $_ := set $configValues "ssl.quorum.trustStore.passwordPath" "/pulsar/jks/jks-password" -}}
+  {{- else -}}
+    {{- $_ := set $configValues "sslQuorum" "false" -}}
+    {{- $_ := set $configValues "ssl.trustStore.type" "JKS" -}}
+    {{/*  Todo: Zookeeper is using a reverse DNS lookup to decide hostname, which resolves with ip addressing, which the certificate has n o provision for. To set this to "true", core dns needs some tweaking read more: https://github.com/strimzi/strimzi-kafka-operator/issues/3111  */}}
+    {{- $_ := set $configValues "ssl.hostnameVerification" "false" -}}
+    {{- $_ := set $configValues "ssl.keyStore.location" "/pulsar/jks/keystore.jks" -}}
+    {{- $_ := set $configValues "ssl.keyStore.passwordPath" "/pulsar/jks/jks-password" -}}
+    {{- $_ := set $configValues "ssl.trustStore.location" "/pulsar/jks/truststore.jks" -}}
+    {{- $_ := set $configValues "ssl.trustStore.passwordPath" "/pulsar/jks/jks-password" -}}
+  {{- end -}}
 {{- end -}}
 
 {{- range $idx,$address := (include "meta-data-store.quorum-cluster-addresses" $ | fromJson) -}}
@@ -21,10 +50,10 @@
 {{- $extraOpts = append $extraOpts (printf "-Dpulsar.log.root.level=%s" (default "error" .Values.pulsarEnv.loggingLevels.root)) -}}
 
 {{- if eq (include "common.tls.require-secure-inter" $) "true" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStorePassword=/pulsar/jks-password" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStorePassword=/pulsar/jks-password" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStore=/pulsar/keystore.jks" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStore=/pulsar/truststore.jks" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStorePassword=/pulsar/jks/jks-password" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStorePassword=/pulsar/jks/jks-password" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStore=/pulsar/jks/keystore.jks" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStore=/pulsar/jks/truststore.jks" -}}
 {{- end -}}
 
 {{- $component := "meta-data-store" -}}
@@ -62,13 +91,9 @@ data:
     {{- if .Values.pulsarEnv.mem }}
     PULSAR_MEM={{ join " " .Values.pulsarEnv.mem | quote }}
     {{- end }}
-    #PULSAR_LOG_CONF=
     PULSAR_LOG_DIR={{ .Values.logPersistence.mountPath }}
-    #PULSAR_BROKER_CONF=
-    #PULSAR_BOOKKEEPER_CONF=
     PULSAR_ZK_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "zookeeper.conf" }}
     PULSAR_GLOBAL_ZK_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "global_zookeeper.conf" }}
-    #PULSAR_PID_DIR=
     PULSAR_STOP_TIMEOUT={{.Values.pulsarEnv.stopTimeout}}
     # Garbage collection log.
     IS_JAVA_8=`java -version 2>&1 |grep version|grep '"1\.8'`

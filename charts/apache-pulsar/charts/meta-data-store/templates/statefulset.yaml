@@ -1,10 +1,21 @@
 {{- if gt (int .Values.globalData.replicas) 0 -}}
 {{- $component := "meta-data-store" -}}
 {{- $name := (printf "%s-statefulset" (include "meta-data-store.name" $)) -}}
-{{- $secureOnlyPorts := (eq (include "common.tls.require-secure-inter" .) "true") -}}
+{{- $secureOnlyPorts := false -}}
+{{- $extraVolMounts := default list .Values.extraVolumeMounts -}}
+{{- $extraVols := default list .Values.extraVolumes -}}
 
-{{- $dataMountName := "data" -}}
-{{- $logsMountName := "logs" -}}
+{{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
+  {{- $secureOnlyPorts = true -}}
+  {{- $tlsSecretName := coalesce .Values.certificateResources.tlsSecretName (printf "%s-tls" (include "meta-data-store.name" .)) -}}
+  {{- $jksPassSecretName := coalesce .Values.certificateResources.jksPasswordSecretName (printf "%s-jks" (include "meta-data-store.name" .)) -}}
+
+  {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.certs" . | fromJson) -}}
+  {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.jks" . | fromJson) -}}
+
+  {{- $extraVols = append $extraVols (include "common.tls.volumes.certs" (dict "tlsSecretName" $tlsSecretName "context" $) | fromJson) -}}
+  {{- $extraVols = append $extraVols (include "common.tls.volumes.jks-store" (dict "jksPasswordSecretName" $jksPassSecretName "tlsSecretName" $tlsSecretName "context" $) | fromJson) -}}
+{{- end -}}
 
 apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
 kind: StatefulSet
@@ -82,7 +93,7 @@ spec:
                   fieldPath: metadata.name #export INDEX=${node.name##*-}
           command: [ "sh", "-c", "echo ${POD_NAME##*-} >> /work/myid" ]
           volumeMounts:
-            - name: {{ $dataMountName | quote}}
+            - name: "data"
               mountPath: "/work"
       {{- if .Values.initContainers }}
         {{ include "common.tplvalues.render" ( dict "value" .Values.initContainers "context" $ ) | nindent 8 }}
@@ -123,7 +134,7 @@ spec:
               containerPort: {{ .Values.containerPorts.client }}
             {{- end }}
             {{- if and $secureOnlyPorts .Values.containerPorts.clientTls }}
-            - name: clientTls
+            - name: client-tls
               containerPort: {{ .Values.containerPorts.clientTls }}
             {{- end }}
             {{- if .Values.containerPorts.server }}
@@ -153,38 +164,38 @@ spec:
         {{ include "common.tplvalues.render" (dict "value" .Values.sidecars "context" $) | nindent 8 }}
         {{- end }}
           volumeMounts:
-            - name: {{ $dataMountName | quote}}
+            - name: "data"
               mountPath: {{ .Values.persistence.mountPath }}
-            - name: {{ $logsMountName | quote }}
+            - name: "logs"
               mountPath: {{ .Values.logPersistence.mountPath }}
-            - name: conf
+            - name: "conf"
               mountPath: {{ .Values.pulsarEnv.confPath }}
-            {{- if .Values.extraVolumeMounts }}
-            {{ include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" $) | nindent 10 }}
+            {{- if $extraVolMounts }}
+            {{ include "common.tplvalues.render" (dict "value" $extraVolMounts "context" $) | nindent 12 }}
             {{- end }}
       volumes:
 {{- if .Values.persistence.existingClaim }}
-        - name: {{ $dataMountName | quote}}
+        - name: "data"
           persistentVolumeClaim:
             claimName: {{ printf "%s" (tpl .Values.persistence.existingClaim .) }}
 {{- end }}
 {{- if .Values.logPersistence.existingClaim }}
-        - name: {{ $logsMountName | quote }}
+        - name: "logs"
           persistentVolumeClaim:
             claimName: {{ printf "%s" (tpl .Values.logPersistence.existingClaim .) }}
 {{- end }}
-        - name: conf
+        - name: "conf"
           configMap:
             name: {{ printf "%s-configuration" (include "meta-data-store.name" .) }}
-        {{- if .Values.extraVolumes }}
-        {{ include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
+        {{- if $extraVols }}
+        {{ include "common.tplvalues.render" (dict "value" $extraVols "context" $) | nindent 8 }}
         {{- end }}
 {{- if or (not .Values.persistence.existingClaim) (not .Values.logPersistence.existingClaim) }}
   volumeClaimTemplates:
 {{- end }}
 {{- if not .Values.persistence.existingClaim }}
       - metadata:
-          name: {{ $dataMountName | quote }}
+          name: "data"
           {{- if .Values.persistence.annotations }}
           annotations: {{ include "common.tplvalues.render" (dict "value" .Values.persistence.annotations "context" $) | nindent 10 }}
           {{- end }}
@@ -203,7 +214,7 @@ spec:
 {{- end }}
 {{- if not .Values.logPersistence.existingClaim }}
       - metadata:
-          name: {{ $logsMountName | quote }}
+          name: "logs"
           {{- if .Values.logPersistence.annotations }}
           annotations: {{ include "common.tplvalues.render" (dict "value" .Values.logPersistence.annotations "context" $) | nindent 10 }}
           {{- end }}
