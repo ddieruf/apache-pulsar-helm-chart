@@ -205,33 +205,22 @@ Meta Data Store application controller service parameters
 
 ### Pod Liveness & Readyness
 
-| Name                                 | Description                                                                                        | Value                                             |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `livenessProbe.enabled`              | Enable livenessProbe on Meta Data Store containers                                                 | `true`                                            |
-| `livenessProbe.exec.command`         | Process to monitor ofr liveness                                                                    | `["timeout","30","bin/pulsar-zookeeper-ruok.sh"]` |
-| `livenessProbe.initialDelaySeconds`  | Initial delay seconds for livenessProbe                                                            | `20`                                              |
-| `livenessProbe.periodSeconds`        | Period seconds for livenessProbe                                                                   | `30`                                              |
-| `livenessProbe.timeoutSeconds`       | Timeout seconds for livenessProbe                                                                  | `30`                                              |
-| `livenessProbe.failureThreshold`     | Failure threshold for livenessProbe                                                                | `10`                                              |
-| `livenessProbe.successThreshold`     | Success threshold for livenessProbe                                                                | `1`                                               |
-| `readinessProbe.enabled`             | Enable readinessProbe on Meta Data Store containers                                                | `true`                                            |
-| `readinessProbe.exec.command`        | Process to monitor for readiness                                                                   | `["timeout","30","bin/pulsar-zookeeper-ruok.sh"]` |
-| `readinessProbe.initialDelaySeconds` | Initial delay seconds for readinessProbe                                                           | `20`                                              |
-| `readinessProbe.periodSeconds`       | Period seconds for readinessProbe                                                                  | `30`                                              |
-| `readinessProbe.timeoutSeconds`      | Timeout seconds for readinessProbe                                                                 | `30`                                              |
-| `readinessProbe.failureThreshold`    | Failure threshold for readinessProbe                                                               | `10`                                              |
-| `readinessProbe.successThreshold`    | Success threshold for readinessProbe                                                               | `1`                                               |
-| `startupProbe.enabled`               | Enable startupProbe on Meta Data Store containers                                                  | `false`                                           |
-| `startupProbe.initialDelaySeconds`   | Initial delay seconds for startupProbe                                                             | `30`                                              |
-| `startupProbe.periodSeconds`         | Period seconds for startupProbe                                                                    | `10`                                              |
-| `startupProbe.timeoutSeconds`        | Timeout seconds for startupProbe                                                                   | `1`                                               |
-| `startupProbe.failureThreshold`      | Failure threshold for startupProbe                                                                 | `15`                                              |
-| `startupProbe.successThreshold`      | Success threshold for startupProbe                                                                 | `1`                                               |
-| `lifecycleHooks`                     | lifecycleHooks for the Meta Data Store container to automate configuration before or after startup | `{}`                                              |
-| `resources.limits`                   | The resources limits for the container                                                             | `{}`                                              |
-| `resources.requests.memory`          | The requested memory resources for the container                                                   | `1Gi`                                             |
-| `resources.requests.cpu`             | The requested cpu resources for the container                                                      | `0.3`                                             |
-| `extraVolumes`                       | Optionally specify extra list of additional volumes for the Meta Data Store pod(s)                 | `[]`                                              |
-| `extraVolumeMounts`                  | Optionally specify extra list of additional volumeMounts for the Meta Data Store container(s)      | `[]`                                              |
-| `sidecars`                           | Add additional sidecar containers to the Meta Data Store pod(s)                                    | `[]`                                              |
+| Name                                 | Description                                                                                        | Value                                                                                   |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `livenessProbe.enabled`              | Enable livenessProbe on Meta Data Store containers                                                 | `false`                                                                                 |
+| `readinessProbe.enabled`             | Enable readinessProbe on Meta Data Store containers                                                | `true`                                                                                  |
+| `readinessProbe.exec.command`        | Process to monitor for readiness                                                                   | `["/bin/bash","-c","[[(\"$(echo ruok | nc localhost 2181)\" == \"imok\")]] || exit 1"]` |
+| `readinessProbe.initialDelaySeconds` | Initial delay seconds for readinessProbe                                                           | `10`                                                                                    |
+| `readinessProbe.periodSeconds`       | Period seconds for readinessProbe                                                                  | `3`                                                                                     |
+| `readinessProbe.timeoutSeconds`      | Timeout seconds for readinessProbe                                                                 | `30`                                                                                    |
+| `readinessProbe.failureThreshold`    | Failure threshold for readinessProbe                                                               | `10`                                                                                    |
+| `readinessProbe.successThreshold`    | Success threshold for readinessProbe                                                               | `2`                                                                                     |
+| `startupProbe.enabled`               | Enable startupProbe on Meta Data Store containers                                                  | `false`                                                                                 |
+| `lifecycleHooks`                     | lifecycleHooks for the Meta Data Store container to automate configuration before or after startup | `{}`                                                                                    |
+| `resources.limits`                   | The resources limits for the container                                                             | `{}`                                                                                    |
+| `resources.requests.memory`          | The requested memory resources for the container                                                   | `1Gi`                                                                                   |
+| `resources.requests.cpu`             | The requested cpu resources for the container                                                      | `0.3`                                                                                   |
+| `extraVolumes`                       | Optionally specify extra list of additional volumes for the Meta Data Store pod(s)                 | `[]`                                                                                    |
+| `extraVolumeMounts`                  | Optionally specify extra list of additional volumeMounts for the Meta Data Store container(s)      | `[]`                                                                                    |
+| `sidecars`                           | Add additional sidecar containers to the Meta Data Store pod(s)                                    | `[]`                                                                                    |
 

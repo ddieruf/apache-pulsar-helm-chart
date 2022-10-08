@@ -625,25 +625,9 @@ logPersistence:
 ## Configure extra options for Meta Data Store containers' liveness, readiness and startup probes
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
 ## @param livenessProbe.enabled Enable livenessProbe on Meta Data Store containers
-## @param livenessProbe.exec.command Process to monitor ofr liveness
-## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
-## @param livenessProbe.periodSeconds Period seconds for livenessProbe
-## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
-## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
-## @param livenessProbe.successThreshold Success threshold for livenessProbe
 ##
 livenessProbe:
-  enabled: true
-  exec:
-    command:
-    - timeout
-    - "30"
-    - "bin/pulsar-zookeeper-ruok.sh"
-  initialDelaySeconds: 20
-  periodSeconds: 30
-  timeoutSeconds: 30
-  failureThreshold: 10
-  successThreshold: 1
+  enabled: false
 
 ## @param readinessProbe.enabled Enable readinessProbe on Meta Data Store containers
 ## @param readinessProbe.exec.command Process to monitor for readiness
@@ -657,29 +641,19 @@ readinessProbe:
   enabled: true
   exec:
     command:
-    - timeout
-    - "30"
-    - "bin/pulsar-zookeeper-ruok.sh"
-  initialDelaySeconds: 20
-  periodSeconds: 30
+      - "/bin/bash"
+      - "-c"
+      - "[[(\"$(echo ruok | nc localhost 2181)\" == \"imok\")]] || exit 1"
+  initialDelaySeconds: 10
+  periodSeconds: 3
   timeoutSeconds: 30
   failureThreshold: 10
-  successThreshold: 1
+  successThreshold: 2
 
 ## @param startupProbe.enabled Enable startupProbe on Meta Data Store containers
-## @param startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
-## @param startupProbe.periodSeconds Period seconds for startupProbe
-## @param startupProbe.timeoutSeconds Timeout seconds for startupProbe
-## @param startupProbe.failureThreshold Failure threshold for startupProbe
-## @param startupProbe.successThreshold Success threshold for startupProbe
 ##
 startupProbe:
   enabled: false
-  initialDelaySeconds: 30
-  periodSeconds: 10
-  timeoutSeconds: 1
-  failureThreshold: 15
-  successThreshold: 1
 
 ## @param lifecycleHooks lifecycleHooks for the Meta Data Store container to automate configuration before or after startup
 ##
