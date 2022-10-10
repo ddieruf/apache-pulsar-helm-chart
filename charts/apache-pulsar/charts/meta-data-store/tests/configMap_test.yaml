@@ -68,7 +68,7 @@ tests:
         service:
           ports:
             client: 123
-            client-tls: 567
+            clientTls: 567
     asserts:
       - matchRegex:
           path: data.zookeeper\.conf
@@ -92,7 +92,7 @@ tests:
         service:
           ports:
             client: 123
-            client-tls: 567
+            clientTls: 567
     asserts:
       - matchRegex:
           path: data.global_zookeeper\.conf

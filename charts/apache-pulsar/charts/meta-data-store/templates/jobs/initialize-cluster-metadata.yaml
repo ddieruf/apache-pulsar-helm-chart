@@ -30,7 +30,7 @@ spec:
               value: "1"
           args:
             - "job"
-            - "statefulset-running"
+            - "meta-data-store-statefulset-running"
       containers:
         - name: "initialize-cluster-metadata"
           image: {{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}

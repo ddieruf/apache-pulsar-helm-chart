@@ -270,7 +270,7 @@ config:
   enableLocalTransport:
   ## @param config.ensemblePlacementPolicy The ensemble placement policy used for re-replicating entries. Options: org.apache.bookkeeper.client.RackawareEnsemblePlacementPolicy or org.apache.bookkeeper.client.RegionAwareEnsemblePlacementPolicy
   ##
-  ensemblePlacementPolicy:
+  ensemblePlacementPolicy: org.apache.bookkeeper.client.RackawareEnsemblePlacementPolicy
   ## @param config.entryLogFilePreallocationEnabled Enable or disable entry logger preallocation
   ##
   entryLogFilePreallocationEnabled: TRUE
@@ -389,7 +389,7 @@ config:
   ## @param config.maxPendingReadRequestsPerThread If read workers threads are enabled, limit the number of pending requests, to avoid the executor queue to grow indefinitely.
   ##
   maxPendingReadRequestsPerThread: 2500
-  ## @sksip config.metadataServiceUri
+  ## @skip config.metadataServiceUri
   ## metadata service uri that bookkeeper is used for loading corresponding metadata driver and resolving its metadata service location. Example: metadataServiceUri=metadata-store:zk:my-zk-1:2181
   ##
   metadataServiceUri:
@@ -447,7 +447,7 @@ config:
   ## @param config.readWorkerThreadsThrottlingEnabled IUse auto-throttling of the read-worker threads. This is done to ensure the bookie is not using unlimited amount of memory to respond to read-requests.
   ##
   readWorkerThreadsThrottlingEnabled: true
-  ## @param config.reppDnsResolverClass TPulsar's metadata store based rack awareness solution
+  ## @param config.reppDnsResolverClass Pulsar's metadata store based rack awareness solution
   ##
   reppDnsResolverClass: "org.apache.pulsar.zookeeper.ZkBookieRackAffinityMapping"
   ## @param config.rereplicationEntryBatchSize The number of max entries to keep in fragment for re-replication
@@ -743,7 +743,7 @@ containerSecurityContext:
 
 ## @param containerCommand Override the container image ENTRYPOINT. Leave blank to use image default (if set)
 ##
-containerCommand: ["sh", "-c", "sleep 500s"] #/pulsar/bin/pulsar bookie
+containerCommand: ["sh", "-c", "/pulsar/bin/pulsar bookie"]
 
 ## @param containerArgs Override the container image CMD. Leave blank to use image default (if set)
 ##
@@ -779,15 +779,15 @@ initContainers: []
 
 containerPorts:
 
-  ## @param containerPorts:.ports.client [nullable] Component application controller unsecure service port
+  ## @param containerPorts.client [nullable] Component application controller unsecure service port
   ##
   client: 3181
 
-  ## @param containerPorts:.ports.clientTls [nullable] Component application controller unsecure service port
+  ## @param containerPorts.clientTls [nullable] Component application controller unsecure service port
   ##
   clientTls: 3182
 
-  ## @param containerPorts:.ports.stateStorage [nullable] Port for function worker interactions when state storage is enabled
+  ## @param containerPorts.stateStorage [nullable] Port for function worker interactions when state storage is enabled
   ##
   stateStorage: 4181
 
@@ -1021,8 +1021,6 @@ logPersistence:
 ## Configure extra options for Bookkeeper containers' liveness, readiness and startup probes
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
 ## @param livenessProbe.enabled Enable livenessProbe on Bookkeeper containers
-## @param livenessProbe.httpGet.path Endpoint to probe
-## @param livenessProbe.httpGet.port Endpoint port to probe
 ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
 ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
 ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
@@ -1030,10 +1028,7 @@ logPersistence:
 ## @param livenessProbe.successThreshold Success threshold for livenessProbe
 ##
 livenessProbe:
-  enabled: true
-  httpGet:
-    path: /api/v1/bookie/is_ready
-    port: 8000
+  enabled: false
   initialDelaySeconds: 10
   periodSeconds: 30
   timeoutSeconds: 5
@@ -1053,7 +1048,7 @@ readinessProbe:
   enabled: true
   httpGet:
     path: /api/v1/bookie/is_ready
-    port: 8000
+    port: 8080
   initialDelaySeconds: 10
   periodSeconds: 30
   timeoutSeconds: 5

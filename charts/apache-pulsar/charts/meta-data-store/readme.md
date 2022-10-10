@@ -100,16 +100,16 @@ Configure meta data store settings. Refer to the [project's documentation](https
 
 Configure the component's certificate
 
-| Name                                                            | Description                                                                                                                                           | Value       |
-| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| `certificateResources.tlsSecretName`                            |                                                                                                                                                       | `nil`       |
-| `certificateResources.jksPasswordSecretName`                    |                                                                                                                                                       | `nil`       |
-| `certificateResources.certificateRequest`                       | Refer to the [CertificateSpec](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec) for more info about these values. |             |
-| `certificateResources.certificateRequest.renewBefore`           | How long before the currently issued certificate’s expiry cert-manager should renew the certificate. Default is 2/3 of the duration.                  | `nil`       |
-| `certificateResources.certificateRequest.duration`              | The requested ‘duration’ (i.e. lifetime) of the Certificate. Default is 90 days                                                                       | `nil`       |
-| `certificateResources.certificateRequest.subject.organizations` | Organizations to be used on the Certificate                                                                                                           | `[]`        |
-| `certificateResources.certificateRequest.privateKey`            | Options to control private keys used for the Certificate                                                                                              | `undefined` |
-| `certificateResources.certificateRequest.issuerRef`             | IssuerRef is a reference to the issuer for this certificate                                                                                           | `undefined` |
+| Name                                                            | Description                                                                                                                                           | Value |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| `certificateResources.tlsSecretName`                            |                                                                                                                                                       | `nil` |
+| `certificateResources.jksPasswordSecretName`                    |                                                                                                                                                       | `nil` |
+| `certificateResources.certificateRequest`                       | Refer to the [CertificateSpec](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec) for more info about these values. |       |
+| `certificateResources.certificateRequest.renewBefore`           | How long before the currently issued certificate’s expiry cert-manager should renew the certificate. Default is 2/3 of the duration.                  | `nil` |
+| `certificateResources.certificateRequest.duration`              | The requested ‘duration’ (i.e. lifetime) of the Certificate. Default is 90 days                                                                       | `nil` |
+| `certificateResources.certificateRequest.subject.organizations` | Organizations to be used on the Certificate                                                                                                           | `[]`  |
+| `certificateResources.certificateRequest.privateKey`            | Options to control private keys used for the Certificate                                                                                              | `{}`  |
+| `certificateResources.certificateRequest.issuerRef`             | IssuerRef is a reference to the issuer for this certificate                                                                                           | `{}`  |
 
 
 ### Service parameters

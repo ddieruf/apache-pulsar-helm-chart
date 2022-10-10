@@ -16,6 +16,15 @@
   {{- $extraVols = append $extraVols (include "common.tls.volumes.jks-store" (dict "jksPasswordSecretName" $jksPassSecretName "tlsSecretName" $tlsSecretName "context" $) | fromJson) -}}
 {{- end -}}
 
+{{/*
+Todo: the readiness probe is assusming the admin server is enabled. For now it gets disabled if the server is disabled. It should change over to "/pulsar/bin/bookkeeper shell bookiesanity"
+*/}}
+{{- if .Values.config.httpServerEnabled -}}
+  {{- $_ := set .Values.readinessProbe.httpGet "port" .Values.config.httpServerPort -}}
+{{- else -}}
+  {{- $_ := set .Values.readinessProbe "enabled" false  -}}
+{{- end -}}
+
 apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
 kind: StatefulSet
 metadata:
@@ -82,7 +91,7 @@ spec:
       securityContext: {{ omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "data-store.serviceAccountName" . }}
-      initContainers:
+      initContainers: {{ include "common.lifeCycle.meta-data-store-running" . | nindent 8 }}
       {{- if .Values.initContainers }}
         {{ include "common.tplvalues.render" ( dict "value" .Values.initContainers "context" $ ) | nindent 8 }}
       {{- end }}

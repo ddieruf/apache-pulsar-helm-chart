@@ -1,15 +1,29 @@
 {{/* vim: set filetype=mustache: */}}
 
-{{/*
-Return a soft podAffinity/podAntiAffinity definition
-{{ include "common.affinities.pods.soft" (dict "component" "FOO" "name" "BAR" "extraMatchLabels" .Values.extraMatchLabels "context" $) -}}
-*/}}
-{{- define "common.lifeCycle.meta-data-store-ready" -}}
-- name: wait-for-all-meta-data-pods
-  image: {{ .Values.metaDataStore.image.repository }}:{{ .Values.metaDataStore.image.tag }}
-  imagePullPolicy: {{ .Values.metaDataStore.image.pullPolicy }}
-  command: ["/bin/bash"]
+{{- define "common.lifeCycle.meta-data-store-running" -}}
+- name: meta-data-store-running
+  image: groundnuty/k8s-wait-for:latest
+  imagePullPolicy: IfNotPresent
+  env:
+    - name: WAIT_TIME
+      value: "20"
+    - name: DEBUG
+      value: "1"
   args:
-    - "-c"
-    - "until [[(\"$(echo ruok | nc meta-data-store-statefulset-0.meta-data-store-headless.pulsar.svc.cluster.local 2181)\" == \"imok\")]]; do sleep 3; done;"
+    - "job"
+    - "meta-data-store-running"
+{{- end -}}
+
+{{- define "common.lifeCycle.data-store-running" -}}
+- name: data-store-running
+  image: groundnuty/k8s-wait-for:latest
+  imagePullPolicy: IfNotPresent
+  env:
+    - name: WAIT_TIME
+      value: "20"
+    - name: DEBUG
+      value: "1"
+  args:
+    - "job"
+    - "data-store-running"
 {{- end -}}
