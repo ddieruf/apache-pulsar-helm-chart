@@ -14,7 +14,7 @@ global:
 
   ## @param global.storageClass [string,nullable] The storage class used by all sub charts when using persistence.
   ##
-  storageClass: "default"
+  storageClass:
 
   ## @param global.kubeVersion [string,nullable] Override Kubernetes version
   ##

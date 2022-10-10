@@ -145,6 +145,10 @@ spec:
             - name: leader-election
               containerPort: {{ .Values.containerPorts.leaderElection }}
             {{- end }}
+            {{- if eq (index .Values "config" "admin.enableServer") true }}
+            - name: admin
+              containerPort: {{ index .Values "config" "admin.serverPort" }}
+            {{- end }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe: {{ include "common.tplvalues.render" (dict "value" (omit .Values.livenessProbe "enabled") "context" $) | nindent 12 }}
           {{- end }}

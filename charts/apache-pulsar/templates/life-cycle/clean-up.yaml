@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "post-install-cleanup"
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      name: "{{ .Release.Name }}"
+      labels:
+        app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+        helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    spec:
+      restartPolicy: Never
+      initContainers:
+        - name: wait-for-meta-data-initialize
+          image: groundnuty/k8s-wait-for:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: WAIT_TIME
+              value: "5"
+            - name: DEBUG
+              value: "1"
+          args:
+            - "job"
+            - "-lapp.kubernetes.io/component=life-cycle"
+      containers:
+        - name: post-install-job
+          image: "bitnami/kubectl:latest"
+          command: ["/bin/sh","-c", "kubectl -n \"{{.Release.Namespace}}\" delete job -l \"app.kubernetes.io/component=life-cycle\""]
