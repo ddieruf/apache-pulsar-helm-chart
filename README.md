@@ -1,6 +1,6 @@
 # Apache Pulsar Kubernetes Helm Charts
 
-This functionality is in alpha and absolutely will change.
+This helm repo is a collection of charts that aid in the deployment of an Apache Pulsar cluster. It's very early days for this effort and everything is in alpha and absolutely will change.
 
 ## Usage
 
@@ -14,3 +14,9 @@ helm repo add ddieruf https://ddieruf.github.io/helm-charts
 ```
 
 You can then run `helm search repo ddieruf` to see the charts.
+
+## Learning more
+
+Visit the read me for each chart to learn more:
+
+- [apache-pulsar](./charts/apache-pulsar/README.md)
