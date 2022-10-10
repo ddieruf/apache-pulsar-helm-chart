@@ -11,6 +11,14 @@ tests:
       global:
         interComponentTls:
           enabled: true
+      metaDataStore:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: some-issuer
+              kind: ClusterIssuer
     asserts:
       - containsDocument:
           kind: Certificate
@@ -26,6 +34,10 @@ tests:
         certificateResources:
           tlsSecretName: null
           jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: some-issuer
+              kind: ClusterIssuer
     asserts:
       - containsDocument:
           kind: Secret
@@ -41,6 +53,14 @@ tests:
           ccc: ddd
         interComponentTls:
           enabled: true
+      metaDataStore:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: some-issuer
+              kind: ClusterIssuer
     asserts:
       - equal:
           path: metadata
@@ -72,6 +92,10 @@ tests:
         certificateResources:
           tlsSecretName: null
           jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: some-issuer
+              kind: ClusterIssuer
       asserts:
         - equal:
             path: metadata

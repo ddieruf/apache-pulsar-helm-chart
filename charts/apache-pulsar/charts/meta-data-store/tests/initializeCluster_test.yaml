@@ -1,0 +1,83 @@
+suite: Test meta-data-store initialize cluster
+release:
+  name: zz
+  namespace: xx
+  IsInstall: true
+templates:
+  - charts/metaDataStore/templates/jobs/initialize-cluster-metadata.yaml
+tests:
+  - it: should be correct document
+    asserts:
+      - containsDocument:
+          kind: Job
+          apiVersion: batch/v1
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          ccc: ddd
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              ccc: ddd
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: meta-data-store
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: meta-data-store
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: metaDataStore-0.1.0
+            name: meta-data-store-initialize-cluster-meta-data
+            namespace: xx
+
+  - it: should wait for pods to start
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].args
+          content: statefulset-running
+
+  - it: should build initialize arguments
+    set:
+      global:
+        metaDataStore:
+          replicas: 1
+          nonPersistentReplicas: 1
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "initialize-cluster-metadata"
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: --cluster "zz"
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: --metadata-store "zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.cluster.local:2181"
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: --configuration-metadata-store "zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.cluster.local:2181"
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: --web-service-url "http://broker.web-cluster-addresses"
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: --broker-service-url "pulsar://broker.binary-cluster-addresses"
+
+#  - it: should build initialize arguments with tls
+#    set:
+#      global:
+#        metaDataStore:
+#          replicas: 1
+#          nonPersistentReplicas: 1
+#    asserts:
+#      - contains:
+#          path: spec.template.spec.containers[0].args
+#          content: --web-service-url-tls "http://broker.web-cluster-addresses"
+#      - contains:
+#          path: spec.template.spec.containers[0].args
+#          content: --broker-service-url-tls "pulsar://broker.binary-cluster-addresses"

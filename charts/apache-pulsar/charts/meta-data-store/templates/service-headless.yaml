@@ -1,12 +1,6 @@
 {{- $component := "meta-data-store" -}}
 {{- $name := (printf "%s-headless" (include "meta-data-store.name" .)) -}}
-{{/* Todo: Ideally only the secure port is used but 2181 is hard coded in the liveness probe script
-{{- if (eq (include "common.tls.require-secure-inter" $) "true") -}}
-{{- $_ := unset .Values.service.ports "client" -}}
-{{- else -}}
-{{- $_ := unset .Values.service.ports "clientTls" -}}
-{{- end -}}
-*/}}
+
 apiVersion: v1
 kind: Service
 metadata:

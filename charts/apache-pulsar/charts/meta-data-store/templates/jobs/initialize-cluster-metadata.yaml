@@ -1,0 +1,51 @@
+{{- $component := "meta-data-store" -}}
+{{- $name := (printf "%s-initialize-cluster-meta-data" (include "meta-data-store.name" $)) -}}
+
+{{- $webServiceUrls := (printf "http://%s" (join "," "broker.web-cluster-addresses")) -}}
+{{- $binaryServiceUrls := (printf "pulsar://%s" (join "," "broker.binary-cluster-addresses")) -}}
+{{- $metaDataStoreUrls := (printf "zk:%s" (join "," ((include "meta-data-store.client-cluster-addresses" $) | fromJsonArray)))}}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "meta-data-store.name" $) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        - name: statefulset-running
+          image: groundnuty/k8s-wait-for:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: WAIT_TIME
+              value: "20"
+            - name: DEBUG
+              value: "1"
+          args:
+            - "job"
+            - "statefulset-running"
+      containers:
+        - name: "initialize-cluster-metadata"
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - >
+              /pulsar/bin/pulsar initialize-cluster-metadata \
+                --cluster "{{ include "cluster.name" $ }}" \
+                --metadata-store "{{ $metaDataStoreUrls }}" \
+                --configuration-metadata-store "{{ $metaDataStoreUrls }}" \
+                {{- if eq (include "common.tls.require-secure-edge" $) "true" }}
+                --web-service-url-tls "{{ $webServiceUrls }}" \
+                --broker-service-url-tls "{{ $binaryServiceUrls }}"
+                {{- else }}
+                --web-service-url "{{ $webServiceUrls }}" \
+                --broker-service-url "{{ $binaryServiceUrls }}"
+                {{- end }}

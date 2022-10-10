@@ -247,15 +247,11 @@ certificateResources:
 
     ## @param certificateResources.certificateRequest.privateKey [object,nullable] Options to control private keys used for the Certificate
     ##
-    privateKey: #{}
-      algorithm: RSA
-      size: 2048
+    privateKey: {}
 
     ## @param certificateResources.certificateRequest.issuerRef [object,nullable] IssuerRef is a reference to the issuer for this certificate
     ##
-    issuerRef: #{}
-      name: dieruf.local-issuer
-      kind: ClusterIssuer
+    issuerRef: {}
 
 ## @section Service parameters
 ## @descriptionStart

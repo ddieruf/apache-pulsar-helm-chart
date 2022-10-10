@@ -109,7 +109,7 @@ but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else 
 {{- end -}}
 
 {{/*
- Create the name of the service account to use in the format: {pod-hostname}.{headless-service-name}.{namespace}.svc.{cluster-domain}:{server-port}:{leader-election-port}
+ Create the name of the headless service account to use in the format: {pod-hostname}.{headless-service-name}.{namespace}.svc.{cluster-domain}:{server-port}:{leader-election-port}
 For more information about headless services with statefulsets and K8s DNS - https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
 
  usage: {{ include "meta-data-store.headless-instance-address" (dict "instanceIndex" 0 "instanceNamePrefix" "meta-data-store-statefulset" "context" $) }}
@@ -124,6 +124,24 @@ For more information about headless services with statefulsets and K8s DNS - htt
                                   .context.Values.global.clusterDomain
                                   (.context.Values.global.metaDataStore.service.ports.server | int)
                                   (.context.Values.global.metaDataStore.service.ports.leaderElection | int) -}}
+{{- end -}}
+
+{{/*
+ Create the name of the headless service account to use in the format: {pod-hostname}.{headless-service-name}.{namespace}.svc.{cluster-domain}:{client-port}
+For more information about headless services with statefulsets and K8s DNS - https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
+
+ usage: {{ include "meta-data-store.client-instance-address" (dict "instanceIndex" 0 "instanceNamePrefix" "meta-data-store-statefulset" "context" $) }}
+ */}}
+{{- define "meta-data-store.client-instance-address" -}}
+  {{- $instanceIndex := .instanceIndex -}}
+  {{- $instanceNamePrefix := .instanceNamePrefix -}}
+  {{- printf "%s-%d.%s.%s.svc.%s:%d" $instanceNamePrefix
+                                  $instanceIndex
+                                  (printf "%s-headless" (include "meta-data-store.name" .context))
+                                  (include "common.names.namespace" .context)
+                                  .context.Values.global.clusterDomain
+                                  (((eq (include "common.tls.require-secure-inter" .context) "true") | ternary .context.Values.global.metaDataStore.service.ports.clientTls .context.Values.global.metaDataStore.service.ports.client ) | int)
+                                   -}}
 {{- end -}}
 
 {{/*
@@ -158,5 +176,38 @@ For more information about headless services with statefulsets and K8s DNS - htt
   {{- end -}}
 
   {{- $addresses | toJson -}}
+{{- end -}}
+
+{{/*
+ Get a list of all meta data server addresses for client communications
+
+ usage: {{ include "meta-data-store.client-cluster-addresses" $ }}
+ returns:
+  [
+    {pod-hostname}-0.{headless-service-name}.{namespace}.svc.{cluster-domain}:{client-port},
+    {pod-hostname}-1.{headless-service-name}.{namespace}.svc.{cluster-domain}:{client-port},
+    {pod-hostname}-2.{headless-service-name}.{namespace}.svc.{cluster-domain}:{client-port}
+    ...
+  ]
+ */}}
+{{- define "meta-data-store.client-cluster-addresses" -}}
+  {{- $addresses := list -}}
+  {{- $replicas := (default 0 (.Values.global.metaDataStore.replicas | int)) -}}
+  {{- $nonPersistentReplicas := (default 0 (.Values.global.metaDataStore.nonPersistentReplicas | int)) -}}
+  {{- $totalServers := add $replicas $nonPersistentReplicas -}}
+
+  {{- range $i := until $replicas -}}
+    {{- $address := (include "meta-data-store.client-instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset" (include "meta-data-store.name" $)) "context" $)) }}
+    {{- $addresses = append $addresses $address }}
+  {{- end -}}
+
+  {{- $i := 0 }}
+  {{- range $r := untilStep $replicas ($totalServers | int) 1 -}}
+    {{- $address := (include "meta-data-store.client-instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset-non-persistent" (include "meta-data-store.name" $)) "context" $)) -}}
+    {{- $addresses = append $addresses $address }}
+    {{- $i = (add $i 1) -}}
+  {{- end -}}
+
+  {{- ($addresses | toJson) -}}
 {{- end -}}
 

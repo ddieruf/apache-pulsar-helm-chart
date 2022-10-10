@@ -1,0 +1,38 @@
+{{- $roleName := "cluster-lifecycle-watch-role" -}}
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $roleName | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" "pulsar-cluster" "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: "pulsar-cluster"
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+rules:
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["pods","services"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cluster-lifecycle-watch-role-binding
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" "pulsar-cluster" "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: "pulsar-cluster"
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+subjects:
+  - kind: Group
+    name: {{ printf "system:serviceaccounts:%s" (include "common.names.namespace" .) }}
+    namespace: {{ (include "common.names.namespace" .) | quote }}
+roleRef:
+  kind: Role
+  name: {{ $roleName | quote }}
+  apiGroup: rbac.authorization.k8s.io
