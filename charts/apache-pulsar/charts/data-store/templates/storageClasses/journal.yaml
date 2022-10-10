@@ -1,0 +1,37 @@
+{{- if and (eq .Values.persistence.enabled true)
+            (not .Values.persistence.journal.existingClaim)
+            (eq (.Values.persistence.journal.storageClass | typeOf) "map[string]interface {}") }}
+
+{{- $component := "data-store" -}}
+{{- $name := (printf "%s-journal" (include "data-store.name" $)) -}}
+
+## ================= TEMPLATE =================
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "data-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+{{- if .Values.persistence.journal.storageClass.reclaimPolicy }}
+reclaimPolicy: {{ .Values.persistence.journal.storageClass.reclaimPolicy }}
+{{- end }}
+{{- if .Values.persistence.journal.storageClass.provisioner }}
+provisioner: {{ .Values.persistence.journal.storageClass.provisioner }}
+{{- end }}
+parameters:
+  {{- if .Values.persistence.journal.storageClass.type }}
+  type: {{ .Values.persistence.journal.storageClass.type }}
+  {{- end }}
+  {{- if .Values.persistence.journal.storageClass.fsType }}
+  fsType: {{ .Values.persistence.journal.storageClass.fsType }}
+  {{- end }}
+  {{- if .Values.persistence.journal.storageClass.extraParams }}
+{{ toYaml .Values.persistence.journal.storageClass.extraParams | indent 2 }}
+  {{- end }}
+{{- end }}

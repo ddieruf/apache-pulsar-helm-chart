@@ -26,7 +26,7 @@ This will be where everything gets explained. It's too early to do it.
 | Generate parameters readme       | Observability (metrics) |
 | Inter-component TLS (encryption) | Authentications         |
 | Component certificates           | Authorizations          |
-|                                  | Lifecycle Jobs          |
+| Cluster Lifecycle                |                         |
 
 ## Parameters
 
@@ -45,5 +45,5 @@ These are global values that all sub charts will inherit
 | `global.commonLabels`              | Labels to add to all deployed objects                                                                    | `undefined`     |
 | `global.commonAnnotations`         | Annotations to add to all deployed objects                                                               | `{}`            |
 | `global.secureClusterEdge`         | Only allow secure ports to be opened at the edge of the Pulsar cluster (also force TLS in all ingresses) | `false`         |
-| `global.interComponentTls.enabled` | Only allow communication over secure ports between all cluster components                                | `false`         |
+| `global.interComponentTls.enabled` | Only allow communication over secure ports between all cluster components                                | `true`          |
 

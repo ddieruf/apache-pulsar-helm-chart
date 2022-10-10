@@ -23,3 +23,12 @@ dependencies:
         parent: global.metaDataStore.globalConfig
       - child: service
         parent: global.metaDataStore.service
+
+  - name: data-store
+    version: "0.1.0"
+    alias: dataStore
+    import-values:
+      - child: globalData
+        parent: global.dataStore
+      - child: config
+        parent: global.dataStore.config

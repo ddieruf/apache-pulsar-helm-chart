@@ -1,0 +1,55 @@
+{{- if and (eq (include "common.tls.require-secure-inter" $) "true") (not .Values.certificateResources.tlsSecretName)}}
+
+{{- if not .Values.certificateResources.certificateRequest.issuerRef }}
+  {{ fail "A value for .certificateResources.certificateRequest.issuerRef is required to create the certificate request" }}
+{{- end }}
+
+{{- $component := "data-store" -}}
+{{- $certificateName := (printf "%s-certificate" (include "data-store.name" $)) -}}
+{{- $secretName := (printf "%s-jks" (include "data-store.name" $)) -}}
+
+{{- $commonName := (include "data-store.fullname" .) -}}
+{{- $dnsNames := list (printf "*.%s.%s.svc.%s" (printf "%s-headless" (include "data-store.name" .)) .Release.Namespace .Values.global.clusterDomain) "127.0.0.1" "localhost" -}}
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $certificateName | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "data-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+spec:
+  commonName: {{ $commonName | quote }}
+  dnsNames: {{- include "common.tplvalues.render" ( dict "value" $dnsNames "context" $ ) | nindent 4 }}
+  secretName: {{ printf "%s-tls" (include "data-store.name" .) | quote }}
+  secretTemplate:
+    annotations:
+      {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 6 }}
+    labels:
+      {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 6 }}
+  keystores:
+    jks:
+      create: true
+      passwordSecretRef:
+        key: jks-password
+        name: {{ default $secretName .Values.certificateResources.jksPasswordSecretName | quote }}
+  {{- if .Values.certificateResources.certificateRequest.renewBefore }}
+  renewBefore: {{ int .Values.certificateResources.certificateRequest.renewBefore }}
+  {{- end }}
+  {{- if .Values.certificateResources.certificateRequest.duration }}
+  duration: {{ int .Values.certificateResources.certificateRequest.duration }}
+  {{- end }}
+  {{- if .Values.certificateResources.certificateRequest.subject.organizations }}
+  subject:
+    organizations: {{ include "common.tplvalues.render" ( dict "value" .Values.certificateResources.certificateRequest.subject.organizations "context" $ ) }}
+  {{- end }}
+  {{- if .Values.certificateResources.certificateRequest.privateKey }}
+  privateKey:
+    {{- include "common.tplvalues.render" ( dict "value" .Values.certificateResources.certificateRequest.privateKey "context" $ ) | nindent 4 }}
+  {{- end }}
+  issuerRef:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.certificateResources.certificateRequest.issuerRef "context" $ ) | nindent 4 }}
+{{- end }}

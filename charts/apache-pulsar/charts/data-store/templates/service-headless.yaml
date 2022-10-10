@@ -1,0 +1,40 @@
+{{- $component := "data-store" -}}
+{{- $name := (printf "%s-headless" (include "data-store.name" .)) -}}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "data-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- if .Values.service.annotations }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.service.annotations "context" $ ) | nindent 4 }}
+    {{- end }}
+spec:
+  clusterIP: "None"
+  publishNotReadyAddresses: true
+  ports:
+    {{- if and (eq (include "common.tls.require-secure-inter" $) "false") .Values.service.ports.client }}
+    - name: client
+      port: {{ .Values.service.ports.client }}
+      targetPort: client
+      protocol: TCP
+    {{- end }}
+    {{- if and (eq (include "common.tls.require-secure-inter" $) "true") .Values.service.ports.clientTls }}
+    - name: client-tls
+      port: {{ .Values.service.ports.clientTls }}
+      targetPort: client-tls
+      protocol: TCP
+    {{- end }}
+    {{- if and (eq (include "data-store.stateStoreEnabled" $) "true") .Values.service.ports.stateStorage }}
+    - name: state-storage
+      port: {{ .Values.service.ports.stateStorage }}
+      targetPort: state-storage
+      protocol: TCP
+    {{- end }}
+  selector: {{ include "common.labels.matchLabels" (dict "name" (include "data-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}

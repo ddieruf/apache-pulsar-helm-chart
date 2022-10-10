@@ -112,7 +112,7 @@ but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else 
  Create the name of the headless service account to use in the format: {pod-hostname}.{headless-service-name}.{namespace}.svc.{cluster-domain}:{server-port}:{leader-election-port}
 For more information about headless services with statefulsets and K8s DNS - https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
 
- usage: {{ include "meta-data-store.headless-instance-address" (dict "instanceIndex" 0 "instanceNamePrefix" "meta-data-store-statefulset" "context" $) }}
+ usage: {{ include "meta-data-store.quorum-instance-address" (dict "instanceIndex" 0 "instanceNamePrefix" "meta-data-store-statefulset" "context" $) }}
  */}}
 {{- define "meta-data-store.quorum-instance-address" -}}
   {{- $instanceIndex := .instanceIndex -}}

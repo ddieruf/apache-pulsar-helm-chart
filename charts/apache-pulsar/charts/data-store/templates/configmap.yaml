@@ -1,0 +1,86 @@
+{{- $configValues := omit .Values.global.dataStore.config "extraConfigValues" -}}
+
+{{- $_ := set $configValues "bookiePort" (coalesce .Values.config.bookiePort ((eq (include "common.tls.require-secure-inter" .) "true") | ternary .Values.service.ports.clientTls .Values.service.ports.client)) -}}
+{{- $_ := set $configValues "zkServers" (coalesce .Values.config.zkServers (include "data-store.config.zkServers" $)) -}}
+{{- $_ := set $configValues "metadataServiceUri" (coalesce .Values.config.metadataServiceUri (printf "metadata-store:zk:%s" (include "data-store.config.zkServers" $))) -}}
+
+{{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
+  {{- $_ := set $configValues "tlsProvider" (coalesce .Values.config.tlsProvider "JDK") -}}
+  {{- $_ := set $configValues "tlsProviderFactoryClass" (coalesce .Values.config.tlsProviderFactoryClass "org.apache.bookkeeper.tls.TLSContextFactor") -}}
+  {{- $_ := set $configValues "tlsKeyStoreType" (coalesce .Values.config.tlsKeyStoreType "JKS") -}}
+  {{- $_ := set $configValues "tlsKeyStore" (coalesce .Values.config.tlsKeyStore "/pulsar/jks/keystore.jks") -}}
+  {{- $_ := set $configValues "tlsKeyStorePasswordPath" (coalesce .Values.config.tlsKeyStorePasswordPath "/pulsar/jks/jks-password") -}}
+  {{- $_ := set $configValues "tlsTrustStoreType" (coalesce .Values.config.tlsTrustStoreType "JKS") -}}
+  {{- $_ := set $configValues "tlsTrustStore" (coalesce .Values.config.tlsTrustStore "/pulsar/jks/truststore.jks") -}}
+  {{- $_ := set $configValues "tlsTrustStorePasswordPath" (coalesce .Values.config.tlsTrustStorePasswordPath "/pulsar/jks/jks-password") -}}
+  {{- $_ := set $configValues "tlsHostnameVerificationEnabled" (coalesce .Values.config.tlsHostnameVerificationEnabled "true") -}}
+
+  {{/* Mutual TLS */}}
+  {{- $_ := set $configValues "tlsClientAuthentication" (coalesce .Values.config.tlsClientAuthentication "true") -}}
+  {{- $_ := set $configValues "bookkeeperTLSClientAuthentication" (coalesce .Values.config.bookkeeperTLSClientAuthentication "true") -}}
+  {{- $_ := set $configValues "bookkeeperTLSTrustCertsFilePath" (coalesce .Values.config.bookkeeperTLSTrustCertsFilePath "/pulsar/certs/ca.crt") -}}
+{{- end -}}
+
+{{- if eq true false -}}
+  {{- $_ := set $configValues "bookieAuthProviderFactoryClass" (coalesce .Values.config.bookieAuthProviderFactoryClass "xxxx") -}}
+{{- end -}}
+
+{{- if eq (include "data-store.stateStoreEnabled" $) "true" -}}
+  {{- $extraServerComponents := default "" .Values.config.extraConfigValues -}}
+  {{- $_ := set $configValues "extraServerComponents" (printf "%s,%s" $extraServerComponents "org.apache.bookkeeper.stream.server.StreamStorageLifecycleComponent") -}}
+{{- end -}}
+
+{{- $extraOpts := default list .Values.pulsarEnv.extraOpts -}}
+
+{{- $extraOpts = append $extraOpts (printf "-Dpulsar.log.root.level=%s" (default "error" .Values.pulsarEnv.loggingLevels.root)) -}}
+
+{{- if eq (include "common.tls.require-secure-inter" $) "true" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStorePassword=/pulsar/jks/jks-password" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStorePassword=/pulsar/jks/jks-password" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStore=/pulsar/jks/keystore.jks" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStore=/pulsar/jks/truststore.jks" -}}
+  {{- $extraOpts = append $extraOpts "-Djavax.net.debug=all" -}}
+{{- end -}}
+
+{{- $component := "data-store" -}}
+{{- $name := (printf "%s-configuration" (include "data-store.name" $)) -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "data-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+data:
+  bookkeeper.conf: |
+    {{ include "common.formatting.toToml" (dict "configValues" $configValues "context" $) | nindent 4 }}
+    {{ if .Values.config.extraConfigValues }}
+    {{- include "common.formatting.toToml" (dict "configValues" .Values.config.extraConfigValues "context" $) | nindent 4 -}}
+    {{ end }}
+  pulsar_env.sh: |
+    {{- if .Values.pulsarEnv.extraClasspath }}
+    PULSAR_EXTRA_CLASSPATH={{ join ";" .Values.pulsarEnv.extraClasspath | quote }}
+    {{- end }}
+    PULSAR_EXTRA_OPTS={{ join " " $extraOpts | quote }}
+    {{- if .Values.pulsarEnv.gc }}
+    PULSAR_GC={{ join " " .Values.pulsarEnv.gc | quote }}
+    {{- end }}
+    {{- if .Values.pulsarEnv.mem }}
+    PULSAR_MEM={{ join " " .Values.pulsarEnv.mem | quote }}
+    {{- end }}
+    PULSAR_LOG_DIR={{ .Values.logPersistence.mountPath }}
+    PULSAR_BOOKKEEPER_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "bookkeeper.conf" }}
+    PULSAR_STOP_TIMEOUT={{.Values.pulsarEnv.stopTimeout}}
+    # Garbage collection log.
+    IS_JAVA_8=`java -version 2>&1 |grep version|grep '"1\.8'`
+    # java version has space, use [[ -n $PARAM ]] to judge if variable exists
+    if [[ -n $IS_JAVA_8 ]]; then
+      PULSAR_GC_LOG=${PULSAR_GC_LOG:-"-Xloggc:logs/pulsar_gc_%p.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=20M"}
+    else
+    # After jdk 9, gc log param should config like this. Ignoring version less than jdk 8
+      PULSAR_GC_LOG=${PULSAR_GC_LOG:-"-Xlog:gc*:logs/pulsar_gc_%p.log:time,uptime:filecount=10,filesize=20M"}
+    fi

@@ -1,0 +1,40 @@
+{{- if and (eq (include "data-store.stateStoreEnabled" $) "true")
+            (eq .Values.persistence.enabled true)
+            (not .Values.persistence.ranges.existingClaim)
+            (eq (.Values.persistence.ranges.storageClass | typeOf) "map[string]interface {}") }}
+
+{{- $component := "data-store" -}}
+{{- $name := (printf "%s-ranges" (include "data-store.name" $)) -}}
+
+## ================= TEMPLATE =================
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "data-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+{{- if not (eq (.Values.persistence.ranges.storageClass | typeOf) "string") }}
+{{- if .Values.persistence.ranges.storageClass.reclaimPolicy }}
+reclaimPolicy: {{ .Values.persistence.ranges.storageClass.reclaimPolicy }}
+{{- end }}
+{{- if .Values.persistence.ranges.storageClass.provisioner }}
+provisioner: {{ .Values.persistence.ranges.storageClass.provisioner }}
+{{- end }}
+parameters:
+  {{- if .Values.persistence.ranges.storageClass.type }}
+  type: {{ .Values.persistence.ranges.storageClass.type | quote }}
+  {{- end }}
+  {{- if .Values.persistence.ranges.storageClass.fsType }}
+  fsType: {{ .Values.persistence.ranges.storageClass.fsType | quote }}
+  {{- end }}
+  {{- if .Values.persistence.ranges.storageClass.extraParams }}
+{{ toYaml .Values.persistence.ranges.storageClass.extraParams | indent 2 }}
+  {{- end }}
+{{- end }}
+{{- end }}

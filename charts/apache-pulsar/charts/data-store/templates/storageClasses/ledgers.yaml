@@ -1,0 +1,37 @@
+{{- if and (eq .Values.persistence.enabled true)
+            (not .Values.persistence.ledgers.existingClaim)
+            (eq (.Values.persistence.ledgers.storageClass | typeOf) "map[string]interface {}") }}
+
+{{- $component := "data-store" -}}
+{{- $name := (printf "%s-ledgers" (include "data-store.name" $)) -}}
+
+## ================= TEMPLATE =================
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "data-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+{{- if .Values.persistence.ledgers.storageClass.reclaimPolicy }}
+reclaimPolicy: {{ .Values.persistence.ledgers.storageClass.reclaimPolicy }}
+{{- end }}
+{{- if .Values.persistence.ledgers.storageClass.provisioner }}
+provisioner: {{ .Values.persistence.ledgers.storageClass.provisioner }}
+{{- end }}
+parameters:
+  {{- if .Values.persistence.ledgers.storageClass.type }}
+  type: {{ .Values.persistence.ledgers.storageClass.type }}
+  {{- end }}
+  {{- if .Values.persistence.ledgers.storageClass.fsType }}
+  fsType: {{ .Values.persistence.ledgers.storageClass.fsType }}
+  {{- end }}
+  {{- if .Values.persistence.ledgers.storageClass.extraParams }}
+{{ toYaml .Values.persistence.ledgers.storageClass.extraParams | indent 2 }}
+  {{- end }}
+{{- end }}

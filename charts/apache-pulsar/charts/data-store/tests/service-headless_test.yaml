@@ -1,0 +1,72 @@
+suite: Test data-store service
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/dataStore/templates/service-headless.yaml
+tests:
+  - it: should be correct document
+    asserts:
+      - containsDocument:
+          kind: Service
+          apiVersion: v1
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          ccc: ddd
+      dataStore:
+        service:
+          annotations:
+            somethingelse: somewherelese
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              ccc: ddd
+              somethingelse: somewherelese
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: data-store
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: data-store
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: dataStore-0.1.0
+            name: data-store-headless
+            namespace: xx
+
+  - it: should select the correct pod
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/component: data-store
+            app.kubernetes.io/instance: zz
+            app.kubernetes.io/name: data-store
+
+  - it: should have default ports
+    set:
+      dataStore:
+        service:
+          ports:
+            client: 123
+    asserts:
+      - contains:
+          path: spec.ports
+          content:
+            name: client
+            port: 123
+            targetPort: client
+            protocol: TCP
+      - notContains:
+          path: spec.ports
+          content:
+            name: stateStorage
+            port: 4181
+            protocol: TCP
+            targetPort: stateStorage
