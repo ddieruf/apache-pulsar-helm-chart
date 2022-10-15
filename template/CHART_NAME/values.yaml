@@ -21,7 +21,7 @@ image:
 
   ## @param image.repository [string,nullable] Component image repository
   ##
-  repository: "datastax/%%IMAGE_NAME%%"
+  repository: "%%IMAGE_NAME%%"
 
   ## @param image.tag [string,nullable] Component image tag (immutable tags are recommended)
   ##
