@@ -7,7 +7,7 @@ NOTE: this does not indicate the meta-data-store is completely running, onlt tha
 example: {{ include "common.lifeCycle.meta-data-store-statefulset-running" $ }}
 */}}
 {{- define "common.lifeCycle.meta-data-store-statefulset-running" -}}
-- name: meta-data-store-running
+- name: meta-data-store-statefulset-running
   image: groundnuty/k8s-wait-for:latest
   imagePullPolicy: IfNotPresent
 {{/*  env:*/}}
