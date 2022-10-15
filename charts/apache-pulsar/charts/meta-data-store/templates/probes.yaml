@@ -1,0 +1,45 @@
+{{- $clusterAddresses := (include "meta-data-store.quorum-cluster-addresses" $ | fromJson) -}}
+
+{{- $component := "meta-data-store" -}}
+{{- $name := (printf "%s-probes" (include "meta-data-store.name" $)) -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "meta-data-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+data:
+  liveness.sh: |
+    #!/bin/bash
+    [[("$(echo ruok | nc localhost {{ .Values.service.ports.client }})" != "imok")]] && exit 1;
+    exit 0;
+  readiness.sh: |
+    #!/bin/bash
+    serverState="$(echo mntr | nc localhost {{ .Values.service.ports.client }} 2>/dev/null| grep zk_server_state)";
+    peerState="$(echo mntr | nc localhost {{ .Values.service.ports.client }} 2>/dev/null| grep zk_peer_state)";
+
+    if [[ "${serverState}" == *"leader"* ]]; then
+      syncedFollowers="$(echo mntr | nc localhost {{ .Values.service.ports.client }} 2>/dev/null | grep zk_synced_followers | tr -cd '[[:digit:]]')";
+      learners="$(echo mntr | nc localhost {{ .Values.service.ports.client }} 2>/dev/null| grep zk_learners | tr -cd '[[:digit:]]')";
+      aliveConnections="$(echo mntr | nc localhost {{ .Values.service.ports.client }} 2>/dev/null| grep zk_num_alive_connections | tr -cd '[[:digit:]]')";
+
+      [[ ("${peerState}" != *"leading - broadcast")]] && exit 1;
+      [[("{{ printf "%d0" (sub (len $clusterAddresses) 1) }}" != "${learners}")]] && exit 1;
+      [[("${syncedFollowers}" != "${learners}")]] && exit 1;
+      [[("${syncedFollowers}" != "${aliveConnections}")]] && exit 1;
+    fi
+
+    if [[ "${serverState}" == *"follower"* ]]; then
+      [[ ("${peerState}" != *"following - broadcast")]] && exit 1;
+    fi
+
+    exit 0;
+  startup.sh: |
+    #!/bin/bash
+    [[("$(echo mntr | nc localhost {{ .Values.service.ports.client }} 2>/dev/null | grep "not currently serving")" != "")]] && exit 1;
+    exit 0;

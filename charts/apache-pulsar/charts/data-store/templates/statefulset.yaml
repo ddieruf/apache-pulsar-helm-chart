@@ -6,23 +6,14 @@
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
   {{- $secureOnlyPorts = true -}}
-  {{- $tlsSecretName := coalesce .Values.certificateResources.tlsSecretName (printf "%s-tls" (include "data-store.name" .)) -}}
-  {{- $jksPassSecretName := coalesce .Values.certificateResources.jksPasswordSecretName (printf "%s-jks" (include "data-store.name" .)) -}}
+  {{- $tlsSecretName := coalesce .Values.certificateResources.tlsSecretName .Values.global.interComponentTls.tlsSecretName (printf "%s-tls" (include "data-store.name" .)) -}}
+  {{- $jksPassSecretName := coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "data-store.name" .)) -}}
 
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.certs" . | fromJson) -}}
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.jks" . | fromJson) -}}
 
   {{- $extraVols = append $extraVols (include "common.tls.volumes.certs" (dict "tlsSecretName" $tlsSecretName "context" $) | fromJson) -}}
   {{- $extraVols = append $extraVols (include "common.tls.volumes.jks-store" (dict "jksPasswordSecretName" $jksPassSecretName "tlsSecretName" $tlsSecretName "context" $) | fromJson) -}}
-{{- end -}}
-
-{{/*
-Todo: the readiness probe is assusming the admin server is enabled. For now it gets disabled if the server is disabled. It should change over to "/pulsar/bin/bookkeeper shell bookiesanity"
-*/}}
-{{- if .Values.config.httpServerEnabled -}}
-  {{- $_ := set .Values.readinessProbe.httpGet "port" .Values.config.httpServerPort -}}
-{{- else -}}
-  {{- $_ := set .Values.readinessProbe "enabled" false  -}}
 {{- end -}}
 
 apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
@@ -91,7 +82,7 @@ spec:
       securityContext: {{ omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "data-store.serviceAccountName" . }}
-      initContainers: {{ include "common.lifeCycle.meta-data-store-running" . | nindent 8 }}
+      initContainers: {{ include "common.lifeCycle.data-store-cluster-initialized" . | nindent 8 }}
       {{- if .Values.initContainers }}
         {{ include "common.tplvalues.render" ( dict "value" .Values.initContainers "context" $ ) | nindent 8 }}
       {{- end }}
@@ -163,6 +154,8 @@ spec:
               mountPath: {{ .Values.logPersistence.mountPath }}
             - name: "conf"
               mountPath: {{ .Values.pulsarEnv.confPath }}
+            - name: "probes"
+              mountPath: /pulsar/probes
             {{- if eq .Values.persistence.oneDisk.enabled true }}
             - name: oneDisk
               mountPath: {{ .Values.persistence.oneDisk.mountPath }}
@@ -191,6 +184,10 @@ spec:
         - name: "conf"
           configMap:
             name: {{ printf "%s-configuration" (include "data-store.name" .) }}
+        - name: "probes"
+          configMap:
+            name: {{ printf "%s-probes" (include "data-store.name" .) }}
+            defaultMode: 0755
         {{- if eq .Values.persistence.enabled false }}
         {{- if eq .Values.persistence.oneDisk.enabled true }}
         - name: oneDisk

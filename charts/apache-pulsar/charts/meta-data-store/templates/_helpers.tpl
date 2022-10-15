@@ -34,7 +34,7 @@ Create a fully qualified app name adding the installation's namespace.
  Create the name of the service account to use
  */}}
 {{- define "meta-data-store.serviceAccountName" -}}
-  {{- printf "%s-service" (default (include "meta-data-store.name" .) .Values.serviceAccount.name) -}}
+  {{- coalesce .Values.serviceAccount.name (include "meta-data-store.name" .) -}}
 {{- end -}}
 
 {{/*
@@ -131,6 +131,8 @@ For more information about headless services with statefulsets and K8s DNS - htt
 For more information about headless services with statefulsets and K8s DNS - https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
 
  usage: {{ include "meta-data-store.client-instance-address" (dict "instanceIndex" 0 "instanceNamePrefix" "meta-data-store-statefulset" "context" $) }}
+
+ Todo: ternary should be choosing the clientTls port but need to figure out proper communications with TLS
  */}}
 {{- define "meta-data-store.client-instance-address" -}}
   {{- $instanceIndex := .instanceIndex -}}
@@ -140,7 +142,7 @@ For more information about headless services with statefulsets and K8s DNS - htt
                                   (printf "%s-headless" (include "meta-data-store.name" .context))
                                   (include "common.names.namespace" .context)
                                   .context.Values.global.clusterDomain
-                                  (((eq (include "common.tls.require-secure-inter" .context) "true") | ternary .context.Values.global.metaDataStore.service.ports.clientTls .context.Values.global.metaDataStore.service.ports.client ) | int)
+                                  (((eq (include "common.tls.require-secure-inter" .context) "true") | ternary .context.Values.global.metaDataStore.service.ports.client .context.Values.global.metaDataStore.service.ports.client ) | int)
                                    -}}
 {{- end -}}
 

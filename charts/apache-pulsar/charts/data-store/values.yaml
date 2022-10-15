@@ -53,23 +53,23 @@ certificateResources:
 
   ## @param certificateResources.tlsSecretName [string,nullable]
   ##
-  tlsSecretName: null
+  tlsSecretName:
 
   ## @param certificateResources.jksPasswordSecretName [string,nullable]
   ##
-  jksPasswordSecretName: null
+  jksPasswordSecretName:
 
   ## @extra certificateResources.certificateRequest Refer to the [CertificateSpec](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec) for more info about these values.
   ##
   certificateRequest:
 
-    ## @param certificateResources.certificateRequest.renewBefore How long before the currently issued certificate’s expiry cert-manager should renew the certificate
+    ## @param certificateResources.certificateRequest.renewBefore How long before the currently issued certificate’s expiry cert-manager should renew the certificate. Default is 2/3 of the duration.
     ##
-    renewBefore: 60days
+    renewBefore:
 
-    ## @param certificateResources.certificateRequest.duration The requested ‘duration’ (i.e. lifetime) of the Certificate
+    ## @param certificateResources.certificateRequest.duration The requested ‘duration’ (i.e. lifetime) of the Certificate. Default is 90 days
     ##
-    duration: 90days
+    duration:
 
     ##
     ##
@@ -146,10 +146,9 @@ pulsarEnv:
 ## > Note, the values not documented here are set by the parent chart
 ## @descriptionEnd
 ##
-
 ## @param replicas The number of bookies to deploy
 ##
-replicas: 1
+replicas: 3
 
 config:
   ## @skip config.advertisedAddress
@@ -590,6 +589,10 @@ service:
 ##
 serviceAccount:
 
+  ## @param serviceAccount.name The name of the ServiceAccount to use.
+  ## If not set and create is true, a name is generated using the common.names.name template
+  name: ""
+
   ## @param serviceAccount.create Specifies whether a ServiceAccount should be created
   ##
   create: true
@@ -1018,57 +1021,52 @@ logPersistence:
 
 ## @section Pod Liveness & Readyness
 
-## Configure extra options for Bookkeeper containers' liveness, readiness and startup probes
+## Configure extra options for Data Store containers' liveness, readiness and startup probes
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
-## @param livenessProbe.enabled Enable livenessProbe on Bookkeeper containers
-## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
-## @param livenessProbe.periodSeconds Period seconds for livenessProbe
-## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
-## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
-## @param livenessProbe.successThreshold Success threshold for livenessProbe
+## @param livenessProbe.enabled Enable livenessProbe on Data Store containers
+## @param livenessProbe.exec.command Process to monitor for readiness
+## @param livenessProbe.periodSeconds Period seconds for readinessProbe
+## @param livenessProbe.timeoutSeconds Timeout seconds for readinessProbe
+## @param livenessProbe.failureThreshold Failure threshold for readinessProbe
+## @param livenessProbe.successThreshold Success threshold for readinessProbe
 ##
 livenessProbe:
-  enabled: false
-  initialDelaySeconds: 10
-  periodSeconds: 30
-  timeoutSeconds: 5
-  failureThreshold: 10
+  enabled: true
+  exec:
+    command:
+      - "/pulsar/probes/liveness.sh"
+  periodSeconds: 3
+  timeoutSeconds: 30
+  failureThreshold: 5
   successThreshold: 1
 
-## @param readinessProbe.enabled Enable readinessProbe on Bookkeeper containers
-## @param readinessProbe.httpGet.path Endpoint path to probe
-## @param readinessProbe.httpGet.port Endpoint port to probe
-## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+## @param readinessProbe.enabled Enable readinessProbe on Data Store containers
+## @param readinessProbe.exec.command Process to monitor for readiness
 ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
-## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
 ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
 ## @param readinessProbe.successThreshold Success threshold for readinessProbe
 ##
 readinessProbe:
   enabled: true
-  httpGet:
-    path: /api/v1/bookie/is_ready
-    port: 8080
-  initialDelaySeconds: 10
-  periodSeconds: 30
-  timeoutSeconds: 5
-  failureThreshold: 10
+  exec:
+    command:
+      - "/pulsar/probes/readiness.sh"
+  periodSeconds: 5
+  failureThreshold: 1
   successThreshold: 1
 
-## @param startupProbe.enabled Enable startupProbe on Bookkeeper containers
-## @param startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
-## @param startupProbe.periodSeconds Period seconds for startupProbe
-## @param startupProbe.timeoutSeconds Timeout seconds for startupProbe
-## @param startupProbe.failureThreshold Failure threshold for startupProbe
-## @param startupProbe.successThreshold Success threshold for startupProbe
+## @param startupProbe.enabled Enable startupProbe on Data Store containers
+## @param startupProbe.exec.command Process to monitor for readiness
+## @param startupProbe.periodSeconds Period seconds for readinessProbe
+## @param startupProbe.failureThreshold Failure threshold for readinessProbe
 ##
 startupProbe:
-  enabled: false
-  initialDelaySeconds: 30
-  periodSeconds: 10
-  timeoutSeconds: 1
-  failureThreshold: 15
-  successThreshold: 1
+  enabled: true
+  exec:
+    command:
+      - "/pulsar/probes/startup.sh"
+  periodSeconds: 3
+  failureThreshold: 10
 
 ## @param customLivenessProbe Custom livenessProbe that overrides the default one
 ##

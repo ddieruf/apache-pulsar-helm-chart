@@ -34,9 +34,8 @@ Create a fully qualified app name adding the installation's namespace.
  Create the name of the service account to use
  */}}
 {{- define "data-store.serviceAccountName" -}}
-  {{- printf "%s-service" (default (include "data-store.fullname" .) .Values.serviceAccount.name) -}}
+  {{- coalesce .Values.serviceAccount.name (include "data-store.name" .) -}}
 {{- end -}}
-
 
 {{/*
 Return the proper Storage Class

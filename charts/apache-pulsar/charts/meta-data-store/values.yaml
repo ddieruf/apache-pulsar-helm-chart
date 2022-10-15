@@ -97,7 +97,7 @@ pulsarEnv:
     - "-Dio.netty.recycler.maxCapacity.default=1000"
     - "-Dio.netty.recycler.linkCapacity=1024"
     - "-Dlog4j2.formatMsgNoLookups=true"
-  ## @param pulsarEnv.extraClasspath A collection of extra paths for the pulsar classpath. Include just the folder or file path, no delimiter.
+  ## @param pulsarEnv.extraClasspath A collection of extra paths for the pulsar classpath. Include just the folder or file path from root.
   ##
   extraClasspath: []
   ## @param pulsarEnv.stopTimeout Time to wait for an instance to stop before getting forceful
@@ -330,7 +330,7 @@ service:
 ##
 serviceAccount:
   create: true
-  ## If not set and create is true, a name is generated using the common.names.fullname template
+  ## If not set and create is true, a name is generated using the common.names.name template
   name: ""
   automountServiceAccountToken: true
   annotations: {}
@@ -621,15 +621,25 @@ logPersistence:
 ## Configure extra options for Meta Data Store containers' liveness, readiness and startup probes
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
 ## @param livenessProbe.enabled Enable livenessProbe on Meta Data Store containers
+## @param livenessProbe.exec.command Process to monitor for readiness
+## @param livenessProbe.periodSeconds Period seconds for readinessProbe
+## @param livenessProbe.timeoutSeconds Timeout seconds for readinessProbe
+## @param livenessProbe.failureThreshold Failure threshold for readinessProbe
+## @param livenessProbe.successThreshold Success threshold for readinessProbe
 ##
 livenessProbe:
-  enabled: false
+  enabled: true
+  exec:
+    command:
+      - "/pulsar/probes/liveness.sh"
+  periodSeconds: 3
+  timeoutSeconds: 30
+  failureThreshold: 5
+  successThreshold: 1
 
 ## @param readinessProbe.enabled Enable readinessProbe on Meta Data Store containers
 ## @param readinessProbe.exec.command Process to monitor for readiness
-## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
 ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
-## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
 ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
 ## @param readinessProbe.successThreshold Success threshold for readinessProbe
 ##
@@ -637,19 +647,23 @@ readinessProbe:
   enabled: true
   exec:
     command:
-      - "/bin/bash"
-      - "-c"
-      - "[[(\"$(echo ruok | nc localhost 2181)\" == \"imok\")]] || exit 1"
-  initialDelaySeconds: 10
-  periodSeconds: 3
-  timeoutSeconds: 30
-  failureThreshold: 10
-  successThreshold: 2
+      - "/pulsar/probes/readiness.sh"
+  periodSeconds: 5
+  failureThreshold: 1
+  successThreshold: 1
 
 ## @param startupProbe.enabled Enable startupProbe on Meta Data Store containers
+## @param startupProbe.exec.command Process to monitor for readiness
+## @param startupProbe.periodSeconds Period seconds for readinessProbe
+## @param startupProbe.failureThreshold Failure threshold for readinessProbe
 ##
 startupProbe:
-  enabled: false
+  enabled: true
+  exec:
+    command:
+      - "/pulsar/probes/startup.sh"
+  periodSeconds: 3
+  failureThreshold: 10
 
 ## @param lifecycleHooks lifecycleHooks for the Meta Data Store container to automate configuration before or after startup
 ##

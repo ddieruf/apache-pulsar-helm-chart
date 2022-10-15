@@ -7,8 +7,8 @@
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
   {{- $secureOnlyPorts = true -}}
-  {{- $tlsSecretName := coalesce .Values.certificateResources.tlsSecretName (printf "%s-tls" (include "meta-data-store.name" .)) -}}
-  {{- $jksPassSecretName := coalesce .Values.certificateResources.jksPasswordSecretName (printf "%s-jks" (include "meta-data-store.name" .)) -}}
+  {{- $tlsSecretName := coalesce .Values.certificateResources.tlsSecretName .Values.global.interComponentTls.tlsSecretName (printf "%s-tls" (include "meta-data-store.name" .)) -}}
+  {{- $jksPassSecretName := coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "meta-data-store.name" .)) -}}
 
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.certs" . | fromJson) -}}
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.jks" . | fromJson) -}}

@@ -40,11 +40,14 @@ tests:
     asserts:
       - contains:
           path: spec.template.spec.initContainers[0].args
-          content: statefulset-running
+          content: meta-data-store-statefulset-running
 
   - it: should build initialize arguments
     set:
       global:
+        clusterDomain: domain.com
+        interComponentTls:
+          enabled: false
         metaDataStore:
           replicas: 1
           nonPersistentReplicas: 1
@@ -57,10 +60,10 @@ tests:
           pattern: --cluster "zz"
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
-          pattern: --metadata-store "zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.cluster.local:2181"
+          pattern: --metadata-store "zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.domain.com:2181,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.domain.com:2181"
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
-          pattern: --configuration-metadata-store "zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.cluster.local:2181"
+          pattern: --configuration-metadata-store "zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.domain.com:2181,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.domain.com:2181"
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
           pattern: --web-service-url "http://broker.web-cluster-addresses"

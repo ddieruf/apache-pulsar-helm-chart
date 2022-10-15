@@ -1,12 +1,12 @@
 {{- $component := "life-cycle" -}}
-{{- $name := (printf "%s-statefulset-running" (include "data-store.name" .)) -}}
+{{- $name := "stage.1-storage-running" -}}
 
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ $name | quote }}
   namespace: {{ (include "common.names.namespace" .) | quote }}
-  labels: {{ include "common.labels.standard" (dict "name" (include "data-store.name" $) "context" $ ) | nindent 4 }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "meta-data-store.name" $) "context" $ ) | nindent 4 }}
     app.kubernetes.io/component: {{ $component | quote }}
     {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
   annotations:
@@ -20,15 +20,5 @@ spec:
         app.kubernetes.io/component: {{ $component | quote }}
     spec:
       restartPolicy: Never
-      containers:
-        - name: wait-for-all-statefulset-pods
-          image: groundnuty/k8s-wait-for:latest
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: WAIT_TIME
-              value: "5"
-            - name: DEBUG
-              value: "1"
-          args:
-            - "pod"
-            - {{ printf "-lapp.kubernetes.io/component=data-store" | quote }}
+      containers: {{ include "common.lifeCycle.meta-data-store-running" . | nindent 8 }}
+        {{ include "common.lifeCycle.data-store-running" . | nindent 8 }}

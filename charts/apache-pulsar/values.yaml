@@ -33,7 +33,7 @@ global:
   commonLabels:
     app.kubernetes.io/part-of: apache-pulsar
 
-  ## @param global.commonAnnotations [nullable] Annotations to add to all deployed objects
+  ## @param global.commonAnnotations [object,nullable] Annotations to add to all deployed objects
   ##
   commonAnnotations: {}
 
@@ -41,7 +41,22 @@ global:
   ##
   secureClusterEdge: false
 
-  ## @param global.interComponentTls.enabled Only allow communication over secure ports between all cluster components
-  ##
   interComponentTls:
+
+    ## @param global.interComponentTls.enabled Only allow communication over secure ports between all cluster components
+    ##
     enabled: false
+
+    ## @param  global.interComponentTls.tlsSecretName [string,nullable] The name of an existing tls secret that includes a JKS store
+    ##
+    tlsSecretName:
+
+    ## @param  global.interComponentTls.jksPasswordSecretName [string,nullable] The name of the secret used to create the JKS store in an existing tls secret
+    ##
+    jksPasswordSecretName:
+
+    ## @param global.interComponentTls.issuerRef [object,nullable] IssuerRef is a reference to the issuer of all certificates. Note that each component can have their own issuerRef that overrides this.
+    ##
+    issuerRef:
+      name:
+      kind:

@@ -1,0 +1,36 @@
+{{- $component := "data-store" -}}
+{{- $name := (printf "%s-probes" (include "data-store.name" $)) -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "data-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+data:
+  liveness.sh: |
+    #!/bin/bash
+    [[ "$(curl -sS --fail -X GET 'http://localhost:{{ .Values.config.httpServerPort }}/heartbeat')" != "OK" ]] && exit 1;
+    exit 0;
+  readiness.sh: |
+    #!/bin/bash
+    set -e
+    running=$(curl -sS --fail -X GET 'http://localhost:{{ .Values.config.httpServerPort }}/api/v1/bookie/state' | grep running);
+    readOnly=$(curl -sS --fail -X GET 'http://localhost:{{ .Values.config.httpServerPort }}/api/v1/bookie/state' | grep readOnly);
+    shuttingDown=$(curl -sS --fail -X GET 'http://localhost:{{ .Values.config.httpServerPort }}/api/v1/bookie/state' | grep shuttingDown);
+
+    [[ ${running} == *"true"* ]] || exit 1;
+    [[ ${readOnly} == *"false"* ]] || exit 1;
+    [[ ${shuttingDown} == *"false"* ]] || exit 1;
+
+    curl -sS --fail -X GET 'http://localhost:{{ .Values.config.httpServerPort }}/api/v1/bookie/is_ready';
+
+    exit 0;
+  startup.sh: |
+    #!/bin/bash
+    [[ "$(curl -sS --fail -X GET 'http://localhost:{{ .Values.config.httpServerPort }}/metrics' | grep STATUS)" == *"1" ]] || exit 1;
+    exit 0;

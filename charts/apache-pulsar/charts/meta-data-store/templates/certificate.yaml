@@ -1,12 +1,15 @@
-{{- if and (eq (include "common.tls.require-secure-inter" $) "true") (not .Values.certificateResources.tlsSecretName)}}
+{{- if and (eq (include "common.tls.require-secure-inter" $) "true") (not .Values.certificateResources.tlsSecretName) (not .Values.global.interComponentTls.tlsSecretName)}}
 
-{{- if not .Values.certificateResources.certificateRequest.issuerRef }}
-  {{ fail "A value for .certificateResources.certificateRequest.issuerRef is required to create the certificate request" }}
+{{- $issuerRef := (coalesce .Values.certificateResources.certificateRequest.issuerRef .Values.global.interComponentTls.issuerRef) -}}
+
+{{- if not $issuerRef }}
+  {{ fail "A value for .certificateResources.certificateRequest.issuerRef or .Values.global.interComponentTls.issuerRef is required to create the certificate request" }}
 {{- end }}
 
 {{- $component := "meta-data-store" -}}
 {{- $certificateName := (printf "%s-certificate" (include "meta-data-store.name" $)) -}}
-{{- $secretName := (printf "%s-jks" (include "meta-data-store.name" $)) -}}
+{{- $secretName := (printf "%s-tls" (include "meta-data-store.name" .)) -}}
+{{- $jksSecretName := (coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "meta-data-store.name" $))) -}}
 
 {{- $commonName := (include "meta-data-store.fullname" .) -}}
 {{- $dnsNames := list (printf "*.%s.%s.svc.%s" (printf "%s-headless" (include "meta-data-store.name" .)) .Release.Namespace .Values.global.clusterDomain) "127.0.0.1" "localhost" -}}
@@ -24,7 +27,7 @@ metadata:
 spec:
   commonName: {{ $commonName | quote }}
   dnsNames: {{- include "common.tplvalues.render" ( dict "value" $dnsNames "context" $ ) | nindent 4 }}
-  secretName: {{ printf "%s-tls" (include "meta-data-store.name" .) | quote }}
+  secretName: {{ $secretName | quote }}
   secretTemplate:
     annotations:
       {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 6 }}
@@ -35,7 +38,7 @@ spec:
       create: true
       passwordSecretRef:
         key: jks-password
-        name: {{ default $secretName .Values.certificateResources.jksPasswordSecretName | quote }}
+        name: {{ $jksSecretName | quote }}
   {{- if .Values.certificateResources.certificateRequest.renewBefore }}
   renewBefore: {{ int .Values.certificateResources.certificateRequest.renewBefore }}
   {{- end }}
@@ -51,5 +54,5 @@ spec:
     {{- include "common.tplvalues.render" ( dict "value" .Values.certificateResources.certificateRequest.privateKey "context" $ ) | nindent 4 }}
   {{- end }}
   issuerRef:
-    {{ include "common.tplvalues.render" ( dict "value" .Values.certificateResources.certificateRequest.issuerRef "context" $ ) | nindent 4 }}
+    {{ include "common.tplvalues.render" ( dict "value" $issuerRef "context" $ ) | nindent 4 }}
 {{- end }}

@@ -148,3 +148,46 @@ tests:
       - equal:
           path: spec.secretName
           value: meta-data-store-tls
+
+  - it: should build correct certificate request with global values
+    template: charts/metaDataStore/templates/certificate.yaml
+    set:
+      global:
+        clusterDomain: domain.com
+        interComponentTls:
+          enabled: true
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          issuerRef:
+            name: cluster-cert-issuer
+            kind: ClusterIssuer
+      metaDataStore:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+    asserts:
+      - equal:
+          path: spec.commonName
+          value: zz-meta-data-store
+      - contains:
+          path: spec.dnsNames
+          content:
+            '*.meta-data-store-headless.xx.svc.domain.com'
+      - contains:
+          path: spec.dnsNames
+          content:
+            127.0.0.1
+      - contains:
+          path: spec.dnsNames
+          content:
+            localhost
+      - equal:
+          path: spec.secretName
+          value: meta-data-store-tls
+      - equal:
+          path: spec.issuerRef
+          value:
+            name: cluster-cert-issuer
+            kind: ClusterIssuer

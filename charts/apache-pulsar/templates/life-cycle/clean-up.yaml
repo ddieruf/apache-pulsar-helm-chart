@@ -21,18 +21,7 @@ spec:
         helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     spec:
       restartPolicy: Never
-      initContainers:
-        - name: wait-for-meta-data-initialize
-          image: groundnuty/k8s-wait-for:latest
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: WAIT_TIME
-              value: "5"
-            - name: DEBUG
-              value: "1"
-          args:
-            - "job"
-            - "-lapp.kubernetes.io/component=life-cycle"
+      initContainers: {{ include "common.lifeCycle.cluster-running" . | nindent 8 }}
       containers:
         - name: post-install-job
           image: "bitnami/kubectl:latest"
