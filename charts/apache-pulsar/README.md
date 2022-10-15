@@ -86,9 +86,9 @@ templating has created well-formed yaml with expected values. A secondary step i
 | Chart Unit testing                | Edge TLS (encryption)                         |
 | Manage Inter-chart configurations | Integration testing (ie: cluster validations) |
 | Generate parameters readme        | Observability (metrics)                       |
-| Inter-component TLS (encryption)  | Authentications                               |
+|                                   | Authentications                               |
 | Component certificates            | Authorizations                                |
-| Cluster Lifecycle                 |                                               |
+| Cluster Lifecycle                 | Inter-component TLS (encryption)              |
 
 ## Getting Started
 
