@@ -36,11 +36,11 @@ tests:
             name: meta-data-store-initialize-cluster-meta-data
             namespace: xx
 
-  - it: should wait for pods to start
+  - it: should wait for statefulset pods to be running
     asserts:
-      - contains:
-          path: spec.template.spec.initContainers[0].args
-          content: meta-data-store-statefulset-running
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: meta-data-store-statefulset-running
 
   - it: should build initialize arguments
     set:

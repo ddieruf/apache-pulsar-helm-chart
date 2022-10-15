@@ -1,0 +1,48 @@
+suite: Test data-store init new cluster job
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/dataStore/templates/jobs/init-new-cluster.yaml
+tests:
+  - it: should be correct document
+    asserts:
+      - containsDocument:
+          kind: Job
+          apiVersion: batch/v1
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          something: somewhere
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              something: somewhere
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: data-store
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: data-store
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: dataStore-0.1.0
+            name: data-store-init-new-cluster
+            namespace: xx
+
+  - it: should wait for meta-data-store to be running
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: meta-data-store-running
+
+  - it: should initialize the cluster meta
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args[0]
+          value: "/pulsar/bin/bookkeeper shell metaformat --nonInteractive || true"

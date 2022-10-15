@@ -69,10 +69,10 @@ tests:
     asserts:
       - matchRegex:
           path: data.bookkeeper\.conf
-          pattern: "zkServers=meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.domain.com:456,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.domain.com:456"
+          pattern: "zkServers=meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.domain.com:123,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.domain.com:123"
       - matchRegex:
           path: data.bookkeeper\.conf
-          pattern: "metadataServiceUri=metadata-store:zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.domain.com:456,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.domain.com:456"
+          pattern: "metadataServiceUri=metadata-store:zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.domain.com:123,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.domain.com:123"
 
   - it: should have tls enabled
     set:
