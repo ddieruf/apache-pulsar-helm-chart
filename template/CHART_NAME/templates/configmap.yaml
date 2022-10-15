@@ -1,0 +1,41 @@
+{{- $configValues := omit .Values.global.%%CHART_NODE_NAME%%.config "extraConfigValues" -}}
+
+{{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
+  {{- $_ := set $configValues "tlsProvider" (coalesce .Values.config.tlsProvider "JDK") -}}
+  {{- $_ := set $configValues "tlsProviderFactoryClass" (coalesce .Values.config.tlsProviderFactoryClass "org.apache.bookkeeper.tls.TLSContextFactor") -}}
+  {{- $_ := set $configValues "tlsKeyStoreType" (coalesce .Values.config.tlsKeyStoreType "JKS") -}}
+  {{- $_ := set $configValues "tlsKeyStore" (coalesce .Values.config.tlsKeyStore "/pulsar/jks/keystore.jks") -}}
+  {{- $_ := set $configValues "tlsKeyStorePasswordPath" (coalesce .Values.config.tlsKeyStorePasswordPath "/pulsar/jks/jks-password") -}}
+  {{- $_ := set $configValues "tlsTrustStoreType" (coalesce .Values.config.tlsTrustStoreType "JKS") -}}
+  {{- $_ := set $configValues "tlsTrustStore" (coalesce .Values.config.tlsTrustStore "/pulsar/jks/truststore.jks") -}}
+  {{- $_ := set $configValues "tlsTrustStorePasswordPath" (coalesce .Values.config.tlsTrustStorePasswordPath "/pulsar/jks/jks-password") -}}
+  {{- $_ := set $configValues "tlsHostnameVerificationEnabled" (coalesce .Values.config.tlsHostnameVerificationEnabled "true") -}}
+{{- end -}}
+
+{{- if eq true false -}}
+  {{- $_ := set $configValues "AuthProviderFactoryClass" (coalesce .Values.config.authProviderFactoryClass "xxxx") -}}
+{{- end -}}
+
+{{- $component := "%%CHART_NAME%%" -}}
+{{- $name := (printf "%s-configuration" (include "%%CHART_NAME%%.name" $)) -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "%%CHART_NAME%%.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+data:
+  log4j2.yaml: |
+    {{ tpl (.Files.Get "files/log4j2.yaml") . | nindent 4 }}
+  pulsar_env.sh: |
+    {{ tpl (.Files.Get "files/pulsar_env.sh") . | nindent 4 }}
+  XXXXXXXXX.conf: |
+    {{ include "common.formatting.toToml" (dict "configValues" $configValues "context" $) | nindent 4 }}
+    {{ if .Values.config.extraConfigValues }}
+    {{- include "common.formatting.toToml" (dict "configValues" .Values.config.extraConfigValues "context" $) | nindent 4 -}}
+    {{ end }}

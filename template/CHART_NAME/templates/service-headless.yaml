@@ -1,0 +1,34 @@
+{{- $component := "%%CHART_NAME%%" -}}
+{{- $name := (printf "%s-headless" (include "%%CHART_NAME%%.name" .)) -}}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "%%CHART_NAME%%.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- if .Values.service.annotations }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.service.annotations "context" $ ) | nindent 4 }}
+    {{- end }}
+spec:
+  clusterIP: "None"
+  publishNotReadyAddresses: true
+  ports:
+    {{- if and (eq (include "common.tls.require-secure-inter" $) "false") .Values.service.ports%%SERVICE_PORT_UNSECURE_NAME%% }}
+    - name: %%SERVICE_PORT_UNSECURE_NAME%%
+      port: {{ .Values.service.ports%%SERVICE_PORT_UNSECURE_NAME%% }}
+      targetPort: %%SERVICE_PORT_UNSECURE_NAME%%
+      protocol: TCP
+    {{- end }}
+    {{- if and (eq (include "common.tls.require-secure-inter" $) "true") .Values.service.ports.%%SERVICE_PORT_SECURE_NAME%% }}
+    - name: %%SERVICE_PORT_UNSECURE_NAME%%-tls
+      port: {{ .Values.service.ports.%%SERVICE_PORT_SECURE_NAME%% }}
+      targetPort: %%SERVICE_PORT_UNSECURE_NAME%%-tls
+      protocol: TCP
+    {{- end }}
+  selector: {{ include "common.labels.matchLabels" (dict "name" (include "%%CHART_NAME%%.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}

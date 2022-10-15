@@ -1,0 +1,28 @@
+{{- if eq .Values.podDisruptionBudget.enabled true }}
+
+{{- $component := "%%CHART_NAME%%" -}}
+{{- $name := (printf "%s-pdb" (include "%%CHART_NAME%%.name" $)) -}}
+
+apiVersion: {{ include "common.capabilities.policy.apiVersion" .}}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "%%CHART_NAME%%.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+spec:
+  {{- if .Values.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels: {{ (include "common.labels.matchLabels" (dict "name" (include "%%CHART_NAME%%.name" $) "context" $ )) | nindent 6 }}
+      app.kubernetes.io/component: {{ $component | quote }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+
+{{- end -}}

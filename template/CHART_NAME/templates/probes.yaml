@@ -1,0 +1,24 @@
+{{- $component := "%%CHART_NAME%%" -}}
+{{- $name := (printf "%s-probes" (include "%%CHART_NAME%%.name" $)) -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "%%CHART_NAME%%.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+data:
+  liveness.sh: |
+    #!/bin/bash
+    exit 0;
+  readiness.sh: |
+    #!/bin/bash
+    set -e
+    exit 0;
+  startup.sh: |
+    #!/bin/bash
+    exit 0;
