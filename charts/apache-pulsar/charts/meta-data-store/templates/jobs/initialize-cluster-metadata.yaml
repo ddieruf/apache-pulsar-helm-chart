@@ -3,7 +3,7 @@
 
 {{- $webServiceUrls := (printf "http://%s" (join "," "broker.web-cluster-addresses")) -}}
 {{- $binaryServiceUrls := (printf "pulsar://%s" (join "," "broker.binary-cluster-addresses")) -}}
-{{- $metaDataStoreUrls := (printf "zk:%s" (join "," ((include "meta-data-store.client-cluster-addresses" $) | fromJsonArray)))}}
+{{- $metaDataStoreUrls := (printf "%s" (join "," ((include "meta-data-store.client-cluster-addresses" $) | fromJsonArray)))}}
 
 {{- $extraVolMounts := default list .Values.extraVolumeMounts -}}
 {{- $extraVols := default list .Values.extraVolumes -}}

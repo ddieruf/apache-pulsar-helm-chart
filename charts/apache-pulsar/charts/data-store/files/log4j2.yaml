@@ -1,5 +1,5 @@
 Configuration:
-  status: INFO
+  status: error
   monitorInterval: 30
   name: pulsar
   packages: io.prometheus.client.log4j2
@@ -112,13 +112,13 @@ Configuration:
 
     Logger:
       - name: org.apache.bookkeeper.bookie.BookieShell
-        level: info
+        level: "${sys:pulsar.log.root.level}"
         additivity: false
         AppenderRef:
           - ref: Console
 
       - name: verbose
-        level: info
+        level: "${sys:pulsar.log.root.level}"
         additivity: false
         AppenderRef:
           - ref: Console

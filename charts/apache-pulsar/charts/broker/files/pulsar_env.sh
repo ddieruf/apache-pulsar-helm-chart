@@ -12,10 +12,7 @@ PULSAR_EXTRA_OPTS={{ join " " $extraOpts | quote }}
 PULSAR_GC={{ join " " .Values.pulsarEnv.gc | quote }}
 PULSAR_MEM={{ join " " .Values.pulsarEnv.mem | quote }}
 PULSAR_LOG_DIR={{ .Values.logPersistence.mountPath }}
-PULSAR_ZK_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "zookeeper.conf" }}
-PULSAR_GLOBAL_ZK_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "global_zookeeper.conf" }}
 PULSAR_STOP_TIMEOUT={{.Values.pulsarEnv.stopTimeout}}
-ZOO_LOG_LEVEL={{ default "error" .Values.pulsarEnv.loggingLevels.root }}
 
 # Garbage collection log.
 IS_JAVA_8=`java -version 2>&1 |grep version|grep '"1\.8'`

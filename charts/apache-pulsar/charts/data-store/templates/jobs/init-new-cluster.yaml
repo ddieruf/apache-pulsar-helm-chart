@@ -34,8 +34,11 @@ spec:
         - name: "init-new-cluster"
           image: {{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
           imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
-          command: ["/bin/sh", "-c"]
-          args: ["/pulsar/bin/bookkeeper shell metaformat --nonInteractive || true"]
+          command: ["sh", "-c"]
+          args:
+            - >
+              /pulsar/bin/bookkeeper shell nukeexistingcluster -force -zkledgersrootpath "/ledgers" &&
+              /pulsar/bin/bookkeeper shell initnewcluster
           volumeMounts:
             - name: "conf"
               mountPath: {{ .Values.pulsarEnv.confPath }}

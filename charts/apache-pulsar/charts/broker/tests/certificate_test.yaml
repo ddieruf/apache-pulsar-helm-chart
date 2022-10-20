@@ -1,0 +1,193 @@
+suite: Test broker certificate
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/broker/templates/certificate.yaml
+  - charts/broker/templates/jks_secret.yaml
+tests:
+  - it: should be correct certificate document
+    set:
+      global:
+        interComponentTls:
+          enabled: true
+      broker:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: some-issuer
+              kind: ClusterIssuer
+    asserts:
+      - containsDocument:
+          kind: Certificate
+          apiVersion: cert-manager.io/v1
+    template: charts/broker/templates/certificate.yaml
+
+  - it: should be correct secret document
+    set:
+      global:
+        interComponentTls:
+          enabled: true
+      broker:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: some-issuer
+              kind: ClusterIssuer
+    asserts:
+      - containsDocument:
+          kind: Secret
+          apiVersion: v1
+    template: charts/broker/templates/jks_secret.yaml
+
+  - it: should have correct certificate metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          ccc: ddd
+        interComponentTls:
+          enabled: true
+      broker:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: some-issuer
+              kind: ClusterIssuer
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              ccc: ddd
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: broker
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: broker
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: broker-0.1.0
+            name: broker-certificate
+            namespace: xx
+    template: charts/broker/templates/certificate.yaml
+
+  - it: should have correct secret metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          ccc: ddd
+        interComponentTls:
+          enabled: true
+      broker:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: some-issuer
+              kind: ClusterIssuer
+      asserts:
+        - equal:
+            path: metadata
+            value:
+              annotations:
+                ccc: ddd
+              labels:
+                aaa: bbb
+                app.kubernetes.io/component: broker
+                app.kubernetes.io/instance: zz
+                app.kubernetes.io/managed-by: Helm
+                app.kubernetes.io/name: broker
+                app.kubernetes.io/part-of: pulsar-luna
+                helm.sh/chart: broker-0.1.0
+              name: broker-jks
+              namespace: xx
+      template: charts/broker/templates/jks_secret.yaml
+
+  - it: should build correct certificate request
+    template: charts/broker/templates/certificate.yaml
+    set:
+      global:
+        clusterDomain: domain.com
+        interComponentTls:
+          enabled: true
+      broker:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: cert-issuer
+              kind: ClusterIssuer
+    asserts:
+      - equal:
+          path: spec.commonName
+          value: zz-broker
+      - contains:
+          path: spec.dnsNames
+          content:
+            'broker-service.xx.svc.domain.com'
+      - contains:
+          path: spec.dnsNames
+          content:
+            127.0.0.1
+      - contains:
+          path: spec.dnsNames
+          content:
+            localhost
+      - equal:
+          path: spec.secretName
+          value: broker-tls
+
+  - it: should build correct certificate request with global values
+    template: charts/broker/templates/certificate.yaml
+    set:
+      global:
+        clusterDomain: domain.com
+        interComponentTls:
+          enabled: true
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          issuerRef:
+            name: cluster-cert-issuer
+            kind: ClusterIssuer
+      broker:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+    asserts:
+      - equal:
+          path: spec.commonName
+          value: zz-broker
+      - contains:
+          path: spec.dnsNames
+          content:
+            'broker-service.xx.svc.domain.com'
+      - contains:
+          path: spec.dnsNames
+          content:
+            127.0.0.1
+      - contains:
+          path: spec.dnsNames
+          content:
+            localhost
+      - equal:
+          path: spec.secretName
+          value: broker-tls
+      - equal:
+          path: spec.issuerRef
+          value:
+            name: cluster-cert-issuer
+            kind: ClusterIssuer

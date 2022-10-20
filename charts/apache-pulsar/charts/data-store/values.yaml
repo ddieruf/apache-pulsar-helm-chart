@@ -122,7 +122,7 @@ pulsarEnv:
     root: "error"
     ## @param pulsarEnv.loggingLevels.pulsar Applies the PULSAR_LOG_LEVEL env var
     ##
-    pulsar: "info"
+    pulsar: "error"
   ## @param pulsarEnv.extraOpts A collection of extra options to be passed to the jvm. Format each as the entire key/value
   ##
   extraOpts:
@@ -325,7 +325,7 @@ config:
   ## @skip config.journalDirectory
   ## The directory where BookKeeper outputs its write-ahead log (WAL).
   ##
-  journalDirectory: "data/bookkeeper/journal"
+  journalDirectory:
   ## @param config.journalFlushWhenQueueEmpty If we should flush the journal when journal queue is empty
   ##
   journalFlushWhenQueueEmpty: FALSE
@@ -359,7 +359,7 @@ config:
   ## @skip config.ledgerDirectories
   ## The directory where BookKeeper outputs ledger snapshots. This could define multiple directories to store snapshots separated by ,, for example ledgerDirectories=/tmp/bk1-data,/tmp/bk2-data. Ideally, ledger dirs and the journal dir are each in a different device, which reduces the contention between random I/O and sequential write. It is possible to run with a single disk, but performance will be significantly lower.
   ##
-  ledgerDirectories: "data/bookkeeper/ledgers"
+  ledgerDirectories:
   ## @param config.ledgerManagerType The type of ledger manager used to manage how ledgers are stored, managed, and garbage collected. See BookKeeper Internals for [more info](http://bookkeeper.apache.org/docs/latest/getting-started/concepts).
   ##
   ledgerManagerType:
@@ -746,7 +746,7 @@ containerSecurityContext:
 
 ## @param containerCommand Override the container image ENTRYPOINT. Leave blank to use image default (if set)
 ##
-containerCommand: ["sh", "-c", "/pulsar/bin/pulsar bookie"]
+containerCommand: ["sh", "-c", "exec /pulsar/bin/pulsar bookie"]
 
 ## @param containerArgs Override the container image CMD. Leave blank to use image default (if set)
 ##
@@ -1067,18 +1067,6 @@ startupProbe:
       - "/pulsar/probes/startup.sh"
   periodSeconds: 3
   failureThreshold: 10
-
-## @param customLivenessProbe Custom livenessProbe that overrides the default one
-##
-customLivenessProbe: {}
-
-## @param customReadinessProbe Custom readinessProbe that overrides the default one
-##
-customReadinessProbe: {}
-
-## @param customStartupProbe Custom startupProbe that overrides the default one
-##
-customStartupProbe: {}
 
 ## @param lifecycleHooks lifecycleHooks for the Bookkeeper container to automate configuration before or after startup
 ##

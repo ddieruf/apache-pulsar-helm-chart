@@ -1,8 +1,14 @@
 {{- $configValues := omit .Values.global.dataStore.config "extraConfigValues" -}}
 
 {{- $_ := set $configValues "bookiePort" (coalesce .Values.config.bookiePort ((eq (include "common.tls.require-secure-inter" .) "true") | ternary .Values.service.ports.clientTls .Values.service.ports.client)) -}}
-{{- $_ := set $configValues "zkServers" (coalesce .Values.config.zkServers (include "data-store.config.zkServers" $)) -}}
-{{- $_ := set $configValues "metadataServiceUri" (coalesce .Values.config.metadataServiceUri (printf "metadata-store:zk:%s" (include "data-store.config.zkServers" $))) -}}
+{{/*{{- $_ := set $configValues "zkServers" (coalesce .Values.config.zkServers (include "data-store.config.zkServers" $)) -}}
+zk://server1:port;server2:port;server3:port/ledgers
+{{- $_ := set $configValues "metadataServiceUri" "zk://meta-data-store-statefulset-0.meta-data-store-headless.pulsar.svc.cluster.local:2181/ledgers" -}}
+*/}}
+{{- $_ := set $configValues "metadataServiceUri" (coalesce .Values.config.metadataServiceUri (printf "zk://%s/ledgers" (include "data-store.config.metadataServiceUri" $))) -}}
+{{- $_ := set $configValues "journalDirectory" (coalesce .Values.config.journalDirectory .Values.persistence.journal.mountPath) -}}
+{{- $_ := set $configValues "ledgerDirectories" (coalesce .Values.config.journalDirectory .Values.persistence.ledgers.mountPath) -}}
+
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
   {{- $_ := set $configValues "tlsProvider" (coalesce .Values.config.tlsProvider "JDK") -}}
@@ -48,6 +54,8 @@ data:
     {{ tpl (.Files.Get "files/log4j2.yaml") . | nindent 4 }}
   pulsar_env.sh: |
     {{ tpl (.Files.Get "files/pulsar_env.sh") . | nindent 4 }}
+  bkenv.sh: |
+    {{ tpl (.Files.Get "files/bkenv.sh") . | nindent 4 }}
   bookkeeper.conf: |
     {{ include "common.formatting.toToml" (dict "configValues" $configValues "context" $) | nindent 4 }}
     {{ if .Values.config.extraConfigValues }}

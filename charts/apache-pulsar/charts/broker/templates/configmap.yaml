@@ -1,0 +1,102 @@
+{{- $brokerConfigValues := omit .Values.global.broker.config "extraConfigValues" -}}
+{{- $clientConfigValues := dict -}}
+
+{{- $_ := set $brokerConfigValues "bindAddress" (coalesce .Values.config.bindAddress "0.0.0.0") -}}
+{{- $_ := set $brokerConfigValues "bookkeeperMetadataServiceUri" (coalesce .Values.config.bookkeeperMetadataServiceUri (printf "zk://%s/ledgers" (include "data-store.config.metadataServiceUri" $))) -}}
+{{- $_ := unset $brokerConfigValues "bootstrapNamespaces" -}}
+
+{{- $_ := set $brokerConfigValues "brokerServicePort" .Values.service.ports.pulsar -}}
+{{- $_ := unset $brokerConfigValues "brokerServicePortTls" -}}
+
+{{- $_ := set $brokerConfigValues "clusterName" (coalesce .Values.config.clusterName (include "cluster.name" .)) -}}
+{{- $_ := set $brokerConfigValues "configurationMetadataStoreUrl" (coalesce .Values.config.configurationMetadataStoreUrl (include "broker.config.configurationMetadataStoreUrl" .)) -}}
+{{- $_ := set $brokerConfigValues "functionsWorkerEnabled" (coalesce .Values.config.functionsWorkerEnabled (include "broker.config.functionWorkerEnabled" .)) -}}
+{{- $_ := set $brokerConfigValues "metadataStoreUrl" (coalesce .Values.config.metadataStoreUrl (include "broker.config.metadataStoreUrl" .)) -}}
+
+{{- $_ := set $brokerConfigValues "webServicePort" .Values.service.ports.http -}}
+{{- $_ := unset $brokerConfigValues "webServicePortTls" -}}
+
+{{- $_ := set $clientConfigValues "webServiceUrl" (printf "http://localhost:%s/" $brokerConfigValues.webServicePort) -}}
+{{- $_ := set $clientConfigValues "brokerServiceUrl" (printf "pulsar://localhost:%s/" $brokerConfigValues.brokerServicePort) -}}
+
+{{- if eq (include "broker.tls.require-secure" .) "true" -}}
+  {{- $_ := unset $brokerConfigValues "brokerServicePort" -}}
+  {{- $_ := set $brokerConfigValues "brokerServicePortTls" .Values.service.ports.pulsarSsl -}}
+
+  {{- $_ := set $brokerConfigValues "brokerClientTlsEnabledWithKeyStore" (coalesce .Values.config.brokerClientTlsEnabledWithKeyStore "true") -}}
+  {{- $_ := set $brokerConfigValues "brokerClientTlsTrustStore" (coalesce .Values.config.brokerClientTlsTrustStore "/pulsar/jks/truststore.jks") -}}
+  {{- $_ := set $brokerConfigValues "brokerClientTlsTrustStorePassword" (coalesce .Values.config.brokerClientTlsTrustStorePassword "/pulsar/jks/jks-password") -}}
+  {{- $_ := set $brokerConfigValues "brokerClientTlsTrustStoreType" (coalesce .Values.config.brokerClientTlsTrustStoreType "JKS") -}}
+
+  {{- $_ := set $brokerConfigValues "tlsEnabledWithKeyStore" "true" -}}
+  {{- $_ := set $brokerConfigValues "tlsKeyStore" (coalesce .Values.config.tlsKeyStore "/pulsar/jks/keystore.jks") -}}
+  {{- $_ := set $brokerConfigValues "tlsKeyStorePassword" (coalesce .Values.config.tlsKeyStorePassword "/pulsar/jks/jks-password") -}}
+  {{- $_ := set $brokerConfigValues "tlsKeyStoreType" (coalesce .Values.config.tlsKeyStoreType "JKS") -}}
+  {{- $_ := set $brokerConfigValues "tlsProvider" (coalesce .Values.config.tlsProvider "JDK") -}}
+  {{- $_ := set $brokerConfigValues "tlsRequireTrustedClientCertOnConnect" (coalesce .Values.config.tlsRequireTrustedClientCertOnConnect "true") -}}
+  {{- $_ := set $brokerConfigValues "tlsTrustStore" (coalesce .Values.config.tlsTrustStore "/pulsar/jks/truststore.jks") -}}
+  {{- $_ := set $brokerConfigValues "tlsTrustStorePassword" (coalesce .Values.config.tlsTrustStorePassword "/pulsar/jks/jks-password") -}}
+  {{- $_ := set $brokerConfigValues "tlsTrustStoreType" (coalesce .Values.config.tlsTrustStoreType "JKS") -}}
+
+  {{- $_ := unset $brokerConfigValues "webServicePort" -}}
+  {{- $_ := set $brokerConfigValues "webServicePortTls" .Values.service.ports.https -}}
+
+  {{- $_ := set $brokerConfigValues "tlsCertificateFilePath" (coalesce .Values.config.tlsCertificateFilePath "/pulsar/certs/cer.crt") -}}
+  {{- $_ := set $brokerConfigValues "tlsKeyFilePath" (coalesce .Values.config.tlsKeyFilePath "/pulsar/certs/key.crt") -}}
+  {{- $_ := set $brokerConfigValues "tlsTrustCertsFilePath" (coalesce .Values.config.tlsTrustCertsFilePath "/pulsar/certs/ca.crt") -}}
+
+  {{- $_ := set $clientConfigValues "webServiceUrl" (printf "https://localhost:%s/" $brokerConfigValues.webServicePortTls) -}}
+  {{- $_ := set $clientConfigValues "tlsAllowInsecureConnection" "false" -}}
+  {{- $_ := set $clientConfigValues "tlsEnableHostnameVerification" "false" -}}
+  {{- $_ := set $clientConfigValues "tlsTrustCertsFilePath" $brokerConfigValues.tlsCertificateFilePath -}}
+  {{- $_ := set $clientConfigValues "useKeyStoreTls" "true" -}}
+  {{- $_ := set $clientConfigValues "tlsTrustStoreType" $brokerConfigValues.tlsTrustStoreType -}}
+  {{- $_ := set $clientConfigValues "tlsTrustStorePath" $brokerConfigValues.tlsTrustStore -}}
+  {{- $_ := set $clientConfigValues "tlsTrustStorePassword" $brokerConfigValues.tlsTrustStorePassword -}}
+  {{- $_ := set $clientConfigValues "brokerServiceUrl" (printf "pulsar+ssl://localhost:%s/" $brokerConfigValues.webServicePortTls) -}}
+{{- end -}}
+
+{{- if eq true false -}}
+  {{- $_ := set $brokerConfigValues "athenzDomainNames" "" -}}
+  {{- $_ := set $brokerConfigValues "authenticationEnabled" "" -}}
+  {{- $_ := set $brokerConfigValues "authenticationProviders" "" -}}
+  {{- $_ := set $brokerConfigValues "authorizationEnabled" "" -}}
+
+  {{- $_ := set $brokerConfigValues "bookkeeperClientAuthenticationParameters" "" -}}
+  {{- $_ := set $brokerConfigValues "bookkeeperClientAuthenticationParametersName" "" -}}
+  {{- $_ := set $brokerConfigValues "bookkeeperClientAuthenticationPlugin" "" -}}
+
+  {{- $_ := set $brokerConfigValues "brokerClientAuthenticationParameters" "" -}}
+  {{- $_ := set $brokerConfigValues "brokerClientAuthenticationPlugin" "" -}}
+
+  {{- $_ := set $clientConfigValues "authPlugin" "" -}}
+  {{- $_ := set $clientConfigValues "authParams" "" -}}
+{{- end -}}
+
+{{- $component := "broker" -}}
+{{- $name := (printf "%s-configuration" (include "broker.name" $)) -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "broker.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+data:
+  log4j2.yaml: |
+    {{ tpl (.Files.Get "files/log4j2.yaml") . | nindent 4 }}
+  pulsar_env.sh: |
+    {{ tpl (.Files.Get "files/pulsar_env.sh") . | nindent 4 }}
+  filesystem_offload_core_site.xml: |
+    {{ tpl (.Files.Get "files/filesystem_offload_core_site.xml") . | nindent 4 }}
+  broker.conf: |
+    {{ include "common.formatting.toToml" (dict "configValues" $brokerConfigValues "context" $) | nindent 4 }}
+    {{ if .Values.config.extraConfigValues }}
+    {{- include "common.formatting.toToml" (dict "configValues" .Values.config.extraConfigValues "context" $) | nindent 4 -}}
+    {{ end }}
+  client.conf: |
+    {{ include "common.formatting.toToml" (dict "configValues" $clientConfigValues "context" $) | nindent 4 }}

@@ -64,3 +64,12 @@ example: {{ include "common.lifeCycle.meta-data-store-statefulset-running" $ }}
     - "job"
     - "-lapp.kubernetes.io/component=life-cycle"
 {{- end -}}
+
+{{- define "common.lifeCycle.broker-running" -}}
+- name: data-store-running
+  image: groundnuty/k8s-wait-for:latest
+  imagePullPolicy: IfNotPresent
+  args:
+    - "pod"
+    - {{ printf "-lapp.kubernetes.io/component=broker" | quote }}
+{{- end -}}

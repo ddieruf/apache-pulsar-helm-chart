@@ -10,6 +10,11 @@
 {{- $_ := unset $configValues "secureClientPort" -}}
 {{- $_ := unset $globalConfigValues "secureClientPort" -}}
 
+{{- $clusterAddresses := (include "meta-data-store.quorum-cluster-addresses" $ | fromJson) -}}
+{{- range $idx,$address := $clusterAddresses -}}
+  {{- $_ := set $configValues (printf "server.%s" $idx) $address -}}
+{{- end -}}
+
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
   {{/*  Todo: Ideally only the secure port is open but the liveness probe is hardcoded to 2181
   {{- $_ := unset $configValues "clientPort" -}}
@@ -41,11 +46,6 @@
   {{- end -}}
 {{- end -}}
 
-{{- $clusterAddresses := (include "meta-data-store.quorum-cluster-addresses" $ | fromJson) -}}
-{{- range $idx,$address := $clusterAddresses -}}
-  {{- $_ := set $configValues (printf "server.%s" $idx) $address -}}
-{{- end -}}
-
 {{- $component := "meta-data-store" -}}
 {{- $name := (printf "%s-configuration" (include "meta-data-store.name" $)) -}}
 
@@ -68,9 +68,4 @@ data:
     {{- include "common.formatting.toToml" (dict "configValues" $configValues "context" $) | nindent 4 -}}
     {{ if .Values.config.extraConfigValues }}
     {{- include "common.formatting.toToml" (dict "configValues" .Values.config.extraConfigValues "context" $) | nindent 4 -}}
-    {{ end }}
-  global_zookeeper.conf: |
-    {{- include "common.formatting.toToml" (dict "configValues" $globalConfigValues "context" $) | nindent 4 -}}
-    {{ if .Values.globalConfig.extraConfigValues }}
-    {{- include "common.formatting.toToml" (dict "configValues" .Values.globalConfig.extraConfigValues "context" $) | nindent 4 -}}
     {{ end }}

@@ -163,17 +163,19 @@ For more information about headless services with statefulsets and K8s DNS - htt
   {{- $replicas := (default 0 (.Values.global.metaDataStore.replicas | int)) -}}
   {{- $nonPersistentReplicas := (default 0 (.Values.global.metaDataStore.nonPersistentReplicas | int)) -}}
   {{- $totalServers := add $replicas $nonPersistentReplicas -}}
+  {{- $serverCount := 1 -}} {{/* This holds a 1 based index of each zerver instance*/}}
 
-  {{- range $i := until $replicas -}}
+  {{- range $i := until $replicas -}} {{/* The count starts at zero to track the indexx of each statfulset index*/}}
     {{- $address := (include "meta-data-store.quorum-instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset" (include "meta-data-store.name" $)) "context" $)) }}
-    {{- $_ := set $addresses (toString $i) $address }}
+    {{- $_ := set $addresses (toString $serverCount) $address }}
+    {{- $serverCount = (add $serverCount 1) -}}
   {{- end -}}
 
-  {{- $i := 0 }}
+  {{- $i := 0 }} {{/* This holds a zero based index of each statefulset instance*/}}
   {{- range $r := untilStep $replicas ($totalServers | int) 1 -}}
-    {{- $address := (include "meta-data-store.quorum-instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset-non-persistent" (include "meta-data-store.name" $)) "context"
-    $)) -}}
-    {{- $_ := set $addresses (toString $r) $address }}
+    {{- $address := (include "meta-data-store.quorum-instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset-non-persistent" (include "meta-data-store.name" $)) "context" $)) -}}
+    {{- $_ := set $addresses (toString $serverCount) $address }}
+    {{- $serverCount = (add $serverCount 1) -}}
     {{- $i = (add $i 1) -}}
   {{- end -}}
 

@@ -1,0 +1,95 @@
+suite: Test broker config map
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/broker/templates/configmap.yaml
+tests:
+  - it: should be correct document
+    asserts:
+      - containsDocument:
+          kind: ConfigMap
+          apiVersion: v1
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          something: somewhere
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              something: somewhere
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: broker
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: broker
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: broker-0.1.0
+            name: broker-configuration
+            namespace: xx
+
+  - it: should have extra opts for ssl
+    set:
+      global:
+        secureClusterEdge: true
+        interComponentTls:
+          enabled: true
+    asserts:
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Djavax.net.ssl.trustStorePassword=/pulsar/jks/jks-password"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Djavax.net.ssl.keyStorePassword=/pulsar/jks/jks-password"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Djavax.net.ssl.keyStore=/pulsar/jks/keystore.jks"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Djavax.net.ssl.trustStore=/pulsar/jks/truststore.jks"
+
+  - it: should have correct meta data store service addresses
+    asserts:
+      - matchRegex:
+          path: data.broker\.conf
+          pattern: "bookkeeperMetadataServiceUri=zk\\+hierarchical://meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181;meta-data-store-statefulset-1.meta-data-store-headless.xx.svc.cluster.local:2181"
+      - matchRegex:
+          path: data.broker\.conf
+          pattern: "configurationMetadataStoreUrl=zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181,meta-data-store-statefulset-1.meta-data-store-headless.xx.svc.cluster.local:2181"
+      - matchRegex:
+          path: data.broker\.conf
+          pattern: "metadataStoreUrl=zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181,meta-data-store-statefulset-1.meta-data-store-headless.xx.svc.cluster.local:2181"
+
+  - it: should have correct default ports
+    set:
+      global:
+        secureClusterEdge: false
+        interComponentTls:
+          enabled: false
+      broker:
+        service:
+          ports:
+            pulsar: 123
+            pulsarSsl: 456
+            http: 789
+            https: 012
+    asserts:
+      - matchRegex:
+          path: data.broker\.conf
+          pattern: "brokerServicePort=123"
+      - notMatchRegex:
+          path: data.broker\.conf
+          pattern: "brokerServicePortTls=*"
+      - matchRegex:
+          path: data.broker\.conf
+          pattern: "webServicePort=789"
+      - notMatchRegex:
+          path: data.broker\.conf
+          pattern: "webServicePortTls=*"

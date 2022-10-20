@@ -13,7 +13,7 @@ set -o errtrace
 #       Script Globals
 #######################################
 
-cmdBase="helm unittest . -3"
+cmdBase="helm unittest . --strict --color --helm3 --failfast"
 
 #######################################
 #       Tests

@@ -112,13 +112,13 @@ Configuration:
 
     Logger:
       - name: org.apache.bookkeeper.bookie.BookieShell
-        level: "${sys:pulsar.log.level}"
+        level: info
         additivity: false
         AppenderRef:
           - ref: Console
 
       - name: verbose
-        level: "${sys:pulsar.log.level}"
+        level: info
         additivity: false
         AppenderRef:
           - ref: Console

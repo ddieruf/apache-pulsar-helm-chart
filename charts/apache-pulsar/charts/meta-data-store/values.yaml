@@ -11,11 +11,11 @@ globalData:
 
   ## @param globalData.replicas The number of meta data stores to deploy
   ##
-  replicas: 2
+  replicas: 1
 
   ## @param globalData.nonPersistentReplicas Number of non-persistent Meta Data Store nodes. Used as floating Meta Data Store to maintain quorum in AZ failures
   ##
-  nonPersistentReplicas: 0
+  nonPersistentReplicas: 2
 
 ## @section Image parameters
 ## @descriptionStart
@@ -87,7 +87,7 @@ pulsarEnv:
     root: "error"
     ## @param pulsarEnv.loggingLevels.pulsar Applies the PULSAR_LOG_LEVEL env var
     ##
-    pulsar: "info"
+    pulsar: "error"
   ## @param pulsarEnv.extraOpts A collection of extra options to be passed to the jvm. Format each as the entire key/value
   ##
   extraOpts:
@@ -124,7 +124,7 @@ config:
   ## @skip config.dataDir
   ## The location where ZooKeeper will store in-memory database snapshots as well as the transaction log of updates to the database.
   ##
-  dataDir:
+  dataDir: data/zookeeper
   ## @skip config.clientPort
   ## The port on which the ZooKeeper server will listen for connections.
   ##
@@ -476,7 +476,7 @@ containerSecurityContext:
 
 ## @param containerCommand Override the container image ENTRYPOINT. Leave blank to use image default (if set)
 ##
-containerCommand: ["sh", "-c", "/pulsar/bin/pulsar zookeeper"]
+containerCommand: ["sh", "-c", "exec /pulsar/bin/pulsar zookeeper"]
 
 ## @param containerArgs Override the container image CMD. Leave blank to use image default (if set)
 ##
@@ -632,7 +632,7 @@ livenessProbe:
   exec:
     command:
       - "/pulsar/probes/liveness.sh"
-  periodSeconds: 3
+  periodSeconds: 5
   timeoutSeconds: 30
   failureThreshold: 5
   successThreshold: 1
@@ -662,7 +662,7 @@ startupProbe:
   exec:
     command:
       - "/pulsar/probes/startup.sh"
-  periodSeconds: 3
+  periodSeconds: 5
   failureThreshold: 10
 
 ## @param lifecycleHooks lifecycleHooks for the Meta Data Store container to automate configuration before or after startup

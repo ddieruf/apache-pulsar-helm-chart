@@ -1,0 +1,78 @@
+suite: Test broker ingress
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/broker/templates/ingress.yaml
+tests:
+  - it: should be correct document
+    set:
+      global:
+        secureClusterEdge: false
+        proxy:
+          enabled: false
+      broker:
+        ingress:
+          enabled: true
+    asserts:
+      - containsDocument:
+          kind: Ingress
+          apiVersion: networking.k8s.io/v1
+
+  - it: should require ingress tls
+    set:
+      global:
+        secureClusterEdge: true
+#        proxy:
+#          enabled: false
+      broker:
+        ingress:
+          enabled: true
+          tls: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "The broker's ingress.tls should be 'true' when secure communications are enabled"
+
+#  - it: should require the proxy be disabled
+#    set:
+#      global:
+#        secureClusterEdge: true
+#        proxy:
+#          enabled: true
+#      broker:
+#        ingress:
+#          enabled: true
+#    asserts:
+#      - failedTemplate:
+#          errorMessage: "With the proxy enabled, the broker becomes an internal component and can't have ingress enabled. Either disable the proxy (to bring the broker to the edge) or disable the broker ingress."
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          something: somewhere
+      broker:
+        ingress:
+          enabled: true
+          tls: true
+          annotations:
+            somethingelse: somewherelese
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            name: broker-ingress
+            namespace: xx
+            annotations:
+              something: somewhere
+              somethingelse: somewherelese
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: broker
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: broker
+              helm.sh/chart: broker-0.1.0
+              app.kubernetes.io/part-of: apache-pulsar

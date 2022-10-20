@@ -1,0 +1,1496 @@
+globalData:
+  ## @skip globalData.nameOverride
+  ## [string,nullable] String to partially override common.names.name
+  ##
+  nameOverride: ""
+
+  ## @skip globalData.fullnameOverride
+  ## [string,nullable] String to fully override common.names.fullname
+  ##
+  fullnameOverride: ""
+
+  ## @param globalData.replicas The number of brokers to deploy
+  ##
+  replicas: 3
+
+## @section Image parameters
+## @descriptionStart
+## @descriptionEnd
+##
+image:
+
+  ## @param image.registry [string,nullable] Component image registry
+  ##
+  registry: ""
+
+  ## @param image.repository [string,nullable] Component image repository
+  ##
+  repository: "datastax/lunastreaming"
+
+  ## @param image.tag [string,nullable] Component image tag (immutable tags are recommended)
+  ##
+  tag: "2.10_2.2"
+
+  ## @param image.pullPolicy Component image pull policy
+  ## Specify a imagePullPolicy
+  ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+  ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+  ##
+  pullPolicy: IfNotPresent
+
+  ## @param image.pullSecrets [array,nullable] Specify docker-registry secret names as an array
+  ## Optionally specify an array of imagePullSecrets.
+  ## Secrets must be manually created in the namespace.
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ## e.g:
+  ## pullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
+  pullSecrets: []
+
+## @section Certificate Resources
+## @descriptionStart
+## Configure the component's certificate
+## @descriptionEnd
+##
+certificateResources:
+
+  ## @param certificateResources.tlsSecretName [string,nullable]
+  ##
+  tlsSecretName:
+
+  ## @param certificateResources.jksPasswordSecretName [string,nullable]
+  ##
+  jksPasswordSecretName:
+
+  ## @extra certificateResources.certificateRequest Refer to the [CertificateSpec](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec) for more info about these values.
+  ##
+  certificateRequest:
+
+    ## @param certificateResources.certificateRequest.renewBefore How long before the currently issued certificate’s expiry cert-manager should renew the certificate. Default is 2/3 of the duration.
+    ##
+    renewBefore:
+
+    ## @param certificateResources.certificateRequest.duration The requested ‘duration’ (i.e. lifetime) of the Certificate. Default is 90 days
+    ##
+    duration:
+
+    ##
+    ##
+    subject:
+
+      ## @param certificateResources.certificateRequest.subject.organizations [array,nullable] Organizations to be used on the Certificate
+      ##
+      organizations: []
+
+    ## @param certificateResources.certificateRequest.privateKey [object,nullable] Options to control private keys used for the Certificate
+    ##
+    privateKey: {}
+
+    ## @param certificateResources.certificateRequest.issuerRef [object,nullable] IssuerRef is a reference to the issuer for this certificate
+    ##
+    issuerRef: {}
+
+## @section Pulsar Environment Configuration
+## @descriptionStart
+
+## @descriptionEnd
+##
+pulsarEnv:
+  ## @param pulsarEnv.confPath The full path where configuration files are held
+  ##
+  confPath: /pulsar/conf
+  ## @param pulsarEnv.gc A collection of JVM settings garbage collection settings
+  ##
+  gc:
+    - "-XX:+UseG1GC"
+  ## @param pulsarEnv.mem A collection of JVM memory settings
+  ##
+  mem:
+    - "-Xms1g"
+    - "-Xmx1g"
+    - "-Dcom.sun.management.jmxremote"
+    - "-Djute.maxbuffer=10485760"
+  ##
+  ##
+  loggingLevels:
+    ## @param pulsarEnv.loggingLevels.root Applies the pulsar.log.root.level JVM option
+    ##
+    root: "error"
+    ## @param pulsarEnv.loggingLevels.pulsar Applies the PULSAR_LOG_LEVEL env var
+    ##
+    pulsar: "error"
+  ## @param pulsarEnv.extraOpts A collection of extra options to be passed to the jvm. Format each as the entire key/value
+  ##
+  extraOpts:
+    - "-Dlog4j2.formatMsgNoLookups=true"
+  ## @param pulsarEnv.extraClasspath A collection of extra paths for the pulsar classpath. Include just the folder or file path, no delimiter.
+  ##
+  extraClasspath: []
+  ## @param pulsarEnv.stopTimeout Time to wait for an instance to stop before getting forceful
+  ##
+  stopTimeout: 5
+
+## @section broker configuration
+## @descriptionStart
+## Configure broker settings. Refer to the [project's documentation](https://pulsar.apache.org/docs/reference-configuration#broker) for a full spec.
+##
+## > Note, the values not documented here are set by the parent chart
+## @descriptionEnd
+##
+config:
+  ## @param config.acknowledgmentAtBatchIndexLevelEnabled Enable or disable the batch index acknowledgement.
+  ##
+  acknowledgmentAtBatchIndexLevelEnabled: FALSE
+  ## @param config.activeConsumerFailoverDelayTimeMillis How long to delay rewinding cursor and dispatching messages when active consumer is changed.
+  ##
+  activeConsumerFailoverDelayTimeMillis: 1000
+  ## @param config.additionalServletDirectory Location of broker additional servlet NAR directory, example: ./brokerAdditionalServlet
+  ##
+  additionalServletDirectory:
+  ## @param config.additionalServlets Additional servlet name. If you have multiple additional servlets, separate them by commas. For example, additionalServlet_1, additionalServlet_2
+  ##
+  additionalServlets:
+  ## @param config.advertisedListeners Specify multiple advertised listeners for the broker. The format is <listener_name>:pulsar://<host>:<port>. If there are multiple listeners, separate them with commas. Note: do not use this configuration with advertisedAddress and brokerServicePort. If the value of this configuration is empty, the broker uses advertisedAddress and brokerServicePort
+  ##
+  advertisedListeners:
+  ## @param config.allowAutoSubscriptionCreation Enable subscription auto creation if a new consumer connected
+  ##
+  allowAutoSubscriptionCreation: TRUE
+  ## @param config.allowAutoTopicCreation Enable topic auto creation if a new producer or consumer connected
+  ##
+  allowAutoTopicCreation: TRUE
+  ## @param config.allowAutoTopicCreationType The type of topic that is allowed to be automatically created.(partitioned/non-partitioned)
+  ##
+  allowAutoTopicCreationType: non-partitioned
+  ## @skip config.athenzDomainNames
+  ## Supported Athenz provider domain names(comma separated) for authentication
+  ##
+  athenzDomainNames:
+  ## @param config.authenticateOriginalAuthData If this flag is set to true, the broker authenticates the original Auth data; else it just accepts the originalPrincipal and authorizes it (if required).
+  ##
+  authenticateOriginalAuthData: FALSE
+  ## @skip config.authenticationEnabled
+  ## Enable authentication
+  ##
+  authenticationEnabled: FALSE
+  ## @skip config.authenticationProviders
+  ## Authentication provider name list, which is comma separated list of class names
+  ##
+  authenticationProviders:
+  ## @param config.authenticationRefreshCheckSeconds Interval of time for checking for expired authentication credentials
+  ##
+  authenticationRefreshCheckSeconds: 60
+  ## @skip config.authorizationEnabled
+  ## Enforce authorization
+  ##
+  authorizationEnabled: FALSE
+  ## @param config.autoSkipNonRecoverableData Skip reading non-recoverable/unreadable data-ledger under managed-ledger’s list.It helps when data-ledgers gets corrupted at bookkeeper and managed-cursor is stuck at that ledger.
+  ##
+  autoSkipNonRecoverableData: FALSE
+  ## @param config.backlogQuotaCheckEnabled Enable backlog quota check. Enforces action on topic when the quota is reached
+  ##
+  backlogQuotaCheckEnabled: TRUE
+  ## @param config.backlogQuotaCheckIntervalInSeconds How often to check for topics that have reached the quota
+  ##
+  backlogQuotaCheckIntervalInSeconds: 60
+  ## @param config.backlogQuotaDefaultLimitBytes The default per-topic backlog quota limit. Being less than 0 means no limitation. By default, it is -1.
+  ##
+  backlogQuotaDefaultLimitBytes: -1
+  ## @param config.backlogQuotaDefaultRetentionPolicy The defaulted backlog quota retention policy. By Default, it is producer_request_hold.'producer_request_hold' Policy which holds producer's send request until the resource becomes available (or holding times out) 'producer_exception' Policy which throws javax.jms.ResourceAllocationException to the producer 'consumer_backlog_eviction' Policy which evicts the oldest message from the slowest consumer's backlog
+  ##
+  backlogQuotaDefaultRetentionPolicy: producer_request_hold
+  ## @skip config.bindAddress
+  ## Hostname or IP address the service binds on, default is 0.0.0.0.
+  ##
+  bindAddress: 0.0.0.0
+  ## @param config.bindAddresses Additional Hostname or IP addresses the service binds on: listener_name:scheme://host:port,....
+  ##
+  bindAddresses:
+  ## @skip config.bookkeeperClientAuthenticationParameters
+  ##
+  ##
+  bookkeeperClientAuthenticationParameters:
+  ## @skip config.bookkeeperClientAuthenticationParametersName
+  ## BookKeeper auth plugin implementation specifics parameters name and values
+  ##
+  bookkeeperClientAuthenticationParametersName:
+  ## @skip config.bookkeeperClientAuthenticationPlugin
+  ## Authentication plugin to use when connecting to bookies
+  ##
+  bookkeeperClientAuthenticationPlugin:
+  ## @param config.bookkeeperClientEnforceMinNumRacksPerWriteQuorum Enforces rack-aware bookie selection policy to pick bookies from 'bookkeeperClientMinNumRacksPerWriteQuorum' racks for a writeQuorum. If BK can't find bookie then it would throw BKNotEnoughBookiesException instead of picking random one.
+  ##
+  bookkeeperClientEnforceMinNumRacksPerWriteQuorum: FALSE
+  ## @param config.bookkeeperClientGetBookieInfoIntervalSeconds Set the interval to periodically check bookie info
+  ##
+  bookkeeperClientGetBookieInfoIntervalSeconds: 86400
+  ## @param config.bookkeeperClientGetBookieInfoRetryIntervalSeconds Set the interval to retry a failed bookie info lookup
+  ##
+  bookkeeperClientGetBookieInfoRetryIntervalSeconds: 60
+  ## @param config.bookkeeperClientHealthCheckEnabled Enable bookies health check. Bookies that have more than the configured number of failure within the interval will be quarantined for some time. During this period, new ledgers won’t be created on these bookies
+  ##
+  bookkeeperClientHealthCheckEnabled: TRUE
+  ## @param config.bookkeeperClientHealthCheckErrorThresholdPerInterval
+  ##
+  bookkeeperClientHealthCheckErrorThresholdPerInterval: 5
+  ## @param config.bookkeeperClientHealthCheckIntervalSeconds
+  ##
+  bookkeeperClientHealthCheckIntervalSeconds: 60
+  ## @param config.bookkeeperClientHealthCheckQuarantineTimeInSeconds
+  ##
+  bookkeeperClientHealthCheckQuarantineTimeInSeconds: 1800
+  ## @param config.bookkeeperClientIsolationGroups Enable bookie isolation by specifying a list of bookie groups to choose from. Any bookie outside the specified groups will not be used by the broker
+  ##
+  bookkeeperClientIsolationGroups:
+  ## @param config.bookkeeperClientMinAvailableBookiesInIsolationGroups Minimum bookies that should be available as part of bookkeeperClientIsolationGroups else broker will include bookkeeperClientSecondaryIsolationGroups bookies in isolated list.
+  ##
+  bookkeeperClientMinAvailableBookiesInIsolationGroups:
+  ## @param config.bookkeeperClientMinNumRacksPerWriteQuorum Minimum number of racks per write quorum. BK rack-aware bookie selection policy will try to get bookies from at least 'bookkeeperClientMinNumRacksPerWriteQuorum' racks for a write quorum.
+  ##
+  bookkeeperClientMinNumRacksPerWriteQuorum: 2
+  ## @param config.bookkeeperClientNumWorkerThreads Number of BookKeeper client worker threads. Default is Runtime.getRuntime().availableProcessors()
+  ##
+  bookkeeperClientNumWorkerThreads:
+  ## @param config.bookkeeperClientRackawarePolicyEnabled Enable rack-aware bookie selection policy. BK will choose bookies from different racks when forming a new bookie ensemble
+  ##
+  bookkeeperClientRackawarePolicyEnabled: TRUE
+  ## @param config.bookkeeperClientRegionawarePolicyEnabled Enable region-aware bookie selection policy. BK will choose bookies from different regions and racks when forming a new bookie ensemble. If enabled, the value of bookkeeperClientRackawarePolicyEnabled is ignored
+  ##
+  bookkeeperClientRegionawarePolicyEnabled: FALSE
+  ## @param config.bookkeeperClientReorderReadSequenceEnabled Enable/disable reordering read sequence on reading entries.
+  ##
+  bookkeeperClientReorderReadSequenceEnabled: FALSE
+  ## @param config.bookkeeperClientSecondaryIsolationGroups Enable bookie secondary-isolation group if bookkeeperClientIsolationGroups doesn't have enough bookie available.
+  ##
+  bookkeeperClientSecondaryIsolationGroups:
+  ## @param config.bookkeeperClientSpeculativeReadTimeoutInMillis Speculative reads are initiated if a read request doesn’t complete within a certain time Using a value of 0, is disabling the speculative reads
+  ##
+  bookkeeperClientSpeculativeReadTimeoutInMillis: 0
+  ## @param config.bookkeeperClientTimeoutInSeconds Timeout for BK add / read operations
+  ##
+  bookkeeperClientTimeoutInSeconds: 30
+  ## @param config.bookkeeperEnableStickyReads Enable/disable having read operations for a ledger to be sticky to a single bookie. If this flag is enabled, the client will use one single bookie (by preference) to read all entries for a ledger.
+  ##
+  bookkeeperEnableStickyReads: TRUE
+  ## @skip config.bookkeeperMetadataServiceUri
+  ## Metadata service uri that bookkeeper is used for loading corresponding metadata driver and resolving its metadata service location. This value can be fetched using bookkeeper shell whatisinstanceid command in BookKeeper cluster. For example: zk+hierarchical://localhost:2181/ledgers. The metadata service uri list can also be semicolon separated values like below: zk+hierarchical://zk1:2181;zk2:2181;zk3:2181/ledgers
+  ##
+  bookkeeperMetadataServiceUri:
+  ## @param config.bookkeeperNumberOfChannelsPerBookie Number of channels per bookie
+  ##
+  bookkeeperNumberOfChannelsPerBookie: 16
+  ## @skip config.bootstrapNamespaces
+  ## The bootstrap name.
+  ##
+  bootstrapNamespaces:
+  ## @skip config.brokerClientAuthenticationParameters
+  ##
+  ##
+  brokerClientAuthenticationParameters:
+  ## @skip config.brokerClientAuthenticationPlugin
+  ## Authentication settings of the broker itself. Used when the broker connects to other brokers, either in same or other clusters
+  ##
+  brokerClientAuthenticationPlugin:
+  ## @param config.brokerClientSslProvider The TLS Provider used by internal client to authenticate with other Pulsar brokers
+  ##
+  brokerClientSslProvider:
+  ## @param config.brokerClientTlsCiphers Specify the tls cipher the internal client will use to negotiate during TLS Handshake. (a comma-separated list of ciphers) e.g. [TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256]
+  ##
+  brokerClientTlsCiphers:
+  ## @skip config.brokerClientTlsEnabledWithKeyStore
+  ## Whether internal client use KeyStore type to authenticate with Pulsar brokers
+  ##
+  brokerClientTlsEnabledWithKeyStore: FALSE
+  ## @param config.brokerClientTlsProtocols Specify the tls protocols the broker will use to negotiate during TLS handshake. (a comma-separated list of protocol names). e.g. TLSv1.3, TLSv1.2
+  ##
+  brokerClientTlsProtocols:
+  ## @skip config.brokerClientTlsTrustStore
+  ## TLS TrustStore path for internal client, used by the internal client to authenticate with Pulsar brokers
+  ##
+  brokerClientTlsTrustStore:
+  ## @skip config.brokerClientTlsTrustStorePassword
+  ## TLS TrustStore password for internal client, used by the internal client to authenticate with Pulsar brokers
+  ##
+  brokerClientTlsTrustStorePassword:
+  ## @skip config.brokerClientTlsTrustStoreType
+  ## TLS TrustStore type configuration for internal client: JKS, PKCS12, used by the internal client to authenticate with Pulsar brokers
+  ##
+  brokerClientTlsTrustStoreType: JKS
+  ## @param config.brokerDeduplicationEnabled Sets the default behavior for message deduplication in the broker. If enabled, the broker will reject messages that were already stored in the topic. This setting can be overridden on a per-namespace basis.
+  ##
+  brokerDeduplicationEnabled: FALSE
+  ## @param config.brokerDeduplicationEntriesInterval The number of entries after which a deduplication informational snapshot is taken. A larger interval will lead to fewer snapshots being taken, though this would also lengthen the topic recovery time (the time required for entries published after the snapshot to be replayed).
+  ##
+  brokerDeduplicationEntriesInterval: 1000
+  ## @param config.brokerDeduplicationMaxNumberOfProducers The maximum number of producers for which information will be stored for deduplication purposes.
+  ##
+  brokerDeduplicationMaxNumberOfProducers: 10000
+  ## @param config.brokerDeduplicationProducerInactivityTimeoutMinutes The time of inactivity (in minutes) after which the broker will discard deduplication information related to a disconnected producer.
+  ##
+  brokerDeduplicationProducerInactivityTimeoutMinutes: 360
+  ## @param config.brokerDeduplicationSnapshotFrequencyInSeconds How often is the thread pool scheduled to check whether a snapshot needs to be taken. The value of 0 means it is disabled.
+  ##
+  brokerDeduplicationSnapshotFrequencyInSeconds: 120
+  ## @param config.brokerDeduplicationSnapshotIntervalSeconds The time period after which a deduplication informational snapshot is taken. It runs simultaneously with brokerDeduplicationEntriesInterval.
+  ##
+  brokerDeduplicationSnapshotIntervalSeconds: 120
+  ## @param config.brokerDeleteInactiveTopicsEnabled Enable the deletion of inactive topics. If topics are not consumed for some while, these inactive topics might be cleaned up. Deleting inactive topics is enabled by default. The default period is 1 minute. Note: When brokerDeleteInactiveTopicsEnabled is set to true, you need to ensure that allowAutoTopicCreation is also set to true.
+  ##
+  brokerDeleteInactiveTopicsEnabled: TRUE
+  ## @param config.brokerDeleteInactiveTopicsFrequencySeconds How often to check for inactive topics
+  ##
+  brokerDeleteInactiveTopicsFrequencySeconds: 60
+  ## @param config.brokerDeleteInactiveTopicsMaxInactiveDurationSeconds Set the maximum duration for inactive topics. If it is not specified, the brokerDeleteInactiveTopicsFrequencySeconds parameter is adopted.
+  ##
+  brokerDeleteInactiveTopicsMaxInactiveDurationSeconds:
+  ## @param config.brokerDeleteInactiveTopicsMode Set the mode to delete inactive topics.delete_when_no_subscriptions: delete the topic which has no subscriptions or active producers. delete_when_subscriptions_caught_up: delete the topic whose subscriptions have no backlogs and which has no active producers or consumers.
+  ##
+  brokerDeleteInactiveTopicsMode: delete_when_no_subscriptions
+  ## @param config.brokerEntryMetadataInterceptors Set broker entry metadata interceptors. Multiple interceptors should be separated by commas. Available values:org.apache.pulsar.common.intercept.AppendBrokerTimestampMetadataInterceptor, org.apache.pulsar.common.intercept.AppendIndexMetadataInterceptor
+  ##
+  brokerEntryMetadataInterceptors:
+  ## @param config.brokerServiceCompactionMonitorIntervalInSeconds Interval between checks to determine whether topics with compaction policies need compaction.
+  ##
+  brokerServiceCompactionMonitorIntervalInSeconds: 60
+  ## @param config.brokerServiceCompactionThresholdInBytes If the estimated backlog size is greater than this threshold, compression is triggered. Set this threshold to 0 means disabling the compression check.
+  ##
+  brokerServiceCompactionThresholdInBytes:
+  ## @param config.brokerShutdownTimeoutMs Time to wait for broker graceful shutdown. After this time elapses, the process will be killed
+  ##
+  brokerShutdownTimeoutMs: 60000
+  ## @param config.clientLibraryVersionCheckAllowUnversioned Allow client libraries with no version information
+  ##
+  clientLibraryVersionCheckAllowUnversioned:
+  ## @param config.clientLibraryVersionCheckEnabled Enable check for minimum allowed client library version
+  ##
+  clientLibraryVersionCheckEnabled: FALSE
+  ## @skip config.clusterName
+  ## Name of the cluster to which this broker belongs to
+  ##
+  clusterName:
+  ## @skip config.configurationMetadataStoreUrl
+  ## Configuration store connection string (as a comma-separated list)
+  ##
+  configurationMetadataStoreUrl:
+  ## @param config.defaultNamespaceBundleSplitAlgorithm Default algorithm name for namespace bundle split
+  ##
+  defaultNamespaceBundleSplitAlgorithm: range_equally_divide
+  ## @param config.defaultNumPartitions The number of partitioned topics that is allowed to be automatically created if allowAutoTopicCreationType is partitioned
+  ##
+  defaultNumPartitions: 1
+  ## @param config.defaultRetentionSizeInMB Default retention size
+  ##
+  defaultRetentionSizeInMB: 0
+  ## @param config.defaultRetentionTimeInMinutes Default message retention time
+  ##
+  defaultRetentionTimeInMinutes: 0
+  ## @param config.delayedDeliveryEnabled Whether to enable the delayed delivery for messages. If disabled, messages will be immediately delivered and there will be no tracking overhead.
+  ##
+  delayedDeliveryEnabled: TRUE
+  ## @param config.delayedDeliveryTickTimeMillis Control the tick time for retrying on delayed delivery, which affects the accuracy of the delivery time compared to the scheduled time. By default, it is 1 second.
+  ##
+  delayedDeliveryTickTimeMillis: 1000
+  ## @param config.dispatchThrottlingOnBatchMessageEnabled Apply dispatch rate limiting on batch message instead individual messages with in batch message. (Default is disabled).
+  ##
+  dispatchThrottlingOnBatchMessageEnabled: FALSE
+  ## @param config.dispatchThrottlingRateInByte Dispatch throttling-limit of bytes for a broker (per second). 0 means the dispatch throttling-limit is disabled.
+  ##
+  dispatchThrottlingRateInByte: 0
+  ## @param config.dispatchThrottlingRateInMsg Dispatch throttling-limit of messages for a broker (per second). 0 means the dispatch throttling-limit is disabled.
+  ##
+  dispatchThrottlingRateInMsg: 0
+  ## @param config.dispatchThrottlingRatePerReplicatorInByte The default bytes per second dispatch throttling-limit for every replicator in replication. The value of 0 means disabling replication message-byte dispatch-throttling
+  ##
+  dispatchThrottlingRatePerReplicatorInByte: 0
+  ## @param config.dispatchThrottlingRatePerReplicatorInMsg The default messages per second dispatch throttling-limit for every replicator in replication. The value of 0 means disabling replication message dispatch-throttling
+  ##
+  dispatchThrottlingRatePerReplicatorInMsg: 0
+  ## @param config.dispatchThrottlingRatePerSubscriptionInByte Dispatch throttling-limit of bytes for a subscription. 0 means the dispatch throttling-limit is disabled.
+  ##
+  dispatchThrottlingRatePerSubscriptionInByte: 0
+  ## @param config.dispatchThrottlingRatePerSubscriptionInMsg Dispatch throttling-limit of messages for a subscription. 0 means the dispatch throttling-limit is disabled.
+  ##
+  dispatchThrottlingRatePerSubscriptionInMsg: 0
+  ## @param config.dispatchThrottlingRatePerTopicInByte Dispatch throttling-limit of bytes for every topic (per second). 0 means the dispatch throttling-limit is disabled.
+  ##
+  dispatchThrottlingRatePerTopicInByte: 0
+  ## @param config.dispatchThrottlingRatePerTopicInMsg Dispatch throttling-limit of messages for every topic (per second). 0 means the dispatch throttling-limit is disabled.
+  ##
+  dispatchThrottlingRatePerTopicInMsg: 0
+  ## @param config.dispatchThrottlingRateRelativeToPublishRate Enable dispatch rate-limiting relative to publish rate.
+  ##
+  dispatchThrottlingRateRelativeToPublishRate: FALSE
+  ## @param config.enableExposingBrokerEntryMetadataToClient Whether to expose broker entry metadata to client or not.
+  ##
+  enableExposingBrokerEntryMetadataToClient:
+  ## @param config.enableNonPersistentTopics Whether non-persistent topics are enabled on the broker
+  ##
+  enableNonPersistentTopics: TRUE
+  ## @param config.enablePackagesManagement Enable the packages management service or not
+  ##
+  enablePackagesManagement: FALSE
+  ## @param config.enablePersistentTopics Whether persistent topics are enabled on the broker
+  ##
+  enablePersistentTopics: TRUE
+  ## @param config.enableReplicatedSubscriptions Whether to enable tracking of replicated subscriptions state across clusters.
+  ##
+  enableReplicatedSubscriptions: TRUE
+  ## @param config.exposeConsumerLevelMetricsInPrometheus Whether to enable consumer level metrics.
+  ##
+  exposeConsumerLevelMetricsInPrometheus: FALSE
+  ## @param config.exposePreciseBacklogInPrometheus Enable expose the precise backlog stats, set false to use published counter and consumed counter to calculate, this would be more efficient but may be inaccurate.
+  ##
+  exposePreciseBacklogInPrometheus: FALSE
+  ## @param config.exposePublisherStats Whether to enable topic level metrics.
+  ##
+  exposePublisherStats: TRUE
+  ## @param config.exposeTopicLevelMetricsInPrometheus Whether to enable topic level metrics.
+  ##
+  exposeTopicLevelMetricsInPrometheus: TRUE
+  ## @param config.fileSystemProfilePath For File System Storage, file system profile path.
+  ##
+  fileSystemProfilePath: /pulsar/conf/filesystem_offload_core_site.xml
+  ## @param config.fileSystemURI For File System Storage, file system uri.
+  ##
+  fileSystemURI:
+  ## @param config.forceDeleteNamespaceAllowed Enable you to delete a namespace forcefully.
+  ##
+  forceDeleteNamespaceAllowed: FALSE
+  ## @param config.forceDeleteTenantAllowed Enable you to delete a tenant forcefully.
+  ##
+  forceDeleteTenantAllowed: FALSE
+  ## @skip config.functionsWorkerEnabled
+  ## Whether the Pulsar Functions worker service is enabled in the broker
+  ##
+  functionsWorkerEnabled: false
+  ## @param config.gcsManagedLedgerOffloadBucket For Google Cloud Storage ledger offload, Bucket to place offloaded ledger into.
+  ##
+  gcsManagedLedgerOffloadBucket:
+  ## @param config.gcsManagedLedgerOffloadMaxBlockSizeInBytes For Google Cloud Storage ledger offload, the maximum block size in bytes. (64MB by default, 5MB minimum)
+  ##
+  gcsManagedLedgerOffloadMaxBlockSizeInBytes: 67108864
+  ## @param config.gcsManagedLedgerOffloadReadBufferSizeInBytes For Google Cloud Storage ledger offload, Read buffer size in bytes. (1MB by default)
+  ##
+  gcsManagedLedgerOffloadReadBufferSizeInBytes: 1048576
+  ## @param config.gcsManagedLedgerOffloadRegion For Google Cloud Storage ledger offload, region where offload bucket is located. Go to this page for more details: https://cloud.google.com/storage/docs/bucket-locations .
+  ##
+  gcsManagedLedgerOffloadRegion:
+  ## @param config.gcsManagedLedgerOffloadServiceAccountKeyFile For Google Cloud Storage, path to json file containing service account credentials. For more details, see the "Service Accounts" section of https://support.google.com/googleapi/answer/6158849 .
+  ##
+  gcsManagedLedgerOffloadServiceAccountKeyFile:
+  ## @param config.haProxyProtocolEnabled Enable or disable the HAProxy protocol.
+  ##
+  haProxyProtocolEnabled: FALSE
+  ## @param config.internalListenerName Specify the internal listener name for the broker. Note: the listener name must be contained in advertisedListeners. If the value of this configuration is empty, the broker uses the first listener as the internal listener.
+  ##
+  internalListenerName:
+  ## @param config.isAllowAutoUpdateSchemaEnabled Allow schema to be auto updated at broker level.
+  ##
+  isAllowAutoUpdateSchemaEnabled: TRUE
+  ## @param config.isSchemaValidationEnforced Whether to enable schema validation, when schema validation is enabled, if a producer without a schema attempts to produce the message to a topic with schema, the producer is rejected and disconnected.
+  ##
+  isSchemaValidationEnforced: FALSE
+  ## @param config.jvmGCMetricsLoggerClassName Classname of Pluggable JVM GC metrics logger that can log GC specific metrics.
+  ##
+  jvmGCMetricsLoggerClassName:
+  ## @param config.keepAliveIntervalSeconds How often to check whether the connections are still alive
+  ##
+  keepAliveIntervalSeconds: 30
+  ## @param config.lazyCursorRecovery Whether to recover cursors lazily when trying to recover a managed ledger backing a persistent topic. It can improve write availability of topics. The caveat is now when recovered ledger is ready to write we're not sure if all old consumers' last mark delete position(ack position) can be recovered or not. So user can make the trade off or have custom logic in application to checkpoint consumer state.
+  ##
+  lazyCursorRecovery: FALSE
+  ## @param config.loadBalancerAutoBundleSplitEnabled enable/disable namespace bundle auto split
+  ##
+  loadBalancerAutoBundleSplitEnabled: FALSE
+  ## @param config.loadBalancerBrokerComfortLoadLevelPercentage Usage threshold to determine a broker is having just right level of load
+  ##
+  loadBalancerBrokerComfortLoadLevelPercentage:
+  ## @param config.loadBalancerBrokerMaxTopics Usage threshold to allocate max number of topics to broker
+  ##
+  loadBalancerBrokerMaxTopics: 50000
+  ## @param config.loadBalancerBrokerOverloadedThresholdPercentage Usage threshold to determine a broker as over-loaded
+  ##
+  loadBalancerBrokerOverloadedThresholdPercentage: 85
+  ## @param config.loadBalancerBrokerUnderloadedThresholdPercentage Usage threshold to determine a broker as under-loaded
+  ##
+  loadBalancerBrokerUnderloadedThresholdPercentage:
+  ## @param config.loadBalancerEnabled Enable load balancer
+  ##
+  loadBalancerEnabled: TRUE
+  ## @param config.loadBalancerHostUsageCheckIntervalMinutes Frequency of report to collect
+  ##
+  loadBalancerHostUsageCheckIntervalMinutes: 1
+  ## @param config.loadBalancerLoadSheddingStrategy The shedding strategy of load balance. Available values:org.apache.pulsar.broker.loadbalance.impl.ThresholdShedder, org.apache.pulsar.broker.loadbalance.impl.OverloadShedder, org.apache.pulsar.broker.loadbalance.impl.UniformLoadShedder For the comparisons of the shedding strategies, see here.
+  ##
+  loadBalancerLoadSheddingStrategy: org.apache.pulsar.broker.loadbalance.impl.ThresholdShedder
+  ## @param config.loadBalancerNamespaceBundleMaxBandwidthMbytes maximum bandwidth (in + out) in a bundle, otherwise bundle split will be triggered
+  ##
+  loadBalancerNamespaceBundleMaxBandwidthMbytes:
+  ## @param config.loadBalancerNamespaceBundleMaxMsgRate maximum msgRate (in + out) in a bundle, otherwise bundle split will be triggered
+  ##
+  loadBalancerNamespaceBundleMaxMsgRate: 30000
+  ## @param config.loadBalancerNamespaceBundleMaxSessions maximum sessions (producers + consumers) in a bundle, otherwise bundle split will be triggered
+  ##
+  loadBalancerNamespaceBundleMaxSessions: 1000
+  ## @param config.loadBalancerNamespaceBundleMaxTopics maximum topics in a bundle, otherwise bundle split will be triggered
+  ##
+  loadBalancerNamespaceBundleMaxTopics: 1000
+  ## @param config.loadBalancerNamespaceMaximumBundles maximum number of bundles in a namespace
+  ##
+  loadBalancerNamespaceMaximumBundles: 128
+  ## @param config.loadBalancerPlacementStrategy Strategy to assign a new bundle weightedRandomSelection
+  ##
+  loadBalancerPlacementStrategy:
+  ## @param config.loadBalancerReportUpdateMaxIntervalMinutes Maximum interval to update load report
+  ##
+  loadBalancerReportUpdateMaxIntervalMinutes: 15
+  ## @param config.loadBalancerReportUpdateThresholdPercentage Percentage of change to trigger load report update
+  ##
+  loadBalancerReportUpdateThresholdPercentage: 10
+  ## @param config.loadBalancerResourceQuotaUpdateIntervalMinutes Interval to update namespace bundle resource quota
+  ##
+  loadBalancerResourceQuotaUpdateIntervalMinutes: 15
+  ## @param config.loadBalancerSheddingGracePeriodMinutes Prevent the same topics to be shed and moved to other broker more than once within this timeframe
+  ##
+  loadBalancerSheddingGracePeriodMinutes: 30
+  ## @param config.loadBalancerSheddingIntervalMinutes Load shedding interval. Broker periodically checks whether some traffic should be offload from some over-loaded broker to other under-loaded brokers
+  ##
+  loadBalancerSheddingIntervalMinutes: 1
+  ## @param config.loadManagerClassName Name of load manager to use
+  ##
+  loadManagerClassName: org.apache.pulsar.broker.loadbalance.impl.SimpleLoadManagerImpl
+  ## @param config.managedLedgerCacheCopyEntries Whether we should make a copy of the entry payloads when inserting in cache
+  ##
+  managedLedgerCacheCopyEntries: FALSE
+  ## @param config.managedLedgerCacheEvictionFrequency Configure the cache eviction frequency for the managed ledger cache (evictions/sec)
+  ##
+  managedLedgerCacheEvictionFrequency: 100
+  ## @param config.managedLedgerCacheEvictionTimeThresholdMillis All entries that have stayed in cache for more than the configured time, will be evicted
+  ##
+  managedLedgerCacheEvictionTimeThresholdMillis: 1000
+  ## @param config.managedLedgerCacheEvictionWatermark Threshold to which bring down the cache level when eviction is triggered
+  ##
+  managedLedgerCacheEvictionWatermark: 0.9
+  ## @param config.managedLedgerCacheSizeMB Amount of memory to use for caching data payload in managed ledger. This memory is allocated from JVM direct memory and it’s shared across all the topics running in the same broker. By default, uses 1/5th of available direct memory
+  ##
+  managedLedgerCacheSizeMB:
+  ## @param config.managedLedgerCursorBackloggedThreshold Configure the threshold (in number of entries) from where a cursor should be considered 'backlogged' and thus should be set as inactive.
+  ##
+  managedLedgerCursorBackloggedThreshold: 1000
+  ## @param config.managedLedgerCursorMaxEntriesPerLedger Max number of entries to append to a cursor ledger
+  ##
+  managedLedgerCursorMaxEntriesPerLedger: 50000
+  ## @param config.managedLedgerCursorRolloverTimeInSeconds Max time before triggering a rollover on a cursor ledger
+  ##
+  managedLedgerCursorRolloverTimeInSeconds: 14400
+  ## @param config.managedLedgerDefaultAckQuorum Number of guaranteed copies (acks to wait before write is complete)
+  ##
+  managedLedgerDefaultAckQuorum: 2
+  ## @param config.managedLedgerDefaultEnsembleSize Number of bookies to use when creating a ledger
+  ##
+  managedLedgerDefaultEnsembleSize: 2
+  ## @param config.managedLedgerDefaultMarkDeleteRateLimit Rate limit the amount of writes per second generated by consumer acking the messages
+  ##
+  managedLedgerDefaultMarkDeleteRateLimit: 1
+  ## @param config.managedLedgerDefaultWriteQuorum Number of copies to store for each message
+  ##
+  managedLedgerDefaultWriteQuorum: 2
+  ## @param config.managedLedgerInactiveLedgerRolloverTimeSeconds Time to rollover ledger for inactive topic
+  ##
+  managedLedgerInactiveLedgerRolloverTimeSeconds: 0
+  ## @param config.managedLedgerInfoCompressionType Compression type of managed ledger information. Available options are NONE, LZ4, ZLIB, ZSTD, and SNAPPY). If this value is NONE or invalid, the managedLedgerInfo is not compressed. Note that after enabling this configuration, if you want to degrade a broker, you need to change the value to NONE and make sure all ledger metadata is saved without compression.
+  ##
+  managedLedgerInfoCompressionType:
+  ## @param config.managedLedgerMaxEntriesPerLedger The max number of entries to append to a ledger before triggering a rollover. A ledger rollover is triggered after the min rollover time has passed and one of the following conditions is true:The max rollover time has been reached. The max entries have been written to the ledger. The max ledger size has been written to the ledger
+  ##
+  managedLedgerMaxEntriesPerLedger: 50000
+  ## @param config.managedLedgerMaxLedgerRolloverTimeMinutes Maximum time before forcing a ledger rollover for a topic
+  ##
+  managedLedgerMaxLedgerRolloverTimeMinutes: 240
+  ## @param config.managedLedgerMaxUnackedRangesToPersist Max number of “acknowledgment holes” that are going to be persistently stored. When acknowledging out of order, a consumer will leave holes that are supposed to be quickly filled by acking all the messages. The information of which messages are acknowledged is persisted by compressing in “ranges” of messages that were acknowledged. After the max number of ranges is reached, the information will only be tracked in memory and messages will be redelivered in case of crashes.
+  ##
+  managedLedgerMaxUnackedRangesToPersist: 1000
+  ## @param config.managedLedgerMinLedgerRolloverTimeMinutes Minimum time between ledger rollover for a topic
+  ##
+  managedLedgerMinLedgerRolloverTimeMinutes: 10
+  ## @param config.managedLedgerOffloadAutoTriggerSizeThresholdBytes The number of bytes before triggering automatic offload to long term storage
+  ##
+  managedLedgerOffloadAutoTriggerSizeThresholdBytes: -1
+  ## @param config.managedLedgerOffloadDeletionLagMs Delay between a ledger being successfully offloaded to long term storage and the ledger being deleted from bookkeeper
+  ##
+  managedLedgerOffloadDeletionLagMs: 14400000
+  ## @param config.managedLedgerOffloadDriver The directory for all the offloader implementations offloadersDirectory=./offloaders. Driver to use to offload old data to long term storage (Possible values: S3, aws-s3, google-cloud-storage). When using google-cloud-storage, Make sure both Google Cloud Storage and Google Cloud Storage JSON API are enabled for the project (check from Developers Console -> Api&auth -> APIs).
+  ##
+  managedLedgerOffloadDriver:
+  ## @param config.managedLedgerOffloadMaxThreads Maximum number of thread pool threads for ledger offloading
+  ##
+  managedLedgerOffloadMaxThreads: 2
+  ## @param config.managedLedgerOffloadPrefetchRounds The maximum prefetch rounds for ledger reading for offloading.
+  ##
+  managedLedgerOffloadPrefetchRounds: 1
+  ## @param config.managedLedgerUnackedRangesOpenCacheSetEnabled Use Open Range-Set to cache unacknowledged messages
+  ##
+  managedLedgerUnackedRangesOpenCacheSetEnabled: TRUE
+  ## @param config.maxConcurrentLookupRequest Max number of concurrent lookup request broker allows to throttle heavy incoming lookup traffic
+  ##
+  maxConcurrentLookupRequest: 50000
+  ## @param config.maxConcurrentTopicLoadRequest Max number of concurrent topic loading request broker allows to control number of zk-operations
+  ##
+  maxConcurrentTopicLoadRequest: 5000
+  ## @param config.maxConsumersPerSubscription Maximum number of consumers allowed to connect to a subscription. Once this limit reaches, the broker rejects new consumers until the number of connected consumers decreases. When the value is set to 0, the limit check is disabled.
+  ##
+  maxConsumersPerSubscription: 0
+  ## @param config.maxConsumersPerTopic Maximum number of consumers allowed to connect to a topic. Once this limit reaches, the broker rejects new consumers until the number of connected consumers decreases. When the value is set to 0, the limit check is disabled.
+  ##
+  maxConsumersPerTopic: 0
+  ## @param config.maxMessagePublishBufferSizeInMB The maximum memory size for a broker to handle messages that are sent by producers. If the processing message size exceeds this value, the broker stops reading data from the connection. The processing messages refer to the messages that are sent to the broker but the broker has not sent response to the client. Usually the messages are waiting to be written to bookies. It is shared across all the topics running in the same broker. The value -1 disables the memory limitation. By default, it is 50% of direct memory.
+  ##
+  maxMessagePublishBufferSizeInMB:
+  ## @param config.maxMessageSize Set the maximum size of a message.
+  ##
+  maxMessageSize: 5242880
+  ## @param config.maxNamespacesPerTenant The maximum number of namespaces that can be created in each tenant. When the number of namespaces reaches this threshold, the broker rejects the request of creating a new tenant. The default value 0 disables the check.
+  ##
+  maxNamespacesPerTenant: 0
+  ## @param config.maxNumPartitionsPerPartitionedTopic Max number of partitions per partitioned topic. Use 0 or negative number to disable the check
+  ##
+  maxNumPartitionsPerPartitionedTopic: 0
+  ## @param config.maxProducersPerTopic Maximum number of producers allowed to connect to a topic. Once this limit reaches, the broker rejects new producers until the number of connected producers decreases. When the value is set to 0, the limit check is disabled.
+  ##
+  maxProducersPerTopic: 0
+  ## @param config.maxSubscriptionsPerTopic Maximum number of subscriptions allowed to subscribe to a topic. Once this limit reaches, the broker rejects new subscriptions until the number of subscriptions decreases. When the value is set to 0, the limit check is disabled.
+  ##
+  maxSubscriptionsPerTopic: 0
+  ## @param config.maxTenants The maximum number of tenants that can be created in each Pulsar cluster. When the number of tenants reaches the threshold, the broker rejects the request of creating a new tenant. The default value 0 disables the check.
+  ##
+  maxTenants: 0
+  ## @param config.maxTopicsPerNamespace The maximum number of persistent topics that can be created in the namespace. When the number of topics reaches this threshold, the broker rejects the request of creating a new topic, including the auto-created topics by the producer or consumer, until the number of connected consumers decreases. The default value 0 disables the check.
+  ##
+  maxTopicsPerNamespace: 0
+  ## @param config.maxUnackedMessagesPerConsumer Max number of unacknowledged messages allowed to receive messages by a consumer on a shared subscription. Broker will stop sending messages to consumer once, this limit reaches until consumer starts acknowledging messages back. Using a value of 0, is disabling unackeMessage limit check and consumer can receive messages without any restriction
+  ##
+  maxUnackedMessagesPerConsumer: 50000
+  ## @param config.maxUnackedMessagesPerSubscription Max number of unacknowledged messages allowed per shared subscription. Broker will stop dispatching messages to all consumers of the subscription once this limit reaches until consumer starts acknowledging messages back and unack count reaches to limit/2. Using a value of 0, is disabling unackedMessage-limit check and dispatcher can dispatch messages without any restriction
+  ##
+  maxUnackedMessagesPerSubscription: 200000
+  ## @param config.messageExpiryCheckIntervalInMinutes The frequency of proactively checking and purging expired messages.
+  ##
+  messageExpiryCheckIntervalInMinutes: 5
+  ## @param config.messagePublishBufferCheckIntervalInMillis Interval between checks to see if message publish buffer size exceeds the maximum. Use 0 or negative number to disable the max publish buffer limiting.
+  ##
+  messagePublishBufferCheckIntervalInMillis:
+  ## @param config.metadataStoreBatchingEnabled Enable metadata operations batching.
+  ##
+  metadataStoreBatchingEnabled: TRUE
+  ## @param config.metadataStoreBatchingMaxDelayMillis Maximum delay to impose on batching grouping.
+  ##
+  metadataStoreBatchingMaxDelayMillis: 5
+  ## @param config.metadataStoreBatchingMaxOperations Maximum number of operations to include in a singular batch.
+  ##
+  metadataStoreBatchingMaxOperations: 1000
+  ## @param config.metadataStoreBatchingMaxSizeKb Maximum size of a batch.
+  ##
+  metadataStoreBatchingMaxSizeKb: 128
+  ## @param config.metadataStoreCacheExpirySeconds Metadata store cache expiry time in seconds
+  ##
+  metadataStoreCacheExpirySeconds: 300
+  ## @skip config.metadataStoreConfigPath
+  ## The configuration file path of the local metadata store. See Configure metadata store for details.
+  ##
+  metadataStoreConfigPath:
+  ## @param config.metadataStoreSessionTimeoutMillis Metadata store session timeout in milliseconds
+  ##
+  metadataStoreSessionTimeoutMillis: 30000
+  ## @skip config.metadataStoreUrl
+  ## Metadata store quorum connection string
+  ##
+  metadataStoreUrl:
+  ## @param config.narExtractionDirectory The extraction directory of the nar package. Available for Protocol Handler, Additional Servlets, Entry Filter, Offloaders, Broker Interceptor. System.getProperty("java.io.tmpdir").
+  ##
+  narExtractionDirectory:
+  ## @param config.offloadersDirectory The directory for all the offloader implementations.
+  ##
+  offloadersDirectory: ./offloaders
+  ## @param config.packagesManagementStorageProvider The packages management service storage service provide
+  ##
+  packagesManagementStorageProvider: org.apache.pulsar.packages.management.storage.bookkeeper.BookKeeperPackagesStorageProvider
+  ## @param config.packagesReplicas When the packages storage provider is bookkeeper, you can use this configuration to control the number of replicas for storing the package
+  ##
+  packagesReplicas: 1
+  ## @param config.packagesManagementLedgerRootPath The bookkeeper ledger root path
+  ##
+  packagesManagementLedgerRootPath: /ledgers
+  ## @param config.preciseTopicPublishRateLimiterEnable Enable precise topic publish rate limiting.
+  ##
+  preciseTopicPublishRateLimiterEnable: FALSE
+  ## @param config.preferLaterVersions If true, (and ModularLoadManagerImpl is being used), the load manager will attempt to use only brokers running the latest software version (to minimize impact to bundles)
+  ##
+  preferLaterVersions: FALSE
+  ## @param config.replicatedSubscriptionsSnapshotFrequencyMillis The frequency of snapshots for replicated subscriptions tracking.
+  ##
+  replicatedSubscriptionsSnapshotFrequencyMillis: 1000
+  ## @param config.replicatedSubscriptionsSnapshotMaxCachedPerSubscription The maximum number of snapshot to be cached per subscription.
+  ##
+  replicatedSubscriptionsSnapshotMaxCachedPerSubscription: 10
+  ## @param config.replicatedSubscriptionsSnapshotTimeoutSeconds The timeout for building a consistent snapshot for tracking replicated subscriptions state.
+  ##
+  replicatedSubscriptionsSnapshotTimeoutSeconds: 30
+  ## @param config.replicationConnectionsPerBroker Max number of connections to open for each broker in a remote cluster More connections host-to-host lead to better throughput over high-latency links.
+  ##
+  replicationConnectionsPerBroker: 16
+  ## @param config.replicationMetricsEnabled Enable replication metrics
+  ##
+  replicationMetricsEnabled: TRUE
+  ## @param config.replicationProducerQueueSize Replicator producer queue size
+  ##
+  replicationProducerQueueSize: 1000
+  ## @param config.replicatorPrefix Replicator prefix used for replicator producer name and cursor name pulsar.repl
+  ##
+  replicatorPrefix: "pulsar.repl"
+  ## @param config.retentionCheckIntervalInSeconds Check between intervals to see if consumed ledgers need to be trimmed. Use 0 or negative number to disable the check.
+  ##
+  retentionCheckIntervalInSeconds: 120
+  ## @param config.s3ManagedLedgerOffloadBucket For Amazon S3 ledger offload, Bucket to place offloaded ledger into
+  ##
+  s3ManagedLedgerOffloadBucket:
+  ## @param config.s3ManagedLedgerOffloadMaxBlockSizeInBytes For Amazon S3 ledger offload, Max block size in bytes. (64MB by default, 5MB minimum)
+  ##
+  s3ManagedLedgerOffloadMaxBlockSizeInBytes: 67108864
+  ## @param config.s3ManagedLedgerOffloadReadBufferSizeInBytes For Amazon S3 ledger offload, Read buffer size in bytes (1MB by default)
+  ##
+  s3ManagedLedgerOffloadReadBufferSizeInBytes: 1048576
+  ## @param config.s3ManagedLedgerOffloadRegion For Amazon S3 ledger offload, AWS region
+  ##
+  s3ManagedLedgerOffloadRegion:
+  ## @param config.s3ManagedLedgerOffloadRole For Amazon S3 ledger offload, provide a role to assume before writing to s3
+  ##
+  s3ManagedLedgerOffloadRole:
+  ## @param config.s3ManagedLedgerOffloadRoleSessionName For Amazon S3 ledger offload, provide a role session name when using a role
+  ##
+  s3ManagedLedgerOffloadRoleSessionName:
+  ## @param config.s3ManagedLedgerOffloadServiceEndpoint For Amazon S3 ledger offload, Alternative endpoint to connect to (useful for testing)
+  ##
+  s3ManagedLedgerOffloadServiceEndpoint:
+  ## @param config.schemaCompatibilityStrategy The schema compatibility strategy at broker level, see here for available values.
+  ##
+  schemaCompatibilityStrategy: FULL
+  ## @param config.schemaRegistryStorageClassName The schema storage implementation used by this broker.
+  ##
+  schemaRegistryStorageClassName: org.apache.pulsar.broker.service.schema.BookkeeperSchemaStorageFactory
+  ## @param config.skipBrokerShutdownOnOOM Flag to skip broker shutdown when broker handles Out of memory error.
+  ##
+  skipBrokerShutdownOnOOM: FALSE
+  ## @param config.statsUpdateFrequencyInSecs
+  ##
+  statsUpdateFrequencyInSecs: 60
+  ## @param config.statsUpdateInitialDelayInSecs
+  ##
+  statsUpdateInitialDelayInSecs: 60
+  ## @param config.statusFilePath Path for the file used to determine the rotation status for the broker when responding to service discovery health checks
+  ##
+  statusFilePath:
+  ## @param config.strictBookieAffinityEnabled Enable or disable the strict bookie isolation strategy. If enabled, bookie-ensemble first tries to choose bookies that belong to a namespace's affinity group. If the number of bookies is not enough, then the rest bookies are chosen. If namespace has no affinity group, bookie-ensemble only chooses bookies that belong to no region. If the number of bookies is not enough, BKNotEnoughBookiesException is thrown.
+  ##
+  strictBookieAffinityEnabled:
+  ## @param config.subscriptionExpirationTimeMinutes How long to delete inactive subscriptions from last consuming. Setting this configuration to a value greater than 0 deletes inactive subscriptions automatically. Setting this configuration to 0 does not delete inactive subscriptions automatically. Since this configuration takes effect on all topics, if there is even one topic whose subscriptions should not be deleted automatically, you need to set it to 0. Instead, you can set a subscription expiration time for each namespace using the pulsar-admin namespaces set-subscription-expiration-time options command.
+  ##
+  subscriptionExpirationTimeMinutes: 0
+  ## @param config.subscriptionRedeliveryTrackerEnabled Enable subscription message redelivery tracker
+  ##
+  subscriptionRedeliveryTrackerEnabled: TRUE
+  ## @param config.subscriptionTypesEnabled Enable all subscription types, which are exclusive, shared, failover, and key_shared.
+  ##
+  subscriptionTypesEnabled: "Exclusive,Shared,Failover,Key_Shared"
+  ## @param config.superUserRoles Role names that are treated as “super-user”, meaning they will be able to do all admin operations and publish/consume from all topics
+  ##
+  superUserRoles:
+  ## @param config.supportedNamespaceBundleSplitAlgorithms Supported algorithms name for namespace bundle split
+  ##
+  supportedNamespaceBundleSplitAlgorithms: "range_equally_divide,topic_count_equally_divide"
+  ## @param config.systemTopicSchemaCompatibilityStrategy The schema compatibility strategy is used for system topics, see here for available values.
+  ##
+  systemTopicSchemaCompatibilityStrategy: ALWAYS_COMPATIBLE
+  ## @param config.tlsAllowInsecureConnection Accept untrusted TLS certificate from client. If it is set to true, a client with a cert which cannot be verified with the 'tlsTrustCertsFilePath' cert will be allowed to connect to the server, though the cert will not be used for client authentication.
+  ##
+  tlsAllowInsecureConnection: FALSE
+  ## @skip config.tlsCertificateFilePath
+  ## Path for the TLS certificate file
+  ##
+  tlsCertificateFilePath:
+  ## @param config.tlsCiphers Specify the tls cipher the broker will use to negotiate during TLS Handshake. Multiple values can be specified, separated by commas. Example:- TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+  ##
+  tlsCiphers:
+  ## @skip config.tlsEnabledWithKeyStore
+  ## Enable TLS with KeyStore type configuration in broker
+  ##
+  tlsEnabledWithKeyStore: FALSE
+  ## @skip config.tlsKeyFilePath
+  ## Path for the TLS private key file
+  ##
+  tlsKeyFilePath:
+  ## @skip config.tlsKeyStore
+  ## TLS KeyStore path in broker
+  ##
+  tlsKeyStore:
+  ## @skip config.tlsKeyStorePassword
+  ## TLS KeyStore password for broker
+  ##
+  tlsKeyStorePassword:
+  ## @skip config.tlsKeyStoreType
+  ## LS KeyStore type configuration in broker: JKS, PKCS12
+  ##
+  tlsKeyStoreType:
+  ## @param config.tlsProtocols Specify the tls protocols the broker will use to negotiate during TLS Handshake. Multiple values can be specified, separated by commas. Example:- TLSv1.3, TLSv1.2
+  ##
+  tlsProtocols:
+  ## @skip config.tlsProvider
+  ## Specify the TLS provider for the broker service: When using TLS authentication with CACert, the valid value is either OPENSSL or JDK. When using TLS authentication with KeyStore, available values can be SunJSSE, Conscrypt and etc.
+  ##
+  tlsProvider:
+  ## @skip config.tlsRequireTrustedClientCertOnConnect
+  ## Trusted client certificates are required for to connect TLS Reject the Connection if the Client Certificate is not trusted. In effect, this requires that all connecting clients perform TLS client authentication.
+  ##
+  tlsRequireTrustedClientCertOnConnect: false
+  ## @skip config.tlsTrustCertsFilePath
+  ## Path for the trusted TLS certificate file. This cert is used to verify that any certs presented by connecting clients are signed by a certificate authority. If this verification fails, then the certs are untrusted and the connections are dropped.
+  ##
+  tlsTrustCertsFilePath:
+  ## @skip config.tlsTrustStore
+  ## TLS TrustStore path in broker
+  ##
+  tlsTrustStore:
+  ## @skip config.tlsTrustStorePassword
+  ## TLS TrustStore password in broker, default value is empty password
+  ##
+  tlsTrustStorePassword:
+  ## @skip config.tlsTrustStoreType
+  ## TLS TrustStore type configuration in broker: JKS, PKCS12
+  ##
+  tlsTrustStoreType:
+  ## @param config.tokenAudience The token audience stands for this broker. The field tokenAudienceClaim of a valid token, need contains this.
+  ##
+  tokenAudience:
+  ## @param config.tokenAudienceClaim The token audience "claim" name, e.g. "aud", that will be used to get the audience from token. If not set, audience will not be verified.
+  ##
+  tokenAudienceClaim:
+  ## @param config.tokenAuthClaim Specify which of the token's claims will be used as the authentication "principal" or "role". The default "sub" claim will be used if this is left blank
+  ##
+  tokenAuthClaim:
+  ## @param config.tokenPublicAlg Configure the algorithm to be used to validate auth tokens. This can be any of the asymettric algorithms supported by Java JWT (https://github.com/jwtk/jjwt#signature-algorithms-keys)
+  ##
+  tokenPublicAlg:
+  ## @param config.tokenPublicKey Configure the public key to be used to validate auth tokens. The key can be specified like: tokenPublicKey=data:;base64,xxxxxxxxx or tokenPublicKey=file:///my/secret.key. Note: key file must be DER-encoded.
+  ##
+  tokenPublicKey:
+  ## @param config.tokenSecretKey Configure the secret key to be used to validate auth tokens. The key can be specified like: tokenSecretKey=data:;base64,xxxxxxxxx or tokenSecretKey=file:///my/secret.key. Note: key file must be DER-encoded.
+  ##
+  tokenSecretKey:
+  ## @param config.tokenSettingPrefix Configure the prefix of the token-related settings, such as tokenSecretKey, tokenPublicKey, tokenAuthClaim, tokenPublicAlg, tokenAudienceClaim, and tokenAudience.
+  ##
+  tokenSettingPrefix:
+  ## @param config.topicFencingTimeoutSeconds If a topic remains fenced for a certain time period (in seconds), it is closed forcefully. If set to 0 or a negative number, the fenced topic is not closed.
+  ##
+  topicFencingTimeoutSeconds: 0
+  ## @param config.transactionCoordinatorEnabled Whether to enable transaction coordinator in broker.
+  ##
+  transactionCoordinatorEnabled: FALSE
+  ## @param config.transactionMetadataStoreProviderClassName
+  ##
+  transactionMetadataStoreProviderClassName: org.apache.pulsar.transaction.coordinator.impl.MLTransactionMetadataStoreProvider
+  ## @param config.transactionBufferSnapshotMaxTransactionCount Transaction buffer take snapshot transaction count
+  ##
+  transactionBufferSnapshotMaxTransactionCount: 1000
+  ## @param config.transactionBufferSnapshotMinTimeInMillis Transaction buffer take snapshot interval time. Unit : millisecond
+  ##
+  transactionBufferSnapshotMinTimeInMillis: 5000
+  ## @param config.transactionBufferClientMaxConcurrentRequests The max concurrent requests for transaction buffer client, default is 1000
+  ##
+  transactionBufferClientMaxConcurrentRequests: 1000
+  ## @param config.transactionPendingAckLogIndexMinLag MLPendingAckStore maintains a ConcurrentSkipListMap pendingAckLogIndex, It stores the position in pendingAckStore as its value and saves a position used to determine whether the previous data can be cleaned up as a key. transactionPendingAckLogIndexMinLag is used to configure the minimum lag between indexes
+  ##
+  transactionPendingAckLogIndexMinLag: 500
+  ## @param config.ttlDurationDefaultInSeconds The default Time to Live (TTL) for namespaces if the TTL is not configured at namespace policies. When the value is set to 0, TTL is disabled. By default, TTL is disabled.
+  ##
+  ttlDurationDefaultInSeconds: 0
+  ## @param config.webSocketConnectionsPerBroker The number of connections per Broker in Pulsar Client used in WebSocket proxy. Runtime.getRuntime().availableProcessors().
+  ##
+  webSocketConnectionsPerBroker:
+  ## @param config.webSocketMaxTextFrameSize The maximum size of a text message during parsing in WebSocket proxy.
+  ##
+  webSocketMaxTextFrameSize: 1048576
+  ## @param config.webSocketNumIoThreads The number of IO threads in Pulsar Client used in WebSocket proxy. Runtime.getRuntime().availableProcessors().
+  ##
+  webSocketNumIoThreads:
+  ## @param config.webSocketServiceEnabled Enable the WebSocket API service in broker
+  ##
+  webSocketServiceEnabled: FALSE
+  ## @param config.webSocketSessionIdleTimeoutMillis Time in milliseconds that idle WebSocket session times out.
+  ##
+  webSocketSessionIdleTimeoutMillis: 300000
+  ## @param config.extraConfigValues [nullable] Additional config values
+  ##
+  extraConfigValues: {}
+
+## @section Ingress parameters
+## @descriptionStart
+## Configure the ingress for Component. Refer to [ingress documentation](https://kubernetes.io/docs/user-guide/ingress/) for more.
+## @descriptionEnd
+##
+ingress:
+
+  ## @param ingress.enabled Enable the creation of an ingress for the Component
+  ## Set to true to enable ingress record generation
+  ##
+  enabled: false
+
+  ## @param ingress.pathType Path type for the Component  ingress
+  ## Ingress Path type
+  ##
+  pathType: ImplementationSpecific
+
+  ## @param ingress.apiVersion [string,nullable] Ingress API version for the Component  ingress
+  ## Override API Version (automatically detected if not set)
+  ##
+  apiVersion: ""
+
+  ## @param ingress.hostname Ingress hostname for the Component  ingress
+  ## When the ingress is enabled, a host pointing to this will be created
+  ##
+  hostname: broker.server.local
+
+  ## @param ingress.path Path array for the Component  ingress
+  ## The Path to server. You may need to set this to '/*' in order to use this
+  ## with ALB ingress controllers.
+  ##
+  path: /
+
+  ## @param ingress.annotations [object,nullable] Annotations for the Component  ingress. To enable certificate autogeneration, place here your cert-manager annotations.
+  ## For a full list of possible ingress annotations, please see
+  ## ref: https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/nginx-configuration/annotations.md
+  ## Use this parameter to set the required annotations for cert-manager, see
+  ## ref: https://cert-manager.io/docs/usage/ingress/#supported-annotations
+  ##
+  ## e.g:
+  ## annotations:
+  ##   kubernetes.io/ingress.class: nginx
+  ##   cert-manager.io/cluster-issuer: cluster-issuer-name
+  ##
+  annotations: {}
+
+  ## @param ingress.extraHosts [array,nullable] Extra hosts array for the Component  ingress
+  ## The list of additional hostnames to be covered with this ingress record.
+  ## Most likely the hostname above will be enough, but in the event more hosts are needed, this is an array
+  extraHosts: []
+  ## - name: admin-console.server.local
+  ##   path: /
+  ##
+
+  ## @param ingress.extraPaths [array,nullable] Extra paths for the Component  ingress
+  ## Any additional arbitrary paths that may need to be added to the ingress under the main host.
+  ## For example: The ALB ingress controller requires a special rule for handling SSL redirection.
+  extraPaths: []
+  ## - path: /ws
+  ##   backend:
+  ##     serviceName: ssl-redirect
+  ##     servicePort: http
+
+  ## @param ingress.tls Enable TLS for the Component  ingress
+  ## Enable TLS configuration for the hostname defined at ingress.hostname parameter
+  ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" .Values.ingress.hostname }}
+  ## You can use the ingress.secrets parameter to create this TLS secret or rely on cert-manager to create it
+  ##
+  tls: false
+
+  ## @param ingress.extraTls [array,nullable] Extra TLS configuration for the Component  ingress
+  ## The tls configuration for additional hostnames to be covered with this ingress record.
+  ## see: https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
+  extraTls: []
+  ## - hosts:
+  ##     - admin-console.server.local
+  ##   secretName: admin-console.server.local-tls
+  ##
+
+  ## @param ingress.secrets [array,nullable] Secrets array to mount into the Ingress
+  ## If you're providing your own certificates, please use this to add the certificates as secrets
+  ## key and certificate should start with -----BEGIN CERTIFICATE----- or
+  ## -----BEGIN RSA PRIVATE KEY-----
+  ##
+  ## name should line up with a tlsSecret set further up
+  ## If you're using cert-manager, this is unneeded, as it will create the secret for you if it is not set
+  ##
+  ## It is also possible to create and manage the certificates outside of this helm chart
+  ## Please see README.md for more information
+  ##
+  secrets: []
+  ## - name: admin-console.server.local-tls
+  ##   key:
+  ##   certificate:
+  ##
+
+  ## @param ingress.ingressClassName [string,nullable] IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)
+  ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
+  ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
+  ##
+  ingressClassName: ""
+
+  ## @param ingress.extraRules [array,nullable] Additional rules to be covered with this ingress record
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-rules
+  ## e.g:
+  ## extraRules:
+  ## - host: example.local
+  ##     http:
+  ##       path: /
+  ##       backend:
+  ##         service:
+  ##           name: example-svc
+  ##           port:
+  ##             name: http
+  ##
+  extraRules: []
+
+## @section Service parameters
+## @descriptionStart
+## Component application controller service and service account parameters. Note the data-store's service is headless because it only needs to communicate with other cluster components.
+## @descriptionEnd
+##
+service:
+
+  ## @param service.type Broker service type
+  ##
+  type: ClusterIP
+
+  ports:
+    ## @param service.ports.pulsar [nullable] Broker application controller binary service port
+    ##
+    pulsar: 6650
+    ## @param service.ports.pulsarSsl [nullable] Broker application controller secure binary service port
+    ##
+    pulsarSsl: 6651
+    ## @param service.ports.http [nullable] Broker application controller web service port
+    ##
+    http: 8080
+    ## @param service.ports.https [nullable] Broker application controller secure web service port
+    ##
+    https: 8081
+
+  ## Node ports to expose
+  ## @param service.nodePorts.pulsar Node port for binary connections
+  ## @param service.nodePorts.pulsarSsl Node port for secure binary connections
+  ## @param service.nodePorts.http Node port for web connections
+  ## @param service.nodePorts.https Node port for secure web connections
+  ## NOTE: choose port between <30000-32767>
+  ##
+  nodePorts:
+    pulsar: 30650
+    pulsarSsl: 30651
+    http: 30080
+    https: 30081
+
+  ## @param service.clusterIP Broker application controller service Cluster IP
+  ## e.g.:
+  ## clusterIP: None
+  ##
+  clusterIP: ""
+
+  ## @param service.loadBalancerIP Broker application controller service Load Balancer IP
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
+  ##
+  loadBalancerIP: ""
+
+  ## @param service.loadBalancerSourceRanges Broker application controller service Load Balancer sources
+  ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+  ## e.g:
+  ## loadBalancerSourceRanges:
+  ##   - 10.10.10.0/24
+  ##
+  loadBalancerSourceRanges: []
+
+  ## @param service.externalTrafficPolicy Broker application controller service external traffic policy
+  ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+  ##
+  externalTrafficPolicy: Cluster
+
+  ## @param service.annotations [object,nullable] Additional custom annotations for Component application controller service
+  ##
+  annotations: {}
+
+  ## @param service.extraPorts [array,nullable] Extra ports to expose (normally used with the `sidecar` value)
+  ##
+  extraPorts: []
+
+  ## @param service.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
+  ## If "ClientIP", consecutive client requests will be directed to the same Pod
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+  ##
+  sessionAffinity: None
+
+  ## @param service.sessionAffinityConfig Additional settings for the sessionAffinity
+  ## sessionAffinityConfig:
+  ##   clientIP:
+  ##     timeoutSeconds: 300
+  sessionAffinityConfig: {}
+
+## ServiceAccount configuration for the Component
+##
+serviceAccount:
+
+  ## @param serviceAccount.name The name of the ServiceAccount to use.
+  ## If not set and create is true, a name is generated using the common.names.name template
+  name: ""
+
+  ## @param serviceAccount.create Specifies whether a ServiceAccount should be created
+  ##
+  create: true
+
+  ## @param serviceAccount.automountServiceAccountToken Automount service account token for the server service account
+  ##
+  automountServiceAccountToken: true
+
+  ## @param serviceAccount.annotations [object,nullable] Annotations for service account. Evaluated as a template. Only used if `create` is `true`.
+  ##
+  annotations: {}
+
+## @param podDisruptionBudget.enabled Enable the disruption budget
+## @param podDisruptionBudget.maxUnavailable When enabled the maximum allowed unavailable for matchLabel objects
+## @param podDisruptionBudget.minAvailable When enabled the min allowed available for matchLabel objects
+##
+podDisruptionBudget:
+  enabled: true
+  maxUnavailable: 1
+  minAvailable:
+
+## @section Other Parameters
+
+## @param podManagementPolicy StatefulSet controller supports relax its ordering guarantees while preserving its uniqueness and identity guarantees. There are two valid pod management policies: OrderedReady and Parallel
+## ref: https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#pod-management-policy
+##
+podManagementPolicy: Parallel
+
+## @param updateStrategy.type Bookkeeper statefulset strategy type
+## @param updateStrategy.rollingUpdate Bookkeeper statefulset rolling update configuration parameters
+## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+##
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate: {}
+
+## @param podLabels Extra labels for Bookkeeper pods
+## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+##
+podLabels: {}
+
+## @param podAnnotations Extra annotations for Bookkeeper pods
+## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+##
+podAnnotations: {}
+
+## @param hostAliases Bookkeeper pods host aliases
+## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+##
+hostAliases: []
+
+## @param hostNetwork Specify if host network should be enabled for Bookkeeper pods
+##
+hostNetwork: false
+
+## @param hostIPC Specify if host IPC should be enabled for Bookkeeper pods
+##
+hostIPC: false
+
+## @param schedulerName Name of the k8s scheduler (other than default)
+## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+##
+schedulerName: ""
+
+## @param affinity Affinity for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+## Note: podAffinityPreset, podAntiAffinityPreset, and  nodeAffinityPreset will be ignored when it's set
+##
+affinity: {}
+
+## @param podAffinityPreset Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+##
+podAffinityPreset: ""
+
+## @param podAntiAffinityPreset Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+##
+podAntiAffinityPreset: hard
+
+## Node affinity preset
+## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+##
+nodeAffinityPreset:
+  ## @param nodeAffinityPreset.type Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+  ##
+  type: ""
+  ## @param nodeAffinityPreset.key Node label key to match Ignored if `affinity` is set.
+  ## E.g.
+  ## key: "kubernetes.io/e2e-az-name"
+  ##
+  key: ""
+  ## @param nodeAffinityPreset.values Node label values to match. Ignored if `affinity` is set.
+  ## E.g.
+  ## values:
+  ##   - e2e-az1
+  ##   - e2e-az2
+  ##
+  values: []
+
+## @param nodeSelector Node labels for pod assignment
+## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+##
+nodeSelector: {}
+
+## @param tolerations Tolerations for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+##
+tolerations: []
+
+## @param topologySpreadConstraints Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template
+## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
+##
+topologySpreadConstraints: []
+
+## @param terminationGracePeriodSeconds Seconds the pod needs to gracefully terminate
+## ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#hook-handler-execution
+##
+terminationGracePeriodSeconds: 60
+
+## @param priorityClassName Name of the existing priority class to be used by Bookkeeper pods
+## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+##
+priorityClassName: ""
+
+## Bookkeeper pods' Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+## @param podSecurityContext.enabled Enable security context for the pods
+## @param podSecurityContext.fsGroup Set Bookkeeper pod's Security Context fsGroup
+##
+podSecurityContext:
+  enabled: true
+  fsGroup: 1001
+
+## Bookkeeper containers' Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+## @param containerSecurityContext.enabled Enable Bookkeeper containers' Security Context
+## @param containerSecurityContext.runAsUser Set Bookkeeper containers' Security Context runAsUser
+## @param containerSecurityContext.runAsNonRoot Set Bookkeeper containers' Security Context runAsNonRoot
+## e.g:
+##   containerSecurityContext:
+##     enabled: true
+##     capabilities:
+##       drop: ["NET_RAW"]
+##     readOnlyRootFilesystem: true
+##
+containerSecurityContext:
+  enabled: true
+  runAsUser: 1001
+  runAsNonRoot: true
+
+## @param containerCommand Override the container image ENTRYPOINT. Leave blank to use image default (if set)
+##
+containerCommand: ["sh", "-c", "exec /pulsar/bin/pulsar broker"]
+
+## @param containerArgs Override the container image CMD. Leave blank to use image default (if set)
+##
+containerArgs: []
+
+## @param extraEnvVars Extra environment variables to add to the provisioning pod
+## e.g:
+## extraEnvVars:
+##   - name: SOME_VALUE
+##     value: "10"
+##
+extraEnvVars: []
+
+## @param extraEnvVarsCM ConfigMap with extra environment variables
+##
+extraEnvVarsCM: ""
+
+## @param extraEnvVarsSecret Secret with extra environment variables
+##
+extraEnvVarsSecret: ""
+
+## @param initContainers Add additional Add init containers to the Bookkeeper pod(s)
+## e.g:
+## initContainers:
+##   - name: your-image-name
+##     image: your-image
+##     imagePullPolicy: Always
+##     ports:
+##       - name: portname
+##         containerPort: 1234
+##
+initContainers: []
+
+containerPorts:
+
+  ## @param containerPorts.pulsar Broker binary port
+  ##
+  pulsar: 6650
+
+  ## @param containerPorts.pulsarSsl Broker secure binary port
+  ##
+  pulsarSsl: 6651
+
+  ## @param containerPorts.http Broker web port
+  ##
+  http: 8080
+
+  ## @param containerPorts.https Broker secure web
+  ##
+  https: 8081
+
+## @section Persistence parameters
+
+## Enable log persistence using Persistent Volume Claims
+## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+##
+logPersistence:
+
+  ## @param logPersistence.mountPath Mount path of Pulsar home
+  ##
+  mountPath: /pulsar/logs
+
+  ## @param logPersistence.size PVC storage size
+  ##
+  size: 5Gi
+
+  ## @param logPersistence.storageClass PVC Storage Class for Kafka data volume
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ## set, choosing the default provisioner.
+  ##
+  storageClass:
+
+  ## @param logPersistence.existingClaim A manually managed Persistent Volume and Claim
+  ## If defined, PVC must be created manually before volume will be bound
+  ## The value is evaluated as a template
+  ##
+  existingClaim: ""
+
+  ## @param logPersistence.accessModes Persistent Volume Access Modes
+  ##
+  accessModes:
+    - ReadWriteOnce
+
+  ## @param logPersistence.annotations Annotations for the PVC
+  ##
+  annotations: {}
+
+  ## @param logPersistence.selector Selector to match an existing Persistent Volume. If set, the PVC can't have a PV dynamically provisioned for it
+  ## selector:
+  ##   matchLabels:
+  ##     app: my-app
+  ##
+  selector: {}
+
+## @section Pod Probes
+
+## Configure extra options for broker containers' liveness, readiness and startup probes
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+## @param livenessProbe.enabled Enable livenessProbe on broker containers
+## @param livenessProbe.exec.command Process to monitor for readiness
+## @param livenessProbe.periodSeconds Period seconds for readinessProbe
+## @param livenessProbe.timeoutSeconds Timeout seconds for readinessProbe
+## @param livenessProbe.failureThreshold Failure threshold for readinessProbe
+## @param livenessProbe.successThreshold Success threshold for readinessProbe
+##
+livenessProbe:
+  enabled: true
+  exec:
+    command:
+      - "/pulsar/probes/liveness.sh"
+  periodSeconds: 3
+  timeoutSeconds: 30
+  failureThreshold: 5
+  successThreshold: 1
+
+## @param readinessProbe.enabled Enable readinessProbe on broker containers
+## @param readinessProbe.exec.command Process to monitor for readiness
+## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+## @param readinessProbe.successThreshold Success threshold for readinessProbe
+##
+readinessProbe:
+  enabled: true
+  exec:
+    command:
+      - "/pulsar/probes/readiness.sh"
+  periodSeconds: 5
+  failureThreshold: 1
+  successThreshold: 1
+
+## @param startupProbe.enabled Enable startupProbe on broker containers
+## @param startupProbe.exec.command Process to monitor for readiness
+## @param startupProbe.periodSeconds Period seconds for readinessProbe
+## @param startupProbe.failureThreshold Failure threshold for readinessProbe
+##
+startupProbe:
+  enabled: true
+  exec:
+    command:
+      - "/pulsar/probes/startup.sh"
+  periodSeconds: 3
+  failureThreshold: 10
+
+## @param lifecycleHooks lifecycleHooks for the Bookkeeper container to automate configuration before or after startup
+##
+lifecycleHooks: {}
+
+## Bookkeeper resource requests and limits
+## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+## @param resources.limits The resources limits for the container
+##
+resources:
+  limits: {}
+
+  requests:
+    ## @param resources.requests.memory The requested resource memory for the container
+    ##
+    memory: 2Gi
+
+    ## @param resources.requests.cpu The requested resource cpu for the container
+    ##
+    cpu: 1
+
+## @param extraVolumes Optionally specify extra list of additional volumes for the Bookkeeper pod(s)
+## e.g:
+## extraVolumes:
+##   - name: certs
+##     secret:
+##       secretName: admin-console-tls
+##
+##   - name: token-superuser
+##     secret:
+##       secretName: token-superuser
+##
+extraVolumes: []
+
+## @param extraVolumeMounts Optionally specify extra list of additional volumeMounts for the Bookkeeper container(s)
+## extraVolumeMounts:
+##    - name: certs
+##      readOnly: true
+##      mountPath: /pulsar/certs
+
+##    - mountPath: "/pulsar/token-superuser"
+##      name: token-superuser
+##      readOnly: true
+##
+extraVolumeMounts: []
+
+## @param sidecars Add additional sidecar containers to the Bookkeeper pod(s)
+## e.g:
+## sidecars:
+##   - name: your-image-name
+##     image: your-image
+##     imagePullPolicy: Always
+##     ports:
+##       - name: portname
+##         containerPort: 1234
+##
+sidecars: []

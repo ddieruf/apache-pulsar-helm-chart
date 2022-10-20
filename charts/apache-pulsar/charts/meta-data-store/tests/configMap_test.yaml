@@ -51,13 +51,13 @@ tests:
     asserts:
       - matchRegex:
           path: data.zookeeper\.conf
-          pattern: "server.0=meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.domain.com:123:567"
+          pattern: "server.1=meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.domain.com:123:567"
       - matchRegex:
           path: data.zookeeper\.conf
-          pattern: "server.1=meta-data-store-statefulset-1.meta-data-store-headless.xx.svc.domain.com:123:567"
+          pattern: "server.2=meta-data-store-statefulset-1.meta-data-store-headless.xx.svc.domain.com:123:567"
       - matchRegex:
           path: data.zookeeper\.conf
-          pattern: "server.2=meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.domain.com:123:567"
+          pattern: "server.3=meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.domain.com:123:567"
 
   - it: should have no tls
     set:
@@ -72,9 +72,6 @@ tests:
     asserts:
       - matchRegex:
           path: data.zookeeper\.conf
-          pattern: "clientPort=123"
-      - matchRegex:
-          path: data.global_zookeeper\.conf
           pattern: "clientPort=123"
       - notMatchRegex:
           path: data.zookeeper\.conf
@@ -94,9 +91,6 @@ tests:
             client: 123
             clientTls: 567
     asserts:
-      - matchRegex:
-          path: data.global_zookeeper\.conf
-          pattern: "secureClientPort=567"
       - matchRegex:
           path: data.zookeeper\.conf
           pattern: "secureClientPort=567"
@@ -134,20 +128,20 @@ tests:
           path: data.zookeeper\.conf
           pattern: "cccc=123"
 
-  - it: should allow additional global config data
-    set:
-      metaDataStore:
-        globalConfig:
-          extraConfigValues:
-            aaaa: bbbb
-            cccc: "123"
-    asserts:
-      - matchRegex:
-          path: data.global_zookeeper\.conf
-          pattern: "aaaa=bbbb"
-      - matchRegex:
-          path: data.global_zookeeper\.conf
-          pattern: "cccc=123"
+#  - it: should allow additional global config data
+#    set:
+#      metaDataStore:
+#        globalConfig:
+#          extraConfigValues:
+#            aaaa: bbbb
+#            cccc: "123"
+#    asserts:
+#      - matchRegex:
+#          path: data.global_zookeeper\.conf
+#          pattern: "aaaa=bbbb"
+#      - matchRegex:
+#          path: data.global_zookeeper\.conf
+#          pattern: "cccc=123"
 
   - it: should have extra opts for ssl
     set:

@@ -20,7 +20,7 @@ cmdBase="helm unittest . --strict --color --helm3 --failfast"
 #######################################
 pushd "./charts/apache-pulsar"
   cmd="${cmdBase}"
-  for file in $(find ./charts/meta-data-store/tests -name '*.yaml'); do
+  for file in $(find ./charts/broker/tests -name '*.yaml'); do
     cmd="${cmd} -f ${file}"
   done
 

@@ -18,19 +18,19 @@ spec:
   clusterIP: "None"
   publishNotReadyAddresses: true
   ports:
-    {{- if and (eq (include "common.tls.require-secure-inter" $) "false") .Values.service.ports.client }}
+    {{- if .Values.service.ports.client }}
     - name: client
       port: {{ .Values.service.ports.client }}
       targetPort: client
       protocol: TCP
     {{- end }}
-    {{- if and (eq (include "common.tls.require-secure-inter" $) "true") .Values.service.ports.clientTls }}
+    {{- if .Values.service.ports.clientTls }}
     - name: client-tls
       port: {{ .Values.service.ports.clientTls }}
       targetPort: client-tls
       protocol: TCP
     {{- end }}
-    {{- if and (eq (include "data-store.stateStoreEnabled" $) "true") .Values.service.ports.stateStorage }}
+    {{- if .Values.service.ports.stateStorage }}
     - name: state-storage
       port: {{ .Values.service.ports.stateStorage }}
       targetPort: state-storage

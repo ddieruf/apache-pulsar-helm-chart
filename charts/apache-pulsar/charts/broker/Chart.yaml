@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: "0.1.0"
+description: Apache Pulsar broker chart
+name: broker
+version: "0.1.0"
+type: application

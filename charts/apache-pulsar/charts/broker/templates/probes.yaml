@@ -1,0 +1,28 @@
+{{- $component := "broker" -}}
+{{- $name := (printf "%s-probes" (include "broker.name" $)) -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "broker.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+data:
+  liveness.sh: |
+    #!/bin/bash
+    exit 0;
+  readiness.sh: |
+    #!/bin/bash
+    set -e
+    #/pulsar/bin/pulsar-admin brokers healthcheck
+    #curl -sS --max-time 60 --fail 'http://localhost:{{ .Values.service.ports.http }}/admin/v2/brokers/ready'
+    exit 0;
+  startup.sh: |
+    #!/bin/bash
+    set -e
+    #curl -sS --max-time 60 --fail 'http://localhost:{{ .Values.service.ports.http }}/admin/v2/brokers/health'
+    exit 0;

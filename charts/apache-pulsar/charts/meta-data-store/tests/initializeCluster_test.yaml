@@ -2,7 +2,6 @@ suite: Test meta-data-store initialize cluster
 release:
   name: zz
   namespace: xx
-  IsInstall: true
 templates:
   - charts/metaDataStore/templates/jobs/initialize-cluster-metadata.yaml
 tests:
@@ -60,10 +59,10 @@ tests:
           pattern: --cluster "zz"
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
-          pattern: --metadata-store "zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.domain.com:2181,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.domain.com:2181"
+          pattern: --metadata-store "meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.domain.com:2181,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.domain.com:2181"
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
-          pattern: --configuration-metadata-store "zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.domain.com:2181,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.domain.com:2181"
+          pattern: --configuration-metadata-store "meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.domain.com:2181,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.domain.com:2181"
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
           pattern: --web-service-url "http://broker.web-cluster-addresses"

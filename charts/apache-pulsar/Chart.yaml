@@ -32,3 +32,14 @@ dependencies:
         parent: global.dataStore
       - child: config
         parent: global.dataStore.config
+
+  - name: broker
+    version: "0.1.0"
+    alias: broker
+    import-values:
+      - child: globalData
+        parent: global.broker
+      - child: config
+        parent: global.broker.config
+      - child: service
+        parent: global.broker.service

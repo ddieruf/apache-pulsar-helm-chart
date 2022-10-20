@@ -1,0 +1,128 @@
+suite: Test broker deployment
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/broker/templates/statefulset.yaml
+  - charts/broker/templates/configmap.yaml
+tests:
+  - it: should be correct document
+    asserts:
+      - containsDocument:
+          kind: StatefulSet
+          apiVersion: apps/v1
+    template: charts/broker/templates/statefulset.yaml
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          something: somewhere
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              something: somewhere
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: broker
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: broker
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: broker-0.1.0
+            name: broker-statefulset
+            namespace: xx
+    template: charts/broker/templates/statefulset.yaml
+
+  - it: should have correct template metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          something: somewhere
+      restartOnConfigMapChange: true
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels
+          value:
+            app.kubernetes.io/component: broker
+            app.kubernetes.io/instance: zz
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: broker
+            helm.sh/chart: broker-0.1.0
+    template: charts/broker/templates/statefulset.yaml
+
+  - it: should have default storage
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /pulsar/probes
+            name: probes
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /pulsar/logs
+            name: logs
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /pulsar/conf
+            name: conf
+    template: charts/broker/templates/statefulset.yaml
+
+  - it: should add jks stores and cert with TLS
+    template: charts/broker/templates/statefulset.yaml
+    set:
+      global:
+        interComponentTls:
+          enabled: true
+    asserts:
+        - contains:
+            path: spec.template.spec.volumes
+            content:
+              name: jks
+              projected:
+                sources:
+                  - secret:
+                      items:
+                        - key: truststore.jks
+                          path: truststore.jks
+                        - key: keystore.jks
+                          path: keystore.jks
+                      name: broker-tls
+                  - secret:
+                      items:
+                        - key: jks-password
+                          path: jks-password
+                      name: broker-jks
+        - contains:
+            path: spec.template.spec.volumes
+            content:
+              name: certs
+              secret:
+                secretName: broker-tls
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+                  - key: tls.key
+                    path: tls.key
+                  - key: tls.crt
+                    path: tls.crt
+        - contains:
+            path: spec.template.spec.containers[0].volumeMounts
+            content:
+              name: certs
+              mountPath: /pulsar/certs
+              readOnly: true
+        - contains:
+            path: spec.template.spec.containers[0].volumeMounts
+            content:
+              name: jks
+              mountPath: /pulsar/jks
+              readOnly: true

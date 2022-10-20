@@ -1,0 +1,132 @@
+suite: Test broker service
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/broker/templates/service.yaml
+tests:
+  - it: should be correct document
+    asserts:
+      - containsDocument:
+          kind: Service
+          apiVersion: v1
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          ccc: ddd
+      broker:
+        service:
+          annotations:
+            somethingelse: somewherelese
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              ccc: ddd
+              somethingelse: somewherelese
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: broker
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: broker
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: broker-0.1.0
+            name: broker-service
+            namespace: xx
+
+  - it: should only have secure ports
+    set:
+      global:
+        secureClusterEdge: true
+        broker:
+          enabled: false
+    asserts:
+      - contains:
+          path: spec.ports
+          content:
+            name: https
+            nodePort: null
+            port: 8081
+            protocol: TCP
+            targetPort: https
+      - contains:
+          path: spec.ports
+          content:
+            name: pulsar-ssl
+            nodePort: null
+            port: 6651
+            protocol: TCP
+            targetPort: pulsar-ssl
+#      - notContains:
+#          path: spec.ports
+#          content:
+#            name: http
+#            nodePort: null
+#            port: 8080
+#            protocol: TCP
+#            targetPort: http
+#      - notContains:
+#          path: spec.ports
+#          content:
+#            name: pulsar
+#            nodePort: null
+#            port: 6650
+#            protocol: TCP
+#            targetPort: pulsar
+
+  - it: should only have non-secure ports
+    set:
+      global:
+        secureClusterEdge: false
+        interComponentTls:
+          enabled: false
+        proxy:
+          enabled: false
+    asserts:
+#      - notContains:
+#          path: spec.ports
+#          content:
+#            name: https
+#            nodePort: null
+#            port: 8081
+#            protocol: TCP
+#            targetPort: https
+#      - notContains:
+#          path: spec.ports
+#          content:
+#            name: pulsarSsl
+#            nodePort: null
+#            port: 6651
+#            protocol: TCP
+#            targetPort: pulsarSsl
+      - contains:
+          path: spec.ports
+          content:
+            name: http
+            nodePort: null
+            port: 8080
+            protocol: TCP
+            targetPort: http
+      - contains:
+          path: spec.ports
+          content:
+            name: pulsar
+            nodePort: null
+            port: 6650
+            protocol: TCP
+            targetPort: pulsar
+
+  - it: should select the correct pod
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/component: broker
+            app.kubernetes.io/instance: zz
+            app.kubernetes.io/name: broker
