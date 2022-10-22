@@ -173,3 +173,19 @@ but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else 
     {{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+ Check the local chart value for enabling service monitor and check the parent charnt's global value. Also validate that a port has been set for metrics.
+
+ usage: {{ (eq (include "data-store.metrics-enabled" $) "true") }}
+ returns: "true|false"
+*/}}
+{{- define "data-store.metrics-enabled" -}}
+  {{- $enabled := (or (eq .Values.metricsServiceMonitor true) (eq .Values.global.observability.serviceMonitors true)) -}}
+
+  {{- if and $enabled (or (not .Values.config.httpServerEnabled) (not .Values.config.httpServerPort)) -}}
+    {{- fail "To enable metrics .config.httpServerEnabled should be true and .config.httpServerPort should be a valid port number." -}}
+  {{- end -}}
+
+  {{- $enabled -}}
+{{- end -}}

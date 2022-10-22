@@ -215,3 +215,18 @@ For more information about headless services with statefulsets and K8s DNS - htt
   {{- ($addresses | toJson) -}}
 {{- end -}}
 
+{{/*
+ Check the local chart value for enabling service monitor and check the parent charnt's global value. Also validate that a port has been set for metrics.
+
+ usage: {{ (eq (include "meta-data-store.metrics-enabled" $) "true") }}
+ returns: "true|false"
+*/}}
+{{- define "meta-data-store.metrics-enabled" -}}
+  {{- $enabled := (or (eq .Values.metricsServiceMonitor true) (eq .Values.global.observability.serviceMonitors true)) -}}
+
+  {{- if and $enabled (not (index .Values "config" "metricsProvider.httpPort")) -}}
+    {{- fail "A value for .config.metricsProvider.httpPort is required when metrics are enabled" -}}
+  {{- end -}}
+
+  {{- $enabled -}}
+{{- end -}}

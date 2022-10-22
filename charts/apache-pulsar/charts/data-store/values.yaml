@@ -267,6 +267,9 @@ config:
   ## @param config.enableLocalTransport Whether the bookie is allowed to listen for the BookKeeper clients executed on the local JVM.
   ##
   enableLocalTransport:
+  ## @param config.enableStatistics Whether the bookie should make metrics available.
+  ##
+  enableStatistics:
   ## @param config.ensemblePlacementPolicy The ensemble placement policy used for re-replicating entries. Options: org.apache.bookkeeper.client.RackawareEnsemblePlacementPolicy or org.apache.bookkeeper.client.RegionAwareEnsemblePlacementPolicy
   ##
   ensemblePlacementPolicy: org.apache.bookkeeper.client.RackawareEnsemblePlacementPolicy
@@ -615,6 +618,10 @@ podDisruptionBudget:
   minAvailable:
 
 ## @section Other Parameters
+
+## @param metricsServiceMonitor Enable component metrics scraping by creating a service monitor that is discoverable by Prometheus.
+##
+metricsServiceMonitor: false
 
 ## @param podManagementPolicy StatefulSet controller supports relax its ordering guarantees while preserving its uniqueness and identity guarantees. There are two valid pod management policies: OrderedReady and Parallel
 ## ref: https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#pod-management-policy

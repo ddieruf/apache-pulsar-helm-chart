@@ -130,7 +130,7 @@ spec:
             - name: state-storage
               containerPort: {{ .Values.containerPorts.stateStorage }}
             {{- end -}}
-            {{- if and .Values.config.httpServerEnabled .Values.config.httpServerPort}}
+            {{- if and (eq .Values.config.httpServerEnabled true) .Values.config.httpServerPort}}
             - name: http
               containerPort: {{ .Values.config.httpServerPort }}
             {{- end -}}

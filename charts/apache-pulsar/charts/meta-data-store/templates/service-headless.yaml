@@ -42,5 +42,11 @@ spec:
       targetPort: leader-election
       protocol: TCP
     {{- end }}
+    {{- if (eq (include "meta-data-store.metrics-enabled" .) "true") }}
+    - name: metrics
+      port: {{ index .Values "config" "metricsProvider.httpPort" }}
+      targetPort: metrics
+      protocol: TCP
+    {{- end }}
   selector: {{ include "common.labels.matchLabels" (dict "name" (include "meta-data-store.name" .) "context" $ ) | nindent 4 }}
     app.kubernetes.io/component: {{ $component | quote }}

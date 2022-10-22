@@ -15,6 +15,13 @@
   {{- $_ := set $configValues (printf "server.%s" $idx) $address -}}
 {{- end -}}
 
+{{- if (eq (include "meta-data-store.metrics-enabled" .) "true") }}
+  {{- $_ := set $configValues "metricsProvider.className" (coalesce (index .Values "config" "metricsProvider.className") "org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider") -}}
+{{- else -}}
+  {{- $_ := unset $configValues "metricsProvider.className" -}}
+  {{- $_ := unset $configValues "metricsProvider.httpPort" -}}
+{{- end -}}
+
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
   {{/*  Todo: Ideally only the secure port is open but the liveness probe is hardcoded to 2181
   {{- $_ := unset $configValues "clientPort" -}}

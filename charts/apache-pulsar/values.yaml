@@ -60,3 +60,19 @@ global:
     issuerRef:
       name:
       kind:
+
+  ## @section Observability
+  ## @descriptionStart
+  ## Values related to enabling or disabling metrics endpoints and pre-configured dashboards. Note these values override an individual component's metrics settings.
+  ## Read more in the [chart wiki](https://github.com/ddieruf/apache-pulsar-helm-chart/wiki)
+  ## @descriptionEnd
+  ##
+  observability:
+
+    ## @param global.observability.serviceMonitors Globally enable all components' metrics scraping by creating service monitors that are discoverable by Prometheus.
+    ##
+    serviceMonitors: true
+
+    ## @param global.observability.dashboards Deploy configmaps with pre-configured dashboards that are discoverable by Grafana.
+    ##
+    dashboards: false

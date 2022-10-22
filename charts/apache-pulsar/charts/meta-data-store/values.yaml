@@ -104,7 +104,7 @@ pulsarEnv:
   ##
   stopTimeout: 5
 
-## @section Meta data store configuration
+## @section Component configuration
 ## @descriptionStart
 ## Configure meta data store settings. Refer to the [project's documentation](https://pulsar.apache.org/docs/next/reference-configuration-zookeeper) for a full spec.
 ##
@@ -159,7 +159,7 @@ config:
   portUnification: FALSE
   ## @param config.metricsProvider.className Metrics provider class name
   ##
-  metricsProvider.className: org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider
+  metricsProvider.className:
   ## @param config.metricsProvider.httpPort Metrics port
   ##
   metricsProvider.httpPort: 8000
@@ -345,6 +345,10 @@ podDisruptionBudget:
   minAvailable: 2
 
 ## @section Other Parameters
+
+## @param metricsServiceMonitor Enable component metrics scraping by creating a service monitor that is discoverable by Prometheus.
+##
+metricsServiceMonitor: false
 
 ## @param podManagementPolicy StatefulSet controller supports relax its ordering guarantees while preserving its uniqueness and identity guarantees. There are two valid pod management policies: OrderedReady and Parallel
 ## ref: https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#pod-management-policy
@@ -628,7 +632,7 @@ logPersistence:
 ## @param livenessProbe.successThreshold Success threshold for readinessProbe
 ##
 livenessProbe:
-  enabled: true
+  enabled: false
   exec:
     command:
       - "/pulsar/probes/liveness.sh"
@@ -644,7 +648,7 @@ livenessProbe:
 ## @param readinessProbe.successThreshold Success threshold for readinessProbe
 ##
 readinessProbe:
-  enabled: true
+  enabled: false
   exec:
     command:
       - "/pulsar/probes/readiness.sh"
@@ -658,7 +662,7 @@ readinessProbe:
 ## @param startupProbe.failureThreshold Failure threshold for readinessProbe
 ##
 startupProbe:
-  enabled: true
+  enabled: false
   exec:
     command:
       - "/pulsar/probes/startup.sh"

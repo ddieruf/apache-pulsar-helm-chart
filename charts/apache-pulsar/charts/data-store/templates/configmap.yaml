@@ -1,14 +1,17 @@
 {{- $configValues := omit .Values.global.dataStore.config "extraConfigValues" -}}
 
 {{- $_ := set $configValues "bookiePort" (coalesce .Values.config.bookiePort ((eq (include "common.tls.require-secure-inter" .) "true") | ternary .Values.service.ports.clientTls .Values.service.ports.client)) -}}
-{{/*{{- $_ := set $configValues "zkServers" (coalesce .Values.config.zkServers (include "data-store.config.zkServers" $)) -}}
-zk://server1:port;server2:port;server3:port/ledgers
-{{- $_ := set $configValues "metadataServiceUri" "zk://meta-data-store-statefulset-0.meta-data-store-headless.pulsar.svc.cluster.local:2181/ledgers" -}}
-*/}}
 {{- $_ := set $configValues "metadataServiceUri" (coalesce .Values.config.metadataServiceUri (printf "zk://%s/ledgers" (include "data-store.config.metadataServiceUri" $))) -}}
 {{- $_ := set $configValues "journalDirectory" (coalesce .Values.config.journalDirectory .Values.persistence.journal.mountPath) -}}
 {{- $_ := set $configValues "ledgerDirectories" (coalesce .Values.config.journalDirectory .Values.persistence.ledgers.mountPath) -}}
 
+{{- if (eq (include "data-store.metrics-enabled" .) "true") }}
+  {{- $_ := set $configValues "enableStatistics" (coalesce .Values.config.enableStatistics "true") -}}
+  {{- $_ := set $configValues "statsProviderClass" (coalesce .Values.config.statsProviderClass "org.apache.bookkeeper.stats.prometheus.PrometheusMetricsProvider") -}}
+{{- else -}}
+  {{- $_ := unset $configValues "enableStatistics" -}}
+  {{- $_ := unset $configValues "statsProviderClass" -}}
+{{- end -}}
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
   {{- $_ := set $configValues "tlsProvider" (coalesce .Values.config.tlsProvider "JDK") -}}

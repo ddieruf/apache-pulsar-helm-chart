@@ -123,3 +123,17 @@ tests:
             name: jks
             mountPath: /pulsar/jks
             readOnly: true
+
+  - it: should enable metrics
+    template: charts/metaDataStore/templates/statefulset.yaml
+    set:
+      metaDataStore:
+        metricsServiceMonitor: true
+        config:
+          "metricsProvider.httpPort": 123
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: metrics
+            containerPort: 123

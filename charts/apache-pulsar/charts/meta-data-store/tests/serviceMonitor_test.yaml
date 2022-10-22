@@ -1,15 +1,20 @@
-suite: Test meta-data-store service
+suite: Test meta-data-store service monitor
 release:
   name: zz
   namespace: xx
 templates:
-  - charts/metaDataStore/templates/service-headless.yaml
+  - charts/metaDataStore/templates/serviceMonitor.yaml
 tests:
   - it: should be correct document
+    set:
+      metaDataStore:
+        metricsServiceMonitor: true
+        config:
+          "metricsProvider.httpPort": 123
     asserts:
       - containsDocument:
-          kind: Service
-          apiVersion: v1
+          kind: ServiceMonitor
+          apiVersion: monitoring.coreos.com/v1
 
   - it: should have correct metadata
     set:
@@ -19,16 +24,15 @@ tests:
         commonAnnotations:
           ccc: ddd
       metaDataStore:
-        service:
-          annotations:
-            somethingelse: somewherelese
+        metricsServiceMonitor: true
+        config:
+          "metricsProvider.httpPort": 123
     asserts:
       - equal:
           path: metadata
           value:
             annotations:
               ccc: ddd
-              somethingelse: somewherelese
             labels:
               aaa: bbb
               app.kubernetes.io/component: meta-data-store
@@ -37,29 +41,19 @@ tests:
               app.kubernetes.io/name: meta-data-store
               app.kubernetes.io/part-of: apache-pulsar
               helm.sh/chart: metaDataStore-0.1.0
-            name: meta-data-store-headless
+            name: meta-data-store-service-monitor
             namespace: xx
 
   - it: should select the correct pod
-    asserts:
-      - equal:
-          path: spec.selector
-          value:
-            app.kubernetes.io/component: meta-data-store
-            app.kubernetes.io/instance: zz
-            app.kubernetes.io/name: meta-data-store
-
-  - it: should enable metrics
     set:
       metaDataStore:
         metricsServiceMonitor: true
         config:
           "metricsProvider.httpPort": 123
     asserts:
-      - contains:
-          path: spec.ports
-          content:
-            name: metrics
-            port: 123
-            targetPort: metrics
-            protocol: TCP
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/component: meta-data-store
+            app.kubernetes.io/instance: zz
+            app.kubernetes.io/name: meta-data-store

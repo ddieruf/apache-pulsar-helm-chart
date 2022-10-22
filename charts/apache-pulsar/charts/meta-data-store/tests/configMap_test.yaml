@@ -161,3 +161,33 @@ tests:
       - matchRegex:
           path: data.pulsar_env\.sh
           pattern: "-Djavax.net.ssl.trustStore=/pulsar/jks/truststore.jks"
+
+  - it: should enable metrics
+    set:
+      metaDataStore:
+        metricsServiceMonitor: true
+        config:
+          "metricsProvider.className": someClass.name
+          "metricsProvider.httpPort": 8000
+    asserts:
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "metricsProvider.className=someClass.name"
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "metricsProvider.httpPort=8000"
+
+  - it: should disable metrics
+    set:
+      global:
+        observability:
+          serviceMonitors: false
+      metaDataStore:
+        metricsServiceMonitor: false
+    asserts:
+      - notMatchRegex:
+          path: data.zookeeper\.conf
+          pattern: "metricsProvider.className"
+      - notMatchRegex:
+          path: data.zookeeper\.conf
+          pattern: "metricsProvider.httpPort"

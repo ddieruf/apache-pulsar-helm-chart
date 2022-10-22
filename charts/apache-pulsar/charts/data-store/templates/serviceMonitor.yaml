@@ -1,0 +1,26 @@
+{{- if (eq (include "data-store.metrics-enabled" .) "true") }}
+  {{- $component := "data-store" -}}
+  {{- $name := (printf "%s-service-monitor" (include "data-store.name" $)) -}}
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "data-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    service_monitor: "1"
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- if .Values.service.annotations }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.service.annotations "context" $ ) | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels: {{ (include "common.labels.matchLabels" (dict "name" (include "data-store.name" $) "context" $ )) | nindent 6 }}
+      app.kubernetes.io/component: {{ $component | quote }}
+  endpoints:
+    - port: http
+      path: /metrics
+{{- end -}}

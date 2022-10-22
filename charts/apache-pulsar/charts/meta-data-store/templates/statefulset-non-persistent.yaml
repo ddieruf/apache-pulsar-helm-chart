@@ -85,13 +85,14 @@ spec:
       serviceAccountName: {{ include "meta-data-store.serviceAccountName" . | quote }}
       initContainers:
         - name: install
-          image: busybox:latest
+          image: busybox:stable
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
           env:
             - name: POD_NAME
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.name #export INDEX=${node.name##*-}
-          command: [ "sh", "-c", "echo $(({{.Values.globalData.replicas}} + ${POD_NAME##*-})) >> /work/myid" ]
+                  fieldPath: metadata.name
+          command: [ "sh", "-c", "podindex=${POD_NAME##*-} && echo $((podindex+{{ add .Values.globalData.replicas 1 }})) >> /work/myid"]
           volumeMounts:
             - name: data
               mountPath: "/work"
@@ -144,6 +145,10 @@ spec:
             {{- if .Values.containerPorts.leaderElection }}
             - name: leader-election
               containerPort: {{ .Values.containerPorts.leaderElection }}
+            {{- end }}
+            {{- if (eq (include "meta-data-store.metrics-enabled" .) "true") }}
+            - name: metrics
+              containerPort: {{ index .Values "config" "metricsProvider.httpPort" }}
             {{- end }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe: {{ include "common.tplvalues.render" (dict "value" (omit .Values.livenessProbe "enabled") "context" $) | nindent 12 }}

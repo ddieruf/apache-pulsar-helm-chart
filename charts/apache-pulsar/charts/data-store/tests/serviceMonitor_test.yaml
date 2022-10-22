@@ -1,0 +1,59 @@
+suite: Test data-store service monitor
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/metaDataStore/templates/serviceMonitor.yaml
+tests:
+  - it: should be correct document
+    set:
+      metaDataStore:
+        metricsServiceMonitor: true
+        config:
+          "metricsProvider.httpPort": 123
+    asserts:
+      - containsDocument:
+          kind: ServiceMonitor
+          apiVersion: monitoring.coreos.com/v1
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          ccc: ddd
+      dataStore:
+        metricsServiceMonitor: true
+        config:
+          "metricsProvider.httpPort": 123
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              ccc: ddd
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: data-store
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: data-store
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: metaDataStore-0.1.0
+            name: data-store-service-monitor
+            namespace: xx
+
+  - it: should select the correct pod
+    set:
+      dataStore:
+        metricsServiceMonitor: true
+        config:
+          "metricsProvider.httpPort": 123
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/component: data-store
+            app.kubernetes.io/instance: zz
+            app.kubernetes.io/name: data-store
