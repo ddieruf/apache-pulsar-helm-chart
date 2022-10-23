@@ -1,13 +1,13 @@
-{{- if (eq (include "meta-data-store.metrics-enabled" .) "true") }}
-  {{- $component := "meta-data-store" -}}
-  {{- $name := (printf "%s-service-monitor" (include "meta-data-store.name" $)) -}}
+{{- if (eq (include "%%CHART_NAME%%.metrics-enabled" .) "true") }}
+  {{- $component := "%%CHART_NAME%%" -}}
+  {{- $name := (printf "%s-service-monitor" (include "%%CHART_NAME%%.name" $)) -}}
 
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: {{ $name | quote }}
   namespace: {{ (include "common.names.namespace" .) | quote }}
-  labels: {{ include "common.labels.standard" (dict "name" (include "meta-data-store.name" .) "context" $ ) | nindent 4 }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "%%CHART_NAME%%.name" .) "context" $ ) | nindent 4 }}
     app.kubernetes.io/component: {{ $component | quote }}
     service_monitor: "1"
     {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
@@ -18,9 +18,9 @@ metadata:
     {{- end }}
 spec:
   selector:
-    matchLabels: {{ (include "common.labels.matchLabels" (dict "name" (include "meta-data-store.name" $) "context" $ )) | nindent 6 }}
+    matchLabels: {{ (include "common.labels.matchLabels" (dict "name" (include "%%CHART_NAME%%.name" $) "context" $ )) | nindent 6 }}
       app.kubernetes.io/component: {{ $component | quote }}
   endpoints:
-    - port: metrics
+    - port: http
       path: /metrics
 {{- end -}}
