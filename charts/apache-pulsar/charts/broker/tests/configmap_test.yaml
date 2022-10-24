@@ -59,13 +59,13 @@ tests:
     asserts:
       - matchRegex:
           path: data.broker\.conf
-          pattern: "bookkeeperMetadataServiceUri=zk\\+hierarchical://meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181;meta-data-store-statefulset-1.meta-data-store-headless.xx.svc.cluster.local:2181"
+          pattern: "bookkeeperMetadataServiceUri=zk://meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181;meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.cluster.local:2181;meta-data-store-statefulset-non-persistent-1.meta-data-store-headless.xx.svc.cluster.local:2181/ledgers"
       - matchRegex:
           path: data.broker\.conf
-          pattern: "configurationMetadataStoreUrl=zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181,meta-data-store-statefulset-1.meta-data-store-headless.xx.svc.cluster.local:2181"
+          pattern: "configurationMetadataStoreUrl=meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.cluster.local:2181,meta-data-store-statefulset-non-persistent-1.meta-data-store-headless.xx.svc.cluster.local:2181"
       - matchRegex:
           path: data.broker\.conf
-          pattern: "metadataStoreUrl=zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181,meta-data-store-statefulset-1.meta-data-store-headless.xx.svc.cluster.local:2181"
+          pattern: "metadataStoreUrl=meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.cluster.local:2181,meta-data-store-statefulset-non-persistent-1.meta-data-store-headless.xx.svc.cluster.local:2181"
 
   - it: should have correct default ports
     set:

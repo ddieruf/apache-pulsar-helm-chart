@@ -43,6 +43,6 @@ tests:
 
   - it: should initialize the cluster meta
     asserts:
-      - equal:
+      - matchRegex:
           path: spec.template.spec.containers[0].args[0]
-          value: "/pulsar/bin/bookkeeper shell metaformat --nonInteractive || true"
+          pattern: "/pulsar/bin/bookkeeper shell nukeexistingcluster -force -zkledgersrootpath \"/ledgers\" && /pulsar/bin/bookkeeper shell initnewcluster"
