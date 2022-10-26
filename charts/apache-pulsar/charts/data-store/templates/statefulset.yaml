@@ -88,7 +88,10 @@ spec:
       securityContext: {{ omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "data-store.serviceAccountName" . }}
-      initContainers: {{ include "common.lifeCycle.data-store-cluster-initialized" . | nindent 8 }}
+      initContainers:
+      {{- if .Release.IsInstall -}}
+        {{ include "common.lifeCycle.data-store-cluster-initialized" . | nindent 8 }}
+      {{- end -}}
       {{- if .Values.initContainers }}
         {{ include "common.tplvalues.render" ( dict "value" .Values.initContainers "context" $ ) | nindent 8 }}
       {{- end }}

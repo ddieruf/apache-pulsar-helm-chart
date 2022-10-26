@@ -1,3 +1,4 @@
+{{- if .Release.IsInstall -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -26,3 +27,4 @@ spec:
         - name: post-install-job
           image: "bitnami/kubectl:latest"
           command: ["/bin/sh","-c", "kubectl -n \"{{.Release.Namespace}}\" delete job -l \"app.kubernetes.io/component=life-cycle\""]
+{{- end -}}
