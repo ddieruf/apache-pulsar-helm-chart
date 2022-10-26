@@ -1,10 +1,10 @@
 {{- $configValues := omit .Values.global.metaDataStore.config "extraConfigValues" -}}
 {{- $globalConfigValues := omit .Values.global.metaDataStore.globalConfig "extraConfigValues" -}}
 
-{{- $_ := set $configValues "clientPort" (coalesce .Values.config.clientPort .Values.service.ports.client) -}}
+{{- $_ := set $configValues "clientPort" .Values.containerPorts.client -}}
 {{- $_ := set $configValues "dataDir" (coalesce .Values.config.dataDir .Values.persistence.mountPath) -}}
 
-{{- $_ := set $globalConfigValues "clientPort" (coalesce .Values.config.clientPort .Values.service.ports.client) -}}
+{{- $_ := set $globalConfigValues "clientPort" .Values.containerPorts.client -}}
 {{- $_ := set $globalConfigValues "dataDir" (coalesce .Values.config.dataDir .Values.persistence.mountPathForGlobal) -}}
 
 {{- $_ := unset $configValues "secureClientPort" -}}
@@ -23,11 +23,8 @@
 {{- end -}}
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
-  {{/*  Todo: Ideally only the secure port is open but the liveness probe is hardcoded to 2181
-  {{- $_ := unset $configValues "clientPort" -}}
-  */}}
-  {{- $_ := set $configValues "secureClientPort" (coalesce .Values.config.secureClientPort .Values.service.ports.clientTls) -}}
-  {{- $_ := set $globalConfigValues "secureClientPort" (coalesce .Values.config.secureClientPort .Values.service.ports.clientTls) -}}
+  {{- $_ := set $configValues "secureClientPort" .Values.containerPorts.clientTls -}}
+  {{- $_ := set $globalConfigValues "secureClientPort" .Values.containerPorts.clientTls -}}
   {{- $_ := set $configValues "leader.closeSocketAsync" "true" -}}
   {{- $_ := set $configValues "learner.closeSocketAsync" "true" -}}
   {{- $_ := set $configValues "serverCnxnFactory" "org.apache.zookeeper.server.NettyServerCnxnFactory" -}}

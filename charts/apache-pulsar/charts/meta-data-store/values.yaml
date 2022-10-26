@@ -125,14 +125,6 @@ config:
   ## The location where ZooKeeper will store in-memory database snapshots as well as the transaction log of updates to the database.
   ##
   dataDir: data/zookeeper
-  ## @skip config.clientPort
-  ## The port on which the ZooKeeper server will listen for connections.
-  ##
-  clientPort:
-  ## @skip config.secureClientPort
-  ## The secure port on which the ZooKeeper server will listen for connections.
-  ##
-  secureClientPort:
   ## @param config.admin.enableServer Enable administrative interface.
   ##
   admin.enableServer: TRUE

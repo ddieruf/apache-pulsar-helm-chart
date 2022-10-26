@@ -65,10 +65,9 @@ tests:
         interComponentTls:
           enabled: false
       metaDataStore:
-        service:
-          ports:
-            client: 123
-            clientTls: 567
+        containerPorts:
+          client: 123
+          clientTls: 567
     asserts:
       - matchRegex:
           path: data.zookeeper\.conf
@@ -86,10 +85,9 @@ tests:
         globalData:
           replicas: 2
           nonPersistentReplicas: 0
-        service:
-          ports:
-            client: 123
-            clientTls: 567
+        containerPorts:
+          client: 123
+          clientTls: 567
     asserts:
       - matchRegex:
           path: data.zookeeper\.conf

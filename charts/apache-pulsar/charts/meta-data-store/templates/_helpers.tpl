@@ -112,7 +112,7 @@ but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else 
  Create the name of the headless service account to use in the format: {pod-hostname}.{headless-service-name}.{namespace}.svc.{cluster-domain}:{server-port}:{leader-election-port}
 For more information about headless services with statefulsets and K8s DNS - https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
 
- usage: {{ include "meta-data-store.quorum-instance-address" (dict "instanceIndex" 0 "instanceNamePrefix" "meta-data-store-statefulset" "context" $) }}
+ usage: {{ include "meta-data-store.quorum-instance-address" (dict "instanceIndex" 0 "instanceNamePrefix" "meta-data-store-statefulset" "serverPort" 123 "leaderElectionPort" 567 "context" $) }}
  */}}
 {{- define "meta-data-store.quorum-instance-address" -}}
   {{- $instanceIndex := .instanceIndex -}}
@@ -122,18 +122,16 @@ For more information about headless services with statefulsets and K8s DNS - htt
                                   (printf "%s-headless" (include "meta-data-store.name" .context))
                                   (include "common.names.namespace" .context)
                                   .context.Values.global.clusterDomain
-                                  (.context.Values.global.metaDataStore.service.ports.server | int)
-                                  (.context.Values.global.metaDataStore.service.ports.leaderElection | int) -}}
+                                  .serverPort
+                                  .leaderElectionPort -}}
 {{- end -}}
 
 {{/*
  Create the name of the headless service account to use in the format: {pod-hostname}.{headless-service-name}.{namespace}.svc.{cluster-domain}:{client-port}
 For more information about headless services with statefulsets and K8s DNS - https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
 
- usage: {{ include "meta-data-store.client-instance-address" (dict "instanceIndex" 0 "instanceNamePrefix" "meta-data-store-statefulset" "context" $) }}
-
- Todo: ternary should be choosing the clientTls port but need to figure out proper communications with TLS
- */}}
+ usage: {{ include "meta-data-store.client-instance-address" (dict "instanceIndex" 0 "instanceNamePrefix" "meta-data-store-statefulset" "clientPort" 123 "context" $) }}
+*/}}
 {{- define "meta-data-store.client-instance-address" -}}
   {{- $instanceIndex := .instanceIndex -}}
   {{- $instanceNamePrefix := .instanceNamePrefix -}}
@@ -142,7 +140,7 @@ For more information about headless services with statefulsets and K8s DNS - htt
                                   (printf "%s-headless" (include "meta-data-store.name" .context))
                                   (include "common.names.namespace" .context)
                                   .context.Values.global.clusterDomain
-                                  (((eq (include "common.tls.require-secure-inter" .context) "true") | ternary .context.Values.global.metaDataStore.service.ports.client .context.Values.global.metaDataStore.service.ports.client ) | int)
+                                  .clientPort
                                    -}}
 {{- end -}}
 
@@ -164,16 +162,18 @@ For more information about headless services with statefulsets and K8s DNS - htt
   {{- $nonPersistentReplicas := (default 0 (.Values.global.metaDataStore.nonPersistentReplicas | int)) -}}
   {{- $totalServers := add $replicas $nonPersistentReplicas -}}
   {{- $serverCount := 1 -}} {{/* This holds a 1 based index of each zerver instance*/}}
+  {{- $serverPort := .Values.global.metaDataStore.service.ports.server | int -}}
+  {{- $leaderElectionPort := .Values.global.metaDataStore.service.ports.leaderElection | int -}}
 
   {{- range $i := until $replicas -}} {{/* The count starts at zero to track the indexx of each statfulset index*/}}
-    {{- $address := (include "meta-data-store.quorum-instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset" (include "meta-data-store.name" $)) "context" $)) }}
+    {{- $address := (include "meta-data-store.quorum-instance-address" (dict "serverPort" $serverPort "leaderElectionPort" $leaderElectionPort "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset" (include "meta-data-store.name" $)) "context" $)) }}
     {{- $_ := set $addresses (toString $serverCount) $address }}
     {{- $serverCount = (add $serverCount 1) -}}
   {{- end -}}
 
   {{- $i := 0 }} {{/* This holds a zero based index of each statefulset instance*/}}
   {{- range $r := untilStep $replicas ($totalServers | int) 1 -}}
-    {{- $address := (include "meta-data-store.quorum-instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset-non-persistent" (include "meta-data-store.name" $)) "context" $)) -}}
+    {{- $address := (include "meta-data-store.quorum-instance-address" (dict "serverPort" $serverPort "leaderElectionPort" $leaderElectionPort "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset-non-persistent" (include "meta-data-store.name" $)) "context" $)) -}}
     {{- $_ := set $addresses (toString $serverCount) $address }}
     {{- $serverCount = (add $serverCount 1) -}}
     {{- $i = (add $i 1) -}}
@@ -199,15 +199,16 @@ For more information about headless services with statefulsets and K8s DNS - htt
   {{- $replicas := (default 0 (.Values.global.metaDataStore.replicas | int)) -}}
   {{- $nonPersistentReplicas := (default 0 (.Values.global.metaDataStore.nonPersistentReplicas | int)) -}}
   {{- $totalServers := add $replicas $nonPersistentReplicas -}}
+  {{- $clientPort := (((eq (include "common.tls.require-secure-inter" .) "true") | ternary .Values.global.metaDataStore.service.ports.clientTls .Values.global.metaDataStore.service.ports.client ) | int) -}}
 
   {{- range $i := until $replicas -}}
-    {{- $address := (include "meta-data-store.client-instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset" (include "meta-data-store.name" $)) "context" $)) }}
+    {{- $address := (include "meta-data-store.client-instance-address" (dict "clientPort" $clientPort "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset" (include "meta-data-store.name" $)) "context" $)) }}
     {{- $addresses = append $addresses $address }}
   {{- end -}}
 
   {{- $i := 0 }}
   {{- range $r := untilStep $replicas ($totalServers | int) 1 -}}
-    {{- $address := (include "meta-data-store.client-instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset-non-persistent" (include "meta-data-store.name" $)) "context" $)) -}}
+    {{- $address := (include "meta-data-store.client-instance-address" (dict "clientPort" $clientPort "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset-non-persistent" (include "meta-data-store.name" $)) "context" $)) -}}
     {{- $addresses = append $addresses $address }}
     {{- $i = (add $i 1) -}}
   {{- end -}}

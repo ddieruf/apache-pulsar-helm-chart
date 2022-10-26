@@ -1,6 +1,6 @@
 {{- $configValues := omit .Values.global.dataStore.config "extraConfigValues" -}}
 
-{{- $_ := set $configValues "bookiePort" (coalesce .Values.config.bookiePort ((eq (include "common.tls.require-secure-inter" .) "true") | ternary .Values.service.ports.clientTls .Values.service.ports.client)) -}}
+{{- $_ := set $configValues "bookiePort" (coalesce .Values.config.bookiePort .Values.containerPorts.client) -}}
 {{- $_ := set $configValues "metadataServiceUri" (coalesce .Values.config.metadataServiceUri (printf "zk://%s/ledgers" (include "data-store.config.metadataServiceUri" $))) -}}
 {{- $_ := set $configValues "journalDirectory" (coalesce .Values.config.journalDirectory .Values.persistence.journal.mountPath) -}}
 {{- $_ := set $configValues "ledgerDirectories" (coalesce .Values.config.journalDirectory .Values.persistence.ledgers.mountPath) -}}
@@ -14,6 +14,8 @@
 {{- end -}}
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
+  {{- $_ := set $configValues "bookiePort" (coalesce .Values.config.bookiePort .Values.containerPorts.clientTls) -}}
+
   {{- $_ := set $configValues "tlsProvider" (coalesce .Values.config.tlsProvider "JDK") -}}
   {{- $_ := set $configValues "tlsProviderFactoryClass" (coalesce .Values.config.tlsProviderFactoryClass "org.apache.bookkeeper.tls.TLSContextFactor") -}}
   {{- $_ := set $configValues "tlsKeyStoreType" (coalesce .Values.config.tlsKeyStoreType "JKS") -}}

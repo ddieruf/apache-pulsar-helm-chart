@@ -1,5 +1,10 @@
 {{- $component := "meta-data-store" -}}
 {{- $name := (printf "%s-headless" (include "meta-data-store.name" .)) -}}
+{{- $ports := .Values.service.ports -}}
+
+{{- if and (eq (include "meta-data-store.metrics-enabled" .) "true") (not (index .Values "config" "metricsProvider.httpPort")) -}}
+  {{- fail "Provide an httpPort when metrics are enabled." -}}
+{{- end -}}
 
 apiVersion: v1
 kind: Service
@@ -18,31 +23,31 @@ spec:
   clusterIP: "None"
   publishNotReadyAddresses: true
   ports:
-    {{- if .Values.service.ports.client }}
+    {{- if $ports.client }}
     - name: client
-      port: {{ .Values.service.ports.client }}
+      port: {{ $ports.client }}
       targetPort: client
       protocol: TCP
     {{- end }}
-    {{- if .Values.service.ports.clientTls }}
+    {{- if $ports.clientTls }}
     - name: client-tls
-      port: {{ .Values.service.ports.clientTls }}
+      port: {{ $ports.clientTls }}
       targetPort: client-tls
       protocol: TCP
     {{- end }}
-    {{- if .Values.service.ports.server }}
+    {{- if $ports.server }}
     - name: server
-      port: {{ .Values.service.ports.server }}
+      port: {{ $ports.server }}
       targetPort: server
       protocol: TCP
     {{- end }}
-    {{- if .Values.service.ports.leaderElection }}
+    {{- if $ports.leaderElection }}
     - name: leader-election
-      port: {{ .Values.service.ports.leaderElection }}
+      port: {{ $ports.leaderElection }}
       targetPort: leader-election
       protocol: TCP
     {{- end }}
-    {{- if (eq (include "meta-data-store.metrics-enabled" .) "true") }}
+    {{- if and (eq (include "meta-data-store.metrics-enabled" .) "true") (index .Values "config" "metricsProvider.httpPort") }}
     - name: metrics
       port: {{ index .Values "config" "metricsProvider.httpPort" }}
       targetPort: metrics

@@ -1,8 +1,15 @@
 {{- $component := "data-store" -}}
 {{- $name := (printf "%s-headless" (include "data-store.name" .)) -}}
+{{- $ports := .Values.service.ports -}}
 
 {{- if and (eq .Values.config.httpServerEnabled true) (not .Values.config.httpServerPort) -}}
-  {{- fail "The value config.httpServerPort is required, when config.httpServerEnabled is set to truw." -}}
+  {{- fail "The value config.httpServerPort is required, when config.httpServerEnabled is set to true." -}}
+{{- end -}}
+
+{{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
+  {{- $_ := unset $ports "client" -}}
+{{- else -}}
+  {{- $_ := unset $ports "clientTls" -}}
 {{- end -}}
 
 apiVersion: v1
@@ -22,21 +29,21 @@ spec:
   clusterIP: "None"
   publishNotReadyAddresses: true
   ports:
-    {{- if .Values.service.ports.client }}
+    {{- if $ports.client }}
     - name: client
-      port: {{ .Values.service.ports.client }}
+      port: {{ $ports.client }}
       targetPort: client
       protocol: TCP
     {{- end }}
-    {{- if .Values.service.ports.clientTls }}
+    {{- if $ports.clientTls }}
     - name: client-tls
-      port: {{ .Values.service.ports.clientTls }}
+      port: {{ $ports.clientTls }}
       targetPort: client-tls
       protocol: TCP
     {{- end }}
-    {{- if .Values.service.ports.stateStorage }}
+    {{- if $ports.stateStorage }}
     - name: state-storage
-      port: {{ .Values.service.ports.stateStorage }}
+      port: {{ $ports.stateStorage }}
       targetPort: state-storage
       protocol: TCP
     {{- end }}
