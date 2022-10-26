@@ -1,11 +1,11 @@
 {{- $brokerConfigValues := omit .Values.global.broker.config "extraConfigValues" -}}
 {{- $clientConfigValues := dict -}}
 
-{{- $_ := set $brokerConfigValues "bindAddress" (coalesce .Values.config.bindAddress "0.0.0.0") -}}
+{{/*{{- $_ := set $brokerConfigValues "bindAddress" (coalesce .Values.config.bindAddress "0.0.0.0") -}}*/}}
 {{- $_ := set $brokerConfigValues "bookkeeperMetadataServiceUri" (coalesce .Values.config.bookkeeperMetadataServiceUri (printf "zk://%s/ledgers" (include "data-store.config.metadataServiceUri" $))) -}}
 {{- $_ := unset $brokerConfigValues "bootstrapNamespaces" -}}
 
-{{- $_ := set $brokerConfigValues "brokerServicePort" .Values.service.ports.pulsar -}}
+{{- $_ := set $brokerConfigValues "brokerServicePort" .Values.containerPorts.pulsar -}}
 {{- $_ := unset $brokerConfigValues "brokerServicePortTls" -}}
 
 {{- $_ := set $brokerConfigValues "clusterName" (coalesce .Values.config.clusterName (include "cluster.name" .)) -}}
@@ -13,15 +13,15 @@
 {{- $_ := set $brokerConfigValues "functionsWorkerEnabled" (coalesce .Values.config.functionsWorkerEnabled (include "broker.config.functionWorkerEnabled" .)) -}}
 {{- $_ := set $brokerConfigValues "metadataStoreUrl" (coalesce .Values.config.metadataStoreUrl (include "broker.config.metadataStoreUrl" .)) -}}
 
-{{- $_ := set $brokerConfigValues "webServicePort" .Values.service.ports.http -}}
+{{- $_ := set $brokerConfigValues "webServicePort" .Values.containerPorts.http -}}
 {{- $_ := unset $brokerConfigValues "webServicePortTls" -}}
 
 {{- $_ := set $clientConfigValues "webServiceUrl" (printf "http://localhost:%s/" $brokerConfigValues.webServicePort) -}}
 {{- $_ := set $clientConfigValues "brokerServiceUrl" (printf "pulsar://localhost:%s/" $brokerConfigValues.brokerServicePort) -}}
 
-{{- if eq (include "broker.tls.require-secure" .) "true" -}}
+{{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
   {{- $_ := unset $brokerConfigValues "brokerServicePort" -}}
-  {{- $_ := set $brokerConfigValues "brokerServicePortTls" .Values.service.ports.pulsarSsl -}}
+  {{- $_ := set $brokerConfigValues "brokerServicePortTls" .Values.containerPorts.pulsarSsl -}}
 
   {{- $_ := set $brokerConfigValues "brokerClientTlsEnabledWithKeyStore" (coalesce .Values.config.brokerClientTlsEnabledWithKeyStore "true") -}}
   {{- $_ := set $brokerConfigValues "brokerClientTlsTrustStore" (coalesce .Values.config.brokerClientTlsTrustStore "/pulsar/jks/truststore.jks") -}}
@@ -39,7 +39,7 @@
   {{- $_ := set $brokerConfigValues "tlsTrustStoreType" (coalesce .Values.config.tlsTrustStoreType "JKS") -}}
 
   {{- $_ := unset $brokerConfigValues "webServicePort" -}}
-  {{- $_ := set $brokerConfigValues "webServicePortTls" .Values.service.ports.https -}}
+  {{- $_ := set $brokerConfigValues "webServicePortTls" .Values.containerPorts.https -}}
 
   {{- $_ := set $brokerConfigValues "tlsCertificateFilePath" (coalesce .Values.config.tlsCertificateFilePath "/pulsar/certs/cer.crt") -}}
   {{- $_ := set $brokerConfigValues "tlsKeyFilePath" (coalesce .Values.config.tlsKeyFilePath "/pulsar/certs/key.crt") -}}

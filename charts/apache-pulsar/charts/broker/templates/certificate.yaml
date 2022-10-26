@@ -1,4 +1,4 @@
-{{- if and (eq (include "broker.tls.require-secure" $) "true") (not .Values.certificateResources.tlsSecretName) (not .Values.global.interComponentTls.tlsSecretName)}}
+{{- if and (eq (include "common.tls.require-secure-inter" $) "true") (not .Values.certificateResources.tlsSecretName) (not .Values.global.interComponentTls.tlsSecretName)}}
 
 {{- $issuerRef := (coalesce .Values.certificateResources.certificateRequest.issuerRef .Values.global.interComponentTls.issuerRef) -}}
 

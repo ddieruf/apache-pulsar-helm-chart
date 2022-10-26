@@ -74,12 +74,11 @@ tests:
         interComponentTls:
           enabled: false
       broker:
-        service:
-          ports:
-            pulsar: 123
-            pulsarSsl: 456
-            http: 789
-            https: 012
+        containerPorts:
+          pulsar: 123
+          pulsarSsl: 456
+          http: 789
+          https: 012
     asserts:
       - matchRegex:
           path: data.broker\.conf

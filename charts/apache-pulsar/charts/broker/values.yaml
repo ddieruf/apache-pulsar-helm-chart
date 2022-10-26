@@ -1056,10 +1056,6 @@ ingress:
 ##
 service:
 
-  ## @param service.type Broker service type
-  ##
-  type: ClusterIP
-
   ports:
     ## @param service.ports.pulsar [nullable] Broker application controller binary service port
     ##
@@ -1074,62 +1070,9 @@ service:
     ##
     https: 8081
 
-  ## Node ports to expose
-  ## @param service.nodePorts.pulsar Node port for binary connections
-  ## @param service.nodePorts.pulsarSsl Node port for secure binary connections
-  ## @param service.nodePorts.http Node port for web connections
-  ## @param service.nodePorts.https Node port for secure web connections
-  ## NOTE: choose port between <30000-32767>
-  ##
-  nodePorts:
-    pulsar: 30650
-    pulsarSsl: 30651
-    http: 30080
-    https: 30081
-
-  ## @param service.clusterIP Broker application controller service Cluster IP
-  ## e.g.:
-  ## clusterIP: None
-  ##
-  clusterIP: ""
-
-  ## @param service.loadBalancerIP Broker application controller service Load Balancer IP
-  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
-  ##
-  loadBalancerIP: ""
-
-  ## @param service.loadBalancerSourceRanges Broker application controller service Load Balancer sources
-  ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
-  ## e.g:
-  ## loadBalancerSourceRanges:
-  ##   - 10.10.10.0/24
-  ##
-  loadBalancerSourceRanges: []
-
-  ## @param service.externalTrafficPolicy Broker application controller service external traffic policy
-  ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
-  ##
-  externalTrafficPolicy: Cluster
-
   ## @param service.annotations [object,nullable] Additional custom annotations for Component application controller service
   ##
   annotations: {}
-
-  ## @param service.extraPorts [array,nullable] Extra ports to expose (normally used with the `sidecar` value)
-  ##
-  extraPorts: []
-
-  ## @param service.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
-  ## If "ClientIP", consecutive client requests will be directed to the same Pod
-  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
-  ##
-  sessionAffinity: None
-
-  ## @param service.sessionAffinityConfig Additional settings for the sessionAffinity
-  ## sessionAffinityConfig:
-  ##   clientIP:
-  ##     timeoutSeconds: 300
-  sessionAffinityConfig: {}
 
 ## ServiceAccount configuration for the Component
 ##
@@ -1405,7 +1348,7 @@ logPersistence:
 ## @param livenessProbe.successThreshold Success threshold for readinessProbe
 ##
 livenessProbe:
-  enabled: true
+  enabled: false
   exec:
     command:
       - "/pulsar/probes/liveness.sh"
@@ -1421,7 +1364,7 @@ livenessProbe:
 ## @param readinessProbe.successThreshold Success threshold for readinessProbe
 ##
 readinessProbe:
-  enabled: true
+  enabled: false
   exec:
     command:
       - "/pulsar/probes/readiness.sh"
@@ -1435,7 +1378,7 @@ readinessProbe:
 ## @param startupProbe.failureThreshold Failure threshold for readinessProbe
 ##
 startupProbe:
-  enabled: true
+  enabled: false
   exec:
     command:
       - "/pulsar/probes/startup.sh"

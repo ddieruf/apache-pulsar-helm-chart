@@ -19,10 +19,10 @@ data:
     #!/bin/bash
     set -e
     #/pulsar/bin/pulsar-admin brokers healthcheck
-    #curl -sS --max-time 60 --fail 'http://localhost:{{ .Values.service.ports.http }}/admin/v2/brokers/ready'
+    #curl -sS --max-time 60 --fail 'http://localhost:{{ .Values.containerPorts.http }}/admin/v2/brokers/ready'
     exit 0;
   startup.sh: |
     #!/bin/bash
     set -e
-    #curl -sS --max-time 60 --fail 'http://localhost:{{ .Values.service.ports.http }}/admin/v2/brokers/health'
+    #curl -sS --max-time 60 --fail 'http://localhost:{{ .Values.containerPorts.http }}/admin/v2/brokers/health'
     exit 0;
