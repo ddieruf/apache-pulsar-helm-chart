@@ -1,5 +1,5 @@
 {{- $component := "broker" -}}
-{{- $name := (printf "%s-service" (include "broker.name" .)) -}}
+{{- $name := (printf "%s-service-headless" (include "broker.name" .)) -}}
 {{- $ports := .Values.service.ports -}}
 
 {{- if (eq (include "common.tls.require-secure-inter" $) "true") -}}

@@ -11,7 +11,7 @@ globalData:
 
   ## @param globalData.replicas The number of brokers to deploy
   ##
-  replicas: 3
+  replicas: 1
 
 ## @section Image parameters
 ## @descriptionStart
@@ -29,7 +29,7 @@ image:
 
   ## @param image.tag [string,nullable] Component image tag (immutable tags are recommended)
   ##
-  tag: "2.10_2.2"
+  tag: "2.10_2.3"
 
   ## @param image.pullPolicy Component image pull policy
   ## Specify a imagePullPolicy
@@ -298,10 +298,14 @@ config:
   ## @param config.brokerClientTlsCiphers Specify the tls cipher the internal client will use to negotiate during TLS Handshake. (a comma-separated list of ciphers) e.g. [TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256]
   ##
   brokerClientTlsCiphers:
+  ## @skip config.brokerClientTlsEnabled
+  ## Whether internal client uses secure connection
+  ##
+  brokerClientTlsEnabled:
   ## @skip config.brokerClientTlsEnabledWithKeyStore
   ## Whether internal client use KeyStore type to authenticate with Pulsar brokers
   ##
-  brokerClientTlsEnabledWithKeyStore: FALSE
+  brokerClientTlsEnabledWithKeyStore:
   ## @param config.brokerClientTlsProtocols Specify the tls protocols the broker will use to negotiate during TLS handshake. (a comma-separated list of protocol names). e.g. TLSv1.3, TLSv1.2
   ##
   brokerClientTlsProtocols:
@@ -316,7 +320,7 @@ config:
   ## @skip config.brokerClientTlsTrustStoreType
   ## TLS TrustStore type configuration for internal client: JKS, PKCS12, used by the internal client to authenticate with Pulsar brokers
   ##
-  brokerClientTlsTrustStoreType: JKS
+  brokerClientTlsTrustStoreType:
   ## @param config.brokerDeduplicationEnabled Sets the default behavior for message deduplication in the broker. If enabled, the broker will reject messages that were already stored in the topic. This setting can be overridden on a per-namespace basis.
   ##
   brokerDeduplicationEnabled: FALSE
@@ -813,7 +817,7 @@ config:
   systemTopicSchemaCompatibilityStrategy: ALWAYS_COMPATIBLE
   ## @param config.tlsAllowInsecureConnection Accept untrusted TLS certificate from client. If it is set to true, a client with a cert which cannot be verified with the 'tlsTrustCertsFilePath' cert will be allowed to connect to the server, though the cert will not be used for client authentication.
   ##
-  tlsAllowInsecureConnection: FALSE
+  tlsAllowInsecureConnection: true
   ## @skip config.tlsCertificateFilePath
   ## Path for the TLS certificate file
   ##
@@ -824,7 +828,7 @@ config:
   ## @skip config.tlsEnabledWithKeyStore
   ## Enable TLS with KeyStore type configuration in broker
   ##
-  tlsEnabledWithKeyStore: FALSE
+  tlsEnabledWithKeyStore:
   ## @skip config.tlsKeyFilePath
   ## Path for the TLS private key file
   ##
@@ -851,7 +855,7 @@ config:
   ## @skip config.tlsRequireTrustedClientCertOnConnect
   ## Trusted client certificates are required for to connect TLS Reject the Connection if the Client Certificate is not trusted. In effect, this requires that all connecting clients perform TLS client authentication.
   ##
-  tlsRequireTrustedClientCertOnConnect: false
+  tlsRequireTrustedClientCertOnConnect:
   ## @skip config.tlsTrustCertsFilePath
   ## Path for the trusted TLS certificate file. This cert is used to verify that any certs presented by connecting clients are signed by a certificate authority. If this verification fails, then the certs are untrusted and the connections are dropped.
   ##

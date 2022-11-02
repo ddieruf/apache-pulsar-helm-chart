@@ -19,8 +19,6 @@ dependencies:
         parent: global.metaDataStore
       - child: config
         parent: global.metaDataStore.config
-      - child: globalConfig
-        parent: global.metaDataStore.globalConfig
       - child: service
         parent: global.metaDataStore.service
 

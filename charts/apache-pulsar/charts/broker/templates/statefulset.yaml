@@ -1,18 +1,16 @@
 {{- $component := "broker" -}}
 {{- $name := (printf "%s-statefulset" (include "broker.name" $)) -}}
-{{- $secureOnlyPorts := false -}}
 {{- $extraVolMounts := default list .Values.extraVolumeMounts -}}
 {{- $extraVols := default list .Values.extraVolumes -}}
 {{- $containerPorts := .Values.containerPorts -}}
+{{- $jksPassSecretName := "" }}
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
-  {{- $secureOnlyPorts = true -}}
-
   {{- $_ := unset $containerPorts "http" -}}
   {{- $_ := unset $containerPorts "pulsar" -}}
 
   {{- $tlsSecretName := coalesce .Values.certificateResources.tlsSecretName .Values.global.interComponentTls.tlsSecretName (printf "%s-tls" (include "broker.name" .)) -}}
-  {{- $jksPassSecretName := coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "broker.name" .)) -}}
+  {{- $jksPassSecretName = coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "broker.name" .)) -}}
 
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.certs" . | fromJson) -}}
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.jks" . | fromJson) -}}

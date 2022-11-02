@@ -38,15 +38,6 @@ example: {{ include "common.lifeCycle.meta-data-store-statefulset-running" $ }}
     - {{ printf "-lapp.kubernetes.io/component=data-store" | quote }}
 {{- end -}}
 
-{{- define "common.lifeCycle.data-store-cluster-initialized" -}}
-- name: data-store-cluster-initialized
-  image: groundnuty/k8s-wait-for:latest
-  imagePullPolicy: IfNotPresent
-  args:
-    - "job"
-    - {{ printf "%s-init-new-cluster" (include "data-store.name" $) | quote }}
-{{- end -}}
-
 {{- define "common.lifeCycle.storage-running" -}}
 - name: storage-running
   image: groundnuty/k8s-wait-for:latest

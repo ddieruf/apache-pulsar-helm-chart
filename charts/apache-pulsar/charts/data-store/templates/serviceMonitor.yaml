@@ -13,9 +13,6 @@ metadata:
     {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
   annotations:
     {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
-    {{- if .Values.service.annotations }}
-    {{ include "common.tplvalues.render" ( dict "value" .Values.service.annotations "context" $ ) | nindent 4 }}
-    {{- end }}
 spec:
   selector:
     matchLabels: {{ (include "common.labels.matchLabels" (dict "name" (include "data-store.name" $) "context" $ )) | nindent 6 }}

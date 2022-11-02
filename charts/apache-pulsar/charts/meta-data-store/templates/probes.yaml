@@ -16,30 +16,12 @@ metadata:
 data:
   liveness.sh: |
     #!/bin/bash
-    [[("$(echo ruok | nc localhost {{ .Values.service.ports.client }})" != "imok")]] && exit 1;
-    exit 0;
+    /pulsar/bin/pulsar zookeeper-shell -server localhost:{{ (eq (include "common.tls.require-secure-inter" .) "true") | ternary .Values.containerPorts.clientTls .Values.containerPorts.client }} -client-configuration /pulsar/conf/zk_client.conf version
+    exit $?
   readiness.sh: |
     #!/bin/bash
-    serverState="$(echo mntr | nc localhost {{ .Values.service.ports.client }} 2>/dev/null| grep zk_server_state)";
-    peerState="$(echo mntr | nc localhost {{ .Values.service.ports.client }} 2>/dev/null| grep zk_peer_state)";
-
-    if [[ "${serverState}" == *"leader"* ]]; then
-      syncedFollowers="$(echo mntr | nc localhost {{ .Values.service.ports.client }} 2>/dev/null | grep zk_synced_followers | tr -cd '[[:digit:]]')";
-      learners="$(echo mntr | nc localhost {{ .Values.service.ports.client }} 2>/dev/null| grep zk_learners | tr -cd '[[:digit:]]')";
-      aliveConnections="$(echo mntr | nc localhost {{ .Values.service.ports.client }} 2>/dev/null| grep zk_num_alive_connections | tr -cd '[[:digit:]]')";
-
-      [[ ("${peerState}" != *"leading - broadcast")]] && exit 1;
-      [[("{{ printf "%d0" (sub (len $clusterAddresses) 1) }}" != "${learners}")]] && exit 1;
-      [[("${syncedFollowers}" != "${learners}")]] && exit 1;
-      [[("${syncedFollowers}" != "${aliveConnections}")]] && exit 1;
-    fi
-
-    if [[ "${serverState}" == *"follower"* ]]; then
-      [[ ("${peerState}" != *"following - broadcast")]] && exit 1;
-    fi
-
-    exit 0;
+    /pulsar/bin/pulsar zookeeper-shell -server localhost:{{ (eq (include "common.tls.require-secure-inter" .) "true") | ternary .Values.containerPorts.clientTls .Values.containerPorts.client }} -client-configuration /pulsar/conf/zk_client.conf "ls -R /"
+    exit $?
   startup.sh: |
     #!/bin/bash
-    [[("$(echo mntr | nc localhost {{ .Values.service.ports.client }} 2>/dev/null | grep "not currently serving")" != "")]] && exit 1;
-    exit 0;
+    exit 0

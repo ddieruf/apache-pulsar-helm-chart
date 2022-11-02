@@ -1,17 +1,15 @@
 {{- $component := "data-store" -}}
 {{- $name := (printf "%s-statefulset" (include "data-store.name" $)) -}}
-{{- $secureOnlyPorts := false -}}
 {{- $extraVolMounts := default list .Values.extraVolumeMounts -}}
 {{- $extraVols := default list .Values.extraVolumes -}}
 {{- $containerPorts := .Values.containerPorts -}}
+{{- $jksPassSecretName := "" }}
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
-  {{- $secureOnlyPorts = true -}}
-
   {{- $_ := unset $containerPorts "client" -}}
 
   {{- $tlsSecretName := coalesce .Values.certificateResources.tlsSecretName .Values.global.interComponentTls.tlsSecretName (printf "%s-tls" (include "data-store.name" .)) -}}
-  {{- $jksPassSecretName := coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "data-store.name" .)) -}}
+  {{- $jksPassSecretName = coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "data-store.name" .)) -}}
 
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.certs" . | fromJson) -}}
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.jks" . | fromJson) -}}
@@ -90,7 +88,7 @@ spec:
       serviceAccountName: {{ include "data-store.serviceAccountName" . }}
       initContainers:
       {{- if .Release.IsInstall -}}
-        {{ include "common.lifeCycle.data-store-cluster-initialized" . | nindent 8 }}
+        {{ include "common.lifeCycle.meta-data-store-running" . | nindent 8 }}
       {{- end -}}
       {{- if .Values.initContainers }}
         {{ include "common.tplvalues.render" ( dict "value" .Values.initContainers "context" $ ) | nindent 8 }}

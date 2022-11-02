@@ -1,10 +1,17 @@
 {{- $extraOpts := default list .Values.pulsarEnv.extraOpts -}}
 
 {{- if eq (include "common.tls.require-secure-inter" $) "true" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStorePassword=/pulsar/jks/jks-password" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStorePassword=/pulsar/jks/jks-password" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStore=/pulsar/jks/keystore.jks" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStore=/pulsar/jks/truststore.jks" -}}
+  {{/* Configure the zookeeper client to be secure */}}
+  {{- $extraOpts = append $extraOpts "-Dzookeeper.client.secure=true" -}}
+  {{- $extraOpts = append $extraOpts "-Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty" -}}
+
+  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.trustStore.type=JKS" -}}
+  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.trustStore.location=/pulsar/jks/truststore.jks" -}}
+  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.trustStore.passwordPath=/pulsar/jks/jks-password" -}}
+
+  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.keyStore.type=JKS" -}}
+  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.keyStore.location=/pulsar/jks/keystore.jks" -}}
+  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.keyStore.passwordPath=/pulsar/jks/jks-password" -}}
 {{- end -}}
 
 PULSAR_EXTRA_CLASSPATH={{ join ";" .Values.pulsarEnv.extraClasspath | quote }}
@@ -13,7 +20,6 @@ PULSAR_GC={{ join " " .Values.pulsarEnv.gc | quote }}
 PULSAR_MEM={{ join " " .Values.pulsarEnv.mem | quote }}
 PULSAR_LOG_DIR={{ .Values.logPersistence.mountPath }}
 PULSAR_ZK_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "zookeeper.conf" }}
-PULSAR_GLOBAL_ZK_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "global_zookeeper.conf" }}
 PULSAR_STOP_TIMEOUT={{.Values.pulsarEnv.stopTimeout}}
 ZOO_LOG_LEVEL={{ default "error" .Values.pulsarEnv.loggingLevels.root }}
 

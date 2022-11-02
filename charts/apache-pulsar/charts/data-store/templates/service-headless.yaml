@@ -21,10 +21,7 @@ metadata:
     app.kubernetes.io/component: {{ $component | quote }}
     {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
   annotations:
-    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
-    {{- if .Values.service.annotations }}
-    {{ include "common.tplvalues.render" ( dict "value" .Values.service.annotations "context" $ ) | nindent 4 }}
-    {{- end }}
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
 spec:
   clusterIP: "None"
   publishNotReadyAddresses: true

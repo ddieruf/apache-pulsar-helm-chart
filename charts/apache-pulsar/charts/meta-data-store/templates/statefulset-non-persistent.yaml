@@ -1,14 +1,15 @@
 {{- if gt (int .Values.globalData.nonPersistentReplicas) 0 -}}
 {{- $component := "meta-data-store" -}}
 {{- $name := (printf "%s-statefulset-non-persistent" (include "meta-data-store.name" $)) -}}
-{{- $secureOnlyPorts := false -}}
 {{- $extraVolMounts := default list .Values.extraVolumeMounts -}}
 {{- $extraVols := default list .Values.extraVolumes -}}
+{{- $containerPorts := .Values.containerPorts -}}
+{{- $jksPassSecretName := "" }}
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
-  {{- $secureOnlyPorts = true -}}
+  {{- $_ := unset $containerPorts "client" -}}
   {{- $tlsSecretName := coalesce .Values.certificateResources.tlsSecretName .Values.global.interComponentTls.tlsSecretName (printf "%s-tls" (include "meta-data-store.name" .)) -}}
-  {{- $jksPassSecretName := coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "meta-data-store.name" .)) -}}
+  {{- $jksPassSecretName = coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "meta-data-store.name" .)) -}}
 
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.certs" . | fromJson) -}}
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.jks" . | fromJson) -}}
@@ -114,8 +115,8 @@ spec:
           args:
             {{ include "common.tplvalues.render" (dict "value" .Values.containerArgs "context" $) | nindent 12 }}
           {{- end }}
-          {{- if .Values.extraEnvVars }}
           env:
+          {{- if .Values.extraEnvVars }}
             {{ include "common.tplvalues.render" ( dict "value" .Values.extraEnvVars "context" $) | nindent 12 }}
           {{- end }}
           {{- if or .Values.extraEnvVarsCM .Values.extraEnvVarsSecret }}
@@ -130,23 +131,27 @@ spec:
             {{- end }}
           {{- end }}
           ports:
-            {{- if and (not $secureOnlyPorts) .Values.containerPorts.client }}
+            {{- if $containerPorts.client }}
             - name: client
-              containerPort: {{ .Values.containerPorts.client }}
+              containerPort: {{ $containerPorts.client }}
             {{- end }}
-            {{- if and $secureOnlyPorts .Values.containerPorts.clientTls }}
+            {{- if $containerPorts.clientTls }}
             - name: client-tls
-              containerPort: {{ .Values.containerPorts.clientTls }}
+              containerPort: {{ $containerPorts.clientTls }}
             {{- end }}
-            {{- if .Values.containerPorts.server }}
+            {{- if $containerPorts.server }}
             - name: server
-              containerPort: {{ .Values.containerPorts.server }}
+              containerPort: {{ $containerPorts.server }}
             {{- end }}
-            {{- if .Values.containerPorts.leaderElection }}
+            {{- if $containerPorts.leaderElection }}
             - name: leader-election
-              containerPort: {{ .Values.containerPorts.leaderElection }}
+              containerPort: {{ $containerPorts.leaderElection }}
             {{- end }}
-            {{- if (eq (include "meta-data-store.metrics-enabled" .) "true") }}
+            {{- if and (eq (index .Values "config" "admin.enableServer") true) (index .Values "config" "admin.serverPort") }}
+            - name: admin
+              containerPort: {{ index .Values "config" "admin.serverPort" }}
+            {{- end }}
+            {{- if and (eq (include "meta-data-store.metrics-enabled" .) "true") (index .Values "config" "metricsProvider.httpPort") }}
             - name: metrics
               containerPort: {{ index .Values "config" "metricsProvider.httpPort" }}
             {{- end }}
@@ -175,6 +180,8 @@ spec:
               mountPath: {{ .Values.logPersistence.mountPath }}
             - name: "conf"
               mountPath: {{ .Values.pulsarEnv.confPath }}
+            - name: "probes"
+              mountPath: /pulsar/probes
             {{- if $extraVolMounts }}
             {{ include "common.tplvalues.render" (dict "value" $extraVolMounts "context" $) | nindent 12 }}
             {{- end }}
@@ -186,6 +193,10 @@ spec:
         - name: conf
           configMap:
             name: {{ printf "%s-configuration" (include "meta-data-store.name" .) }}
+        - name: "probes"
+          configMap:
+            name: {{ printf "%s-probes" (include "meta-data-store.name" .) }}
+            defaultMode: 0755
         {{- if $extraVols }}
         {{ include "common.tplvalues.render" (dict "value" $extraVols "context" $) | nindent 8 }}
         {{- end }}

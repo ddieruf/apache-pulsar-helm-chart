@@ -92,6 +92,26 @@ but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else 
   {{- ((eq (include "common.tls.require-secure-inter" .) "true") | ternary .Values.global.broker.service.ports.pulsarSsl .Values.global.broker.service.ports.pulsar ) -}}
 {{- end -}}
 
+{{/* Broker web address */}}
+{{- define "broker.webAddress" -}}
+  {{- printf "%s://%s.%s.svc.%s:%d"
+                        (include "broker.webScheme" .)
+                        (printf "%s-service-headless" (include "broker.name" .))
+                        (include "common.names.namespace" .)
+                        (include "common.names.domain" .)
+                        (include "broker.webPort" . | int)  -}}
+{{- end -}}
+
+{{/* Broker binary address */}}
+{{- define "broker.binaryAddress" -}}
+  {{- printf "%s://%s.%s.svc.%s:%d"
+                        (include "broker.binaryScheme" .)
+                        (printf "%s-service-headless" (include "broker.name" .))
+                        (include "common.names.namespace" .)
+                        (include "common.names.domain" .)
+                        (include "broker.binaryPort" . | int)  -}}
+{{- end -}}
+
 {{/*
  Check the local chart value for enabling service monitor and check the parent charnt's global value. Also validate that a port has been set for metrics.
 
