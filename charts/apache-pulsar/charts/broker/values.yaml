@@ -11,7 +11,7 @@ globalData:
 
   ## @param globalData.replicas The number of brokers to deploy
   ##
-  replicas: 1
+  replicas: 3
 
 ## @section Image parameters
 ## @descriptionStart

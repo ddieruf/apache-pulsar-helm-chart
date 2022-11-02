@@ -150,7 +150,7 @@ pulsarEnv:
 ##
 ## @param replicas The number of bookies to deploy
 ##
-replicas: 1
+replicas: 3
 
 config:
   ## @skip config.advertisedAddress
