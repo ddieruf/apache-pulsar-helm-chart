@@ -1,20 +1,23 @@
 {{- if gt (int .Values.globalData.replicas) 0 -}}
 {{- $component := "meta-data-store" -}}
 {{- $name := (printf "%s-statefulset" (include "meta-data-store.name" $)) -}}
-{{- $secureOnlyPorts := false -}}
 {{- $extraVolMounts := default list .Values.extraVolumeMounts -}}
 {{- $extraVols := default list .Values.extraVolumes -}}
+{{- $containerPorts := .Values.containerPorts -}}
+{{- $jksPassSecretName := "" }}
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
-  {{- $secureOnlyPorts = true -}}
+  {{- $_ := unset $containerPorts "client" -}}
   {{- $tlsSecretName := coalesce .Values.certificateResources.tlsSecretName .Values.global.interComponentTls.tlsSecretName (printf "%s-tls" (include "meta-data-store.name" .)) -}}
-  {{- $jksPassSecretName := coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "meta-data-store.name" .)) -}}
+  {{- $jksPassSecretName = coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "meta-data-store.name" .)) -}}
 
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.certs" . | fromJson) -}}
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.jks" . | fromJson) -}}
 
   {{- $extraVols = append $extraVols (include "common.tls.volumes.certs" (dict "tlsSecretName" $tlsSecretName "context" $) | fromJson) -}}
   {{- $extraVols = append $extraVols (include "common.tls.volumes.jks-store" (dict "jksPasswordSecretName" $jksPassSecretName "tlsSecretName" $tlsSecretName "context" $) | fromJson) -}}
+{{- else -}}
+  {{- $_ := unset $containerPorts "clientTls" -}}
 {{- end -}}
 
 apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
@@ -114,8 +117,8 @@ spec:
           args:
             {{ include "common.tplvalues.render" (dict "value" .Values.containerArgs "context" $) | nindent 12 }}
           {{- end }}
-          {{- if .Values.extraEnvVars }}
           env:
+          {{- if .Values.extraEnvVars }}
             {{ include "common.tplvalues.render" ( dict "value" .Values.extraEnvVars "context" $) | nindent 12 }}
           {{- end }}
           {{- if or .Values.extraEnvVarsCM .Values.extraEnvVarsSecret }}
@@ -130,27 +133,27 @@ spec:
             {{- end }}
           {{- end }}
           ports:
-            {{- if .Values.containerPorts.client }}
+            {{- if $containerPorts.client }}
             - name: client
-              containerPort: {{ .Values.containerPorts.client }}
+              containerPort: {{ $containerPorts.client }}
             {{- end }}
-            {{- if .Values.containerPorts.clientTls }}
+            {{- if $containerPorts.clientTls }}
             - name: client-tls
-              containerPort: {{ .Values.containerPorts.clientTls }}
+              containerPort: {{ $containerPorts.clientTls }}
             {{- end }}
-            {{- if .Values.containerPorts.server }}
+            {{- if $containerPorts.server }}
             - name: server
-              containerPort: {{ .Values.containerPorts.server }}
+              containerPort: {{ $containerPorts.server }}
             {{- end }}
-            {{- if .Values.containerPorts.leaderElection }}
+            {{- if $containerPorts.leaderElection }}
             - name: leader-election
-              containerPort: {{ .Values.containerPorts.leaderElection }}
+              containerPort: {{ $containerPorts.leaderElection }}
             {{- end }}
-            {{- if eq (index .Values "config" "admin.enableServer") true }}
+            {{- if and (eq (index .Values "config" "admin.enableServer") true) (index .Values "config" "admin.serverPort") }}
             - name: admin
               containerPort: {{ index .Values "config" "admin.serverPort" }}
             {{- end }}
-            {{- if (eq (include "meta-data-store.metrics-enabled" .) "true") }}
+            {{- if and (eq (include "meta-data-store.metrics-enabled" .) "true") (index .Values "config" "metricsProvider.httpPort") }}
             - name: metrics
               containerPort: {{ index .Values "config" "metricsProvider.httpPort" }}
             {{- end }}

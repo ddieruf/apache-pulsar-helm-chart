@@ -1,3 +1,9 @@
+{{- $extraOpts := default list .Values.pulsarEnv.extraOpts -}}
+
+{{- if eq (include "common.tls.require-secure-inter" $) "true" -}}
+  {{- $extraOpts = concat $extraOpts (include "meta-data-store.zookeeper.client" . | fromJsonArray)  -}}
+{{- end -}}
+
 #!/bin/sh
 
 # Set JAVA_HOME here to override the environment setting
@@ -9,7 +15,7 @@
 BOOKIE_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "bookkeeper.conf" }}
 
 # Log4j configuration file
-# BOOKIE_LOG_CONF=
+BOOKIE_LOG_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "log4j2.yaml" }}
 
 # Logs location
 BOOKIE_LOG_DIR={{ .Values.logPersistence.mountPath }}
@@ -30,10 +36,10 @@ else
 fi
 
 # Extra options to be passed to the jvm
-BOOKIE_EXTRA_OPTS="${BOOKIE_EXTRA_OPTS:-"-Dio.netty.leakDetectionLevel=disabled ${PULSAR_EXTRA_OPTS:-"-Dio.netty.recycler.maxCapacity.default=1000 -Dio.netty.recycler.linkCapacity=1024"}"}"
+BOOKIE_EXTRA_OPTS={{ join " " $extraOpts | quote }}
 
 # Add extra paths to the bookkeeper classpath
-# BOOKIE_EXTRA_CLASSPATH=
+BOOKIE_EXTRA_CLASSPATH={{ join ";" .Values.pulsarEnv.extraClasspath | quote }}
 
 #Folder where the Bookie server PID file should be stored
 #BOOKIE_PID_DIR=

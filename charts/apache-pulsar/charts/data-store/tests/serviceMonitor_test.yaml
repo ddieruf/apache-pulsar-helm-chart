@@ -3,14 +3,15 @@ release:
   name: zz
   namespace: xx
 templates:
-  - charts/metaDataStore/templates/serviceMonitor.yaml
+  - charts/dataStore/templates/serviceMonitor.yaml
 tests:
   - it: should be correct document
     set:
-      metaDataStore:
+      dataStore:
         metricsServiceMonitor: true
         config:
-          "metricsProvider.httpPort": 123
+          httpServerEnabled: true
+          httpServerPort: 123
     asserts:
       - containsDocument:
           kind: ServiceMonitor
@@ -26,7 +27,8 @@ tests:
       dataStore:
         metricsServiceMonitor: true
         config:
-          "metricsProvider.httpPort": 123
+          httpServerEnabled: true
+          httpServerPort: 123
     asserts:
       - equal:
           path: metadata
@@ -40,7 +42,8 @@ tests:
               app.kubernetes.io/managed-by: Helm
               app.kubernetes.io/name: data-store
               app.kubernetes.io/part-of: apache-pulsar
-              helm.sh/chart: metaDataStore-0.1.0
+              helm.sh/chart: dataStore-0.1.0
+              service_monitor: "1"
             name: data-store-service-monitor
             namespace: xx
 
@@ -49,7 +52,8 @@ tests:
       dataStore:
         metricsServiceMonitor: true
         config:
-          "metricsProvider.httpPort": 123
+          httpServerEnabled: true
+          httpServerPort: 123
     asserts:
       - equal:
           path: spec.selector.matchLabels
@@ -57,3 +61,14 @@ tests:
             app.kubernetes.io/component: data-store
             app.kubernetes.io/instance: zz
             app.kubernetes.io/name: data-store
+
+  - it: should warn about enabling http server
+    set:
+      dataStore:
+        metricsServiceMonitor: true
+        config:
+          httpServerEnabled: false
+          httpServerPort: 123
+    asserts:
+      - failedTemplate:
+          errorMessage: To enable metrics .config.httpServerEnabled should be true and .config.httpServerPort should be a valid port number.

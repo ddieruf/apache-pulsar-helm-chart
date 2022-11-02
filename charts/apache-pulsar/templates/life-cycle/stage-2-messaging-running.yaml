@@ -1,3 +1,4 @@
+{{- if .Release.IsInstall -}}
 {{- $component := "life-cycle" -}}
 {{- $name := "stage.2-messaging-running" -}}
 
@@ -21,3 +22,4 @@ spec:
     spec:
       restartPolicy: Never
       containers: {{ include "common.lifeCycle.broker-running" . | nindent 8 }}
+{{- end -}}

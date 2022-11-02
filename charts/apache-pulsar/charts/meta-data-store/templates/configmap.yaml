@@ -1,14 +1,9 @@
 {{- $configValues := omit .Values.global.metaDataStore.config "extraConfigValues" -}}
-{{- $globalConfigValues := omit .Values.global.metaDataStore.globalConfig "extraConfigValues" -}}
 
-{{- $_ := set $configValues "clientPort" (coalesce .Values.config.clientPort .Values.service.ports.client) -}}
-{{- $_ := set $configValues "dataDir" (coalesce .Values.config.dataDir .Values.persistence.mountPath) -}}
-
-{{- $_ := set $globalConfigValues "clientPort" (coalesce .Values.config.clientPort .Values.service.ports.client) -}}
-{{- $_ := set $globalConfigValues "dataDir" (coalesce .Values.config.dataDir .Values.persistence.mountPathForGlobal) -}}
-
+{{- $_ := set $configValues "clientPort" .Values.containerPorts.client -}}
 {{- $_ := unset $configValues "secureClientPort" -}}
-{{- $_ := unset $globalConfigValues "secureClientPort" -}}
+{{- $_ := set $configValues "dataDir" (coalesce .Values.config.dataDir .Values.persistence.mountPath) -}}
+{{- $_ := set $configValues "ssl.quorum.clientAuth" "NONE" -}}
 
 {{- $clusterAddresses := (include "meta-data-store.quorum-cluster-addresses" $ | fromJson) -}}
 {{- range $idx,$address := $clusterAddresses -}}
@@ -23,35 +18,39 @@
 {{- end -}}
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
-  {{/*  Todo: Ideally only the secure port is open but the liveness probe is hardcoded to 2181
+  {{- $_ := set $configValues "secureClientPort" .Values.containerPorts.clientTls -}}
   {{- $_ := unset $configValues "clientPort" -}}
-  */}}
-  {{- $_ := set $configValues "secureClientPort" (coalesce .Values.config.secureClientPort .Values.service.ports.clientTls) -}}
-  {{- $_ := set $globalConfigValues "secureClientPort" (coalesce .Values.config.secureClientPort .Values.service.ports.clientTls) -}}
+
   {{- $_ := set $configValues "leader.closeSocketAsync" "true" -}}
   {{- $_ := set $configValues "learner.closeSocketAsync" "true" -}}
   {{- $_ := set $configValues "serverCnxnFactory" "org.apache.zookeeper.server.NettyServerCnxnFactory" -}}
-  
-  {{- if gt (add .Values.globalData.replicas .Values.globalData.nonPersistentReplicas) 1 -}}
-    {{- $_ := set $configValues "sslQuorum" (coalesce .Values.config.sslQuorum "true") -}}
-    {{- $_ := set $configValues "ssl.quorum.trustStore.type" "JKS" -}}
-    {{/*  Todo: Zookeeper is using a reverse DNS lookup to decide hostname, which resolves with ip addressing, which the certificate has n o provision for. To set this to "true", core dns needs some tweaking read more: https://github.com/strimzi/strimzi-kafka-operator/issues/3111  */}}
-    {{- $_ := set $configValues "ssl.quorum.hostnameVerification" "false" -}}
-    {{- $_ := set $configValues "ssl.quorum.keyStore.location" "/pulsar/jks/keystore.jks" -}}
-    {{- $_ := set $configValues "ssl.quorum.keyStore.passwordPath" "/pulsar/jks/jks-password" -}}
-    {{- $_ := set $configValues "ssl.quorum.trustStore.location" "/pulsar/jks/truststore.jks" -}}
-    {{- $_ := set $configValues "ssl.quorum.trustStore.passwordPath" "/pulsar/jks/jks-password" -}}
-  {{- else -}}
-    {{- $_ := set $configValues "sslQuorum" (coalesce .Values.config.sslQuorum "false") -}}
-    {{- $_ := set $configValues "ssl.trustStore.type" "JKS" -}}
-    {{/*  Todo: Zookeeper is using a reverse DNS lookup to decide hostname, which resolves with ip addressing, which the certificate has n o provision for. To set this to "true", core dns needs some tweaking read more: https://github.com/strimzi/strimzi-kafka-operator/issues/3111  */}}
-    {{- $_ := set $configValues "ssl.hostnameVerification" "false" -}}
-    {{- $_ := set $configValues "ssl.keyStore.location" "/pulsar/jks/keystore.jks" -}}
-    {{- $_ := set $configValues "ssl.keyStore.passwordPath" "/pulsar/jks/jks-password" -}}
-    {{- $_ := set $configValues "ssl.trustStore.location" "/pulsar/jks/truststore.jks" -}}
-    {{- $_ := set $configValues "ssl.trustStore.passwordPath" "/pulsar/jks/jks-password" -}}
-  {{- end -}}
+
+  {{- $_ := set $configValues "sslQuorum" (coalesce .Values.config.sslQuorum "true") -}}
+  {{- $_ := set $configValues "ssl.quorum.trustStore.type" "JKS" -}}
+  {{- $_ := set $configValues "ssl.quorum.trustStore.location" "/pulsar/jks/truststore.jks" -}}
+  {{- $_ := set $configValues "ssl.quorum.trustStore.passwordPath" "/pulsar/jks/jks-password" -}}
+  {{- $_ := set $configValues "ssl.quorum.keyStore.type" "JKS" -}}
+  {{- $_ := set $configValues "ssl.quorum.keyStore.location" "/pulsar/jks/keystore.jks" -}}
+  {{- $_ := set $configValues "ssl.quorum.keyStore.passwordPath" "/pulsar/jks/jks-password" -}}
+
+  {{/*
+  Enum specifying the client auth requirement of server-side TLS sockets created by this X509Util.
+  NONE - do not request a client certificate.
+  WANT(default) - request a client certificate, but allow anonymous clients to connect.
+  NEED - require a client certificate, disconnect anonymous clients.
+  */}}
+  {{- $_ := set $configValues "ssl.quorum.clientAuth" "NEED" -}}
 {{- end -}}
+
+{{/*
+  Zookeeper is using a reverse DNS lookup to decide hostname, which resolves with ip addressing, which the certificate has no provision for.
+  To set this to "true", core dns needs some tweaking read more: https://github.com/strimzi/strimzi-kafka-operator/issues/3111
+
+  Also this - Hostname verification can not be turned one due to the inability get the keystore alias, distinguished name, and host name to all match
+  https://zookeeper.apache.org/doc/current/zookeeperAdmin.html#Quorum+TLS
+*/}}
+{{- $_ := set $configValues "ssl.quorum.hostnameVerification" "false" -}}
+{{- $_ := set $configValues "ssl.hostnameVerification" "false" -}}
 
 {{- $component := "meta-data-store" -}}
 {{- $name := (printf "%s-configuration" (include "meta-data-store.name" $)) -}}
@@ -76,3 +75,5 @@ data:
     {{ if .Values.config.extraConfigValues }}
     {{- include "common.formatting.toToml" (dict "configValues" .Values.config.extraConfigValues "context" $) | nindent 4 -}}
     {{ end }}
+  zk_client.conf: |
+    {{ tpl (.Files.Get "files/zk_client.conf") . | nindent 4 }}

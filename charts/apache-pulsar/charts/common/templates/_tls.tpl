@@ -67,26 +67,27 @@ Params:
 Get the needed volumes for jks store
 
 Usage:
-{{ include "common.tls.volumes.jks-store" (dict "jksPasswordSecretName" "meta-data-store-jks" "tlsSecretName" "meta-data-store-tls" "context" $) | fromJson }}
+{{ include "common.tls.volumes.jks-store" (dict "tlsSecretName" "meta-data-store-tls" "context" $) | fromJson }}
 
 Params:
   - volumeName - String - Required - The nanme of the volume
-  - jksPasswordSecretName - String - Required - The name of the secret object with the jks password
   - tlsSecretName - String - Required - The name of the TLS secret with the jks stores
+  - jksPasswordSecretName - String - Optional - The name of the secret object with the jks password that will be attached to disk
   - context - Context - Required - Parent context.
 */}}
 {{- define "common.tls.volumes.jks-store" -}}
   {{- $tlsSecretName := .tlsSecretName -}}
-  {{- $jksPasswordSecretName := .jksPasswordSecretName -}}
 
   {{- if not $tlsSecretName -}}
     {{- fail "Provide tlsSecretName when using common.tls.volumes.jks-store" -}}
   {{- end -}}
-  {{- if not $jksPasswordSecretName -}}
-    {{- fail "Provide jksPasswordSecretName when using common.tls.volumes.jks-store" -}}
-  {{- end -}}
-
   {{- $stores := (dict "secret" (dict "name" $tlsSecretName "items" (list (dict "key" "truststore.jks" "path" "truststore.jks") (dict "key" "keystore.jks" "path" "keystore.jks")))) -}}
-  {{- $jksPassword := (dict "secret" (dict "name" $jksPasswordSecretName "items" (list (dict "key" "jks-password" "path" "jks-password")))) -}}
-  {{- (dict "name" "jks" "projected" (dict "sources" (list $stores $jksPassword))) | toJson -}}
+
+  {{- if not .jksPasswordSecretName -}}
+    {{- (dict "name" "jks" "projected" (dict "sources" (list $stores))) | toJson -}}
+  {{- else -}}
+    {{- $jksPasswordSecretName := .jksPasswordSecretName -}}
+    {{- $jksPassword := (dict "secret" (dict "name" $jksPasswordSecretName "items" (list (dict "key" "jks-password" "path" "jks-password")))) -}}
+    {{- (dict "name" "jks" "projected" (dict "sources" (list $stores $jksPassword))) | toJson -}}
+  {{- end -}}
 {{- end -}}

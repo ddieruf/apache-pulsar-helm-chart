@@ -1,9 +1,9 @@
-suite: Test broker service
+suite: Test broker headless service
 release:
   name: zz
   namespace: xx
 templates:
-  - charts/broker/templates/service.yaml
+  - charts/broker/templates/service-headless.yaml
 tests:
   - it: should be correct document
     asserts:
@@ -37,88 +37,90 @@ tests:
               app.kubernetes.io/name: broker
               app.kubernetes.io/part-of: apache-pulsar
               helm.sh/chart: broker-0.1.0
-            name: broker-service
+            name: broker-service-headless
             namespace: xx
 
   - it: should only have secure ports
     set:
       global:
-        secureClusterEdge: true
-        broker:
-          enabled: false
+        interComponentTls:
+          enabled: true
+      broker:
+        service:
+          ports:
+            https: 123
+            http: 456
+            pulsar: 678
+            pulsarSsl: 789
     asserts:
       - contains:
           path: spec.ports
           content:
             name: https
-            nodePort: null
-            port: 8081
+            port: 123
             protocol: TCP
             targetPort: https
       - contains:
           path: spec.ports
           content:
             name: pulsar-ssl
-            nodePort: null
-            port: 6651
+            port: 789
             protocol: TCP
             targetPort: pulsar-ssl
-#      - notContains:
-#          path: spec.ports
-#          content:
-#            name: http
-#            nodePort: null
-#            port: 8080
-#            protocol: TCP
-#            targetPort: http
-#      - notContains:
-#          path: spec.ports
-#          content:
-#            name: pulsar
-#            nodePort: null
-#            port: 6650
-#            protocol: TCP
-#            targetPort: pulsar
+      - notContains:
+          path: spec.ports
+          content:
+            name: http
+            port: 456
+            protocol: TCP
+            targetPort: http
+      - notContains:
+          path: spec.ports
+          content:
+            name: pulsar
+            port: 678
+            protocol: TCP
+            targetPort: pulsar
 
   - it: should only have non-secure ports
     set:
       global:
-        secureClusterEdge: false
         interComponentTls:
           enabled: false
-        proxy:
-          enabled: false
+      broker:
+        service:
+          ports:
+            https: 123
+            http: 456
+            pulsar: 678
+            pulsarSsl: 789
     asserts:
-#      - notContains:
-#          path: spec.ports
-#          content:
-#            name: https
-#            nodePort: null
-#            port: 8081
-#            protocol: TCP
-#            targetPort: https
-#      - notContains:
-#          path: spec.ports
-#          content:
-#            name: pulsarSsl
-#            nodePort: null
-#            port: 6651
-#            protocol: TCP
-#            targetPort: pulsarSsl
+      - notContains:
+          path: spec.ports
+          content:
+            name: https
+            port: 123
+            protocol: TCP
+            targetPort: https
+      - notContains:
+          path: spec.ports
+          content:
+            name: pulsarSsl
+            port: 789
+            protocol: TCP
+            targetPort: pulsarSsl
       - contains:
           path: spec.ports
           content:
             name: http
-            nodePort: null
-            port: 8080
+            port: 456
             protocol: TCP
             targetPort: http
       - contains:
           path: spec.ports
           content:
             name: pulsar
-            nodePort: null
-            port: 6650
+            port: 678
             protocol: TCP
             targetPort: pulsar
 

@@ -25,7 +25,7 @@ image:
 
   ## @param image.tag [string,nullable] Component image tag (immutable tags are recommended)
   ##
-  tag: "2.10_2.0"
+  tag: "2.10_2.3"
 
   ## @param image.pullPolicy Component image pull policy
   ## Specify a imagePullPolicy
@@ -114,6 +114,7 @@ pulsarEnv:
     - "-Xms2g"
     - "-Xmx2g"
     - "-XX:MaxDirectMemorySize=4g"
+
   ##
   ##
   loggingLevels:
@@ -123,6 +124,7 @@ pulsarEnv:
     ## @param pulsarEnv.loggingLevels.pulsar Applies the PULSAR_LOG_LEVEL env var
     ##
     pulsar: "error"
+
   ## @param pulsarEnv.extraOpts A collection of extra options to be passed to the jvm. Format each as the entire key/value
   ##
   extraOpts:
@@ -132,6 +134,8 @@ pulsarEnv:
     - "-Dio.netty.recycler.maxCapacity.default=1000"
     - "-Dio.netty.recycler.linkCapacity=1024"
     - "-Dlog4j2.formatMsgNoLookups=true"
+    - "-Dio.netty.leakDetectionLevel=disabled"
+
   ## @param pulsarEnv.extraClasspath A collection of extra paths for the pulsar classpath. Include just the folder or file path, no delimiter.
   ##
   extraClasspath: []
@@ -272,7 +276,7 @@ config:
   enableStatistics:
   ## @param config.ensemblePlacementPolicy The ensemble placement policy used for re-replicating entries. Options: org.apache.bookkeeper.client.RackawareEnsemblePlacementPolicy or org.apache.bookkeeper.client.RegionAwareEnsemblePlacementPolicy
   ##
-  ensemblePlacementPolicy: org.apache.bookkeeper.client.RackawareEnsemblePlacementPolicy
+  ensemblePlacementPolicy: "org.apache.bookkeeper.client.RackawareEnsemblePlacementPolicy"
   ## @param config.entryLogFilePreallocationEnabled Enable or disable entry logger preallocation
   ##
   entryLogFilePreallocationEnabled: TRUE
@@ -539,7 +543,7 @@ config:
   writeBufferSizeBytes: 65536
   ## @param config.zkEnableSecurity Set ACLs on every node written on ZooKeeper, allowing users to read and write BookKeeper metadata stored on ZooKeeper. In order to make ACLs work you need to setup ZooKeeper JAAS authentication. All the bookies and Client need to share the same user, and this is usually done using Kerberos authentication. See ZooKeeper documentation.
   ##
-  zkEnableSecurity: FALSE
+  zkEnableSecurity:
   ## @param config.zkLedgersRootPath The root ZooKeeper path used to store ledger metadata. This parameter is used by the ZooKeeper-based ledger manager as a root znode to store all ledgers.
   ##
   zkLedgersRootPath: "/ledgers"
@@ -582,7 +586,7 @@ service:
 
   ## @param service.annotations [object,nullable] Additional custom annotations for Component application controller service
   ##
-  annotations: {}
+  annotations:
 
   ## @param service.extraPorts [array,nullable] Extra ports to expose (normally used with the `sidecar` value)
   ##

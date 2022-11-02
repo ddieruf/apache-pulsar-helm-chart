@@ -1,5 +1,13 @@
 {{- $configValues := omit .Values.global.%%CHART_NODE_NAME%%.config "extraConfigValues" -}}
 
+{{- if (eq (include "%%CHART_NAME%%.metrics-enabled" .) "true") }}
+  {{- $_ := set $configValues "enableStatistics" (coalesce .Values.config.enableStatistics "true") -}}
+  {{- $_ := set $configValues "statsProviderClass" (coalesce .Values.config.statsProviderClass "org.apache.XXXXXX.stats.prometheus.PrometheusMetricsProvider") -}}
+{{- else -}}
+  {{- $_ := unset $configValues "enableStatistics" -}}
+  {{- $_ := unset $configValues "statsProviderClass" -}}
+{{- end -}}
+
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
   {{- $_ := set $configValues "tlsProvider" (coalesce .Values.config.tlsProvider "JDK") -}}
   {{- $_ := set $configValues "tlsProviderFactoryClass" (coalesce .Values.config.tlsProviderFactoryClass "org.apache.bookkeeper.tls.TLSContextFactor") -}}

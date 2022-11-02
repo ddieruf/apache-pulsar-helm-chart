@@ -12,7 +12,10 @@
 {{- $jksSecretName := (coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "meta-data-store.name" $))) -}}
 
 {{- $commonName := (include "meta-data-store.fullname" .) -}}
-{{- $dnsNames := list (printf "*.%s.%s.svc.%s" (printf "%s-headless" (include "meta-data-store.name" .)) .Release.Namespace .Values.global.clusterDomain) "127.0.0.1" "localhost" -}}
+{{- $dnsNames := list (printf "*.%s.%s.svc.%s" (printf "%s-headless" (include "meta-data-store.name" .)) .Release.Namespace .Values.global.clusterDomain)
+                      "127.0.0.1"
+                      "localhost"
+                      (printf "%s.%s.svc.%s" (printf "%s-headless" (include "meta-data-store.name" .)) .Release.Namespace .Values.global.clusterDomain) -}}
 
 apiVersion: cert-manager.io/v1
 kind: Certificate

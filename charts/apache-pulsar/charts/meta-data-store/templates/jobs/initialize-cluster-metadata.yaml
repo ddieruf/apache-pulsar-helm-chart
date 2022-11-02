@@ -1,16 +1,17 @@
 {{- $component := "meta-data-store" -}}
 {{- $name := (printf "%s-initialize-cluster-meta-data" (include "meta-data-store.name" $)) -}}
 
-{{- $webServiceUrls := (printf "http://%s" (join "," "broker.web-cluster-addresses")) -}}
-{{- $binaryServiceUrls := (printf "pulsar://%s" (join "," "broker.binary-cluster-addresses")) -}}
-{{- $metaDataStoreUrls := (printf "%s" (join "," ((include "meta-data-store.client-cluster-addresses" $) | fromJsonArray)))}}
+{{- $webServiceUrl := (include "broker.webAddress" .) -}}
+{{- $binaryServiceUrl := (include "broker.binaryAddress" .) -}}
+{{- $metaDataStoreUrls := (printf "zk:%s" (join "," ((include "meta-data-store.client-cluster-addresses" $) | fromJsonArray)))}}
 
 {{- $extraVolMounts := default list .Values.extraVolumeMounts -}}
 {{- $extraVols := default list .Values.extraVolumes -}}
+{{- $jksPassSecretName := "" }}
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
   {{- $tlsSecretName := coalesce .Values.certificateResources.tlsSecretName .Values.global.interComponentTls.tlsSecretName (printf "%s-tls" (include "meta-data-store.name" .)) -}}
-  {{- $jksPassSecretName := coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "meta-data-store.name" .)) -}}
+  {{- $jksPassSecretName = coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "meta-data-store.name" .)) -}}
 
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.certs" . | fromJson) -}}
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.jks" . | fromJson) -}}
@@ -46,11 +47,11 @@ spec:
                 --metadata-store "{{ $metaDataStoreUrls }}" \
                 --configuration-metadata-store "{{ $metaDataStoreUrls }}" \
                 {{- if eq (include "common.tls.require-secure-inter" $) "true" }}
-                --web-service-url-tls "{{ $webServiceUrls }}" \
-                --broker-service-url-tls "{{ $binaryServiceUrls }}" \
+                --web-service-url-tls "{{ $webServiceUrl }}" \
+                --broker-service-url-tls "{{ $binaryServiceUrl }}" \
                 {{- end }}
-                --web-service-url "{{ $webServiceUrls }}" \
-                --broker-service-url "{{ $binaryServiceUrls }}"
+                --web-service-url "{{ $webServiceUrl }}" \
+                --broker-service-url "{{ $binaryServiceUrl }}"
           volumeMounts:
             - name: "conf"
               mountPath: {{ .Values.pulsarEnv.confPath }}

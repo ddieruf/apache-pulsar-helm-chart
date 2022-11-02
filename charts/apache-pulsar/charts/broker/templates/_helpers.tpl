@@ -72,127 +72,53 @@ but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else 
 {{- end -}}
 {{- end -}}
 
-{{- define "broker.isAtEdge" -}}
-  {{/*  (eq .Values.global.proxy.enabled false)*/}}
-  {{- "true" -}}
-{{- end -}}
-
-{{/*
-Decide if the broker should require secure communications.
-
-The decision tree is:
-Is the proxy enabled (which makes the broker an internal component)
-  N - Evaluate common.tls.require-secure-edge
-  Y - Evaluate common.tls.require-secure-inter
-
-Usage: {{ include "broker.tls.require-secure" $ }}
-*/}}
-{{- define "broker.tls.require-secure" -}}
-  {{- (or
-          (and (eq (include "broker.isAtEdge" .) "true") (eq (include "common.tls.require-secure-edge" .) "true"))
-          (eq (include "common.tls.require-secure-inter" .) "true")) -}}
-{{- end -}}
-
 {{/* Broker web scheme */}}
 {{- define "broker.webScheme" -}}
-  {{- ((eq (include "broker.tls.require-secure" .) "true") | ternary (print "https") (print "http") ) -}}
+  {{- ((eq (include "common.tls.require-secure-inter" .) "true") | ternary (print "https") (print "http") ) -}}
 {{- end -}}
 
 {{/* Broker binary scheme */}}
 {{- define "broker.binaryScheme" -}}
-  {{- ((eq (include "broker.tls.require-secure" .) "true") | ternary (print "pulsar+ssl") (print "pulsar") ) -}}
+  {{- ((eq (include "common.tls.require-secure-inter" .) "true") | ternary (print "pulsar+ssl") (print "pulsar") ) -}}
 {{- end -}}
 
 {{/* Broker web port */}}
 {{- define "broker.webPort" -}}
-  {{- ((eq (include "broker.tls.require-secure" .) "true") | ternary .Values.global.broker.service.ports.https .Values.global.broker.service.ports.http ) -}}
+  {{- ((eq (include "common.tls.require-secure-inter" .) "true") | ternary .Values.global.broker.service.ports.https .Values.global.broker.service.ports.http ) -}}
 {{- end -}}
 
 {{/* Broker binary port */}}
 {{- define "broker.binaryPort" -}}
-  {{- ((eq (include "broker.tls.require-secure" .) "true") | ternary .Values.global.broker.service.ports.pulsarSsl .Values.global.broker.service.ports.pulsar ) -}}
+  {{- ((eq (include "common.tls.require-secure-inter" .) "true") | ternary .Values.global.broker.service.ports.pulsarSsl .Values.global.broker.service.ports.pulsar ) -}}
+{{- end -}}
+
+{{/* Broker web address */}}
+{{- define "broker.webAddress" -}}
+  {{- printf "%s://%s.%s.svc.%s:%d"
+                        (include "broker.webScheme" .)
+                        (printf "%s-service-headless" (include "broker.name" .))
+                        (include "common.names.namespace" .)
+                        (include "common.names.domain" .)
+                        (include "broker.webPort" . | int)  -}}
+{{- end -}}
+
+{{/* Broker binary address */}}
+{{- define "broker.binaryAddress" -}}
+  {{- printf "%s://%s.%s.svc.%s:%d"
+                        (include "broker.binaryScheme" .)
+                        (printf "%s-service-headless" (include "broker.name" .))
+                        (include "common.names.namespace" .)
+                        (include "common.names.domain" .)
+                        (include "broker.binaryPort" . | int)  -}}
 {{- end -}}
 
 {{/*
- Create the name of the service account to use in the format: {pod-hostname}.{service-name}.{namespace}.svc.{cluster-domain}:{binary(Ssl)-port}
-For more information about headless services with statefulsets and K8s DNS - https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
+ Check the local chart value for enabling service monitor and check the parent charnt's global value. Also validate that a port has been set for metrics.
 
- usage: {{ include "broker.binary-instance-address" (dict "instanceIndex" 0 "instanceNamePrefix" "broker-statefulset" "context" $) }}
- */}}
-{{- define "broker.binary-instance-address" -}}
-  {{- $instanceIndex := .instanceIndex -}}
-  {{- $instanceNamePrefix := .instanceNamePrefix -}}
-  {{- printf "%s-%d.%s.%s.svc.%s:%d" $instanceNamePrefix
-                                  $instanceIndex
-                                  (printf "%s-service" (include "broker.name" .context))
-                                  (include "common.names.namespace" .context)
-                                  .context.Values.global.clusterDomain
-                                  (((eq (include "broker.tls.require-secure" .context) "true") | ternary .context.Values.global.broker.service.ports.pulsarSsl .context.Values.global.broker.service.ports.pulsar ) | int)
-                                   -}}
-{{- end -}}
-
-{{/*
- Create the name of the service account to use in the format: {pod-hostname}.{service-name}.{namespace}.svc.{cluster-domain}:{http(s)-port}
-For more information about headless services with statefulsets and K8s DNS - https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
-
- usage: {{ include "broker.web-instance-address" (dict "instanceIndex" 0 "instanceNamePrefix" "broker-statefulset" "context" $) }}
- */}}
-{{- define "broker.web-instance-address" -}}
-  {{- $instanceIndex := .instanceIndex -}}
-  {{- $instanceNamePrefix := .instanceNamePrefix -}}
-  {{- printf "%s-%d.%s.%s.svc.%s:%d" $instanceNamePrefix
-                                  $instanceIndex
-                                  (printf "%s-service" (include "broker.name" .context))
-                                  (include "common.names.namespace" .context)
-                                  .context.Values.global.clusterDomain
-                                  (((eq (include "broker.tls.require-secure" .context) "true") | ternary .context.Values.global.broker.service.ports.https .context.Values.global.broker.service.ports.http ) | int)
-                                   -}}
-{{- end -}}
-
-{{/*
- Get a list of all broker server addresses for client communications
-
- usage: {{ include "broker.web-cluster-addresse" $ }}
- returns:
-  [
-    {pod-hostname}-0.{service-name}.{namespace}.svc.{cluster-domain}:{http(s)-port},
-    {pod-hostname}-1.{service-name}.{namespace}.svc.{cluster-domain}:{http(s)-port},
-    {pod-hostname}-2.{service-name}.{namespace}.svc.{cluster-domain}:{http(s)-port}
-    ...
-  ]
- */}}
-{{- define "broker.web-cluster-addresses" -}}
-  {{- $addresses := list -}}
-  {{- $replicas := (default 0 (.Values.global.broker.replicas | int)) -}}
-
-  {{- range $i := until $replicas -}}
-    {{- $address := (include "broker.web-instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset" (include "broker.name" $)) "context" $)) }}
-    {{- $addresses = append $addresses $address }}
-  {{- end -}}
-
-  {{- ($addresses | toJson) -}}
-{{- end -}}
-
-{{/*
- Get a list of all broker server addresses for binary communications
-
- usage: {{ include "broker.binary-cluster-addresse" $ }}
- returns:
-  [
-    {pod-hostname}-0.{service-name}.{namespace}.svc.{cluster-domain}:{binary(Ssl)-port},
-    {pod-hostname}-1.{service-name}.{namespace}.svc.{cluster-domain}:{binary(Ssl)-port},
-    {pod-hostname}-2.{service-name}.{namespace}.svc.{cluster-domain}:{binary(Ssl)-port}
-    ...
-  ]
- */}}
-{{- define "broker.binary-cluster-addresses" -}}
-  {{- $addresses := list -}}
-  {{- $replicas := (default 0 (.Values.global.broker.replicas | int)) -}}
-
-  {{- range $i := until $replicas -}}
-    {{- $address := (include "broker.binary-instance-address" (dict "instanceIndex" $i "instanceNamePrefix" (printf "%s-statefulset" (include "broker.name" $)) "context" $)) }}
-    {{- $addresses = append $addresses $address }}
-  {{- end -}}
-
-  {{- ($addresses | toJson) -}}
+ usage: {{ (eq (include "broker.metrics-enabled" $) "true") }}
+ returns: "true|false"
+*/}}
+{{- define "broker.metrics-enabled" -}}
+  {{- $enabled := (or (eq .Values.metricsServiceMonitor true) (eq .Values.global.observability.serviceMonitors true)) -}}
+  {{- $enabled -}}
 {{- end -}}

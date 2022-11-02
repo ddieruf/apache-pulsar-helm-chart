@@ -26,7 +26,7 @@ usage: {{- include "cluster.name" $ -}}
                 BROKER OVERRIDABLES
 ==========================================================*/}}
 {{- define "broker.config.bookkeeperMetadataServiceUri" -}}
-  {{- printf "zk+hierarchical://%s" (join ";" ((include "meta-data-store.client-cluster-addresses" .) | fromJsonArray)) -}}
+  {{- printf "%s" (join ";" ((include "meta-data-store.client-cluster-addresses" .) | fromJsonArray)) -}}
 {{- end -}}
 {{- define "broker.config.clusterName" -}}
   {{- (include "cluster.name" .) -}}

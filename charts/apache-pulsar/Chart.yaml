@@ -19,8 +19,6 @@ dependencies:
         parent: global.metaDataStore
       - child: config
         parent: global.metaDataStore.config
-      - child: globalConfig
-        parent: global.metaDataStore.globalConfig
       - child: service
         parent: global.metaDataStore.service
 
@@ -35,7 +33,6 @@ dependencies:
 
   - name: broker
     version: "0.1.0"
-    alias: broker
     import-values:
       - child: globalData
         parent: global.broker

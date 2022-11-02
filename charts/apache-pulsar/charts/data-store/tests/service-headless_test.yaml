@@ -51,10 +51,14 @@ tests:
 
   - it: should have default ports
     set:
+      global:
+        interComponentTls:
+          enabled: false
       dataStore:
         service:
           ports:
             client: 123
+            clientTls: 456
     asserts:
       - contains:
           path: spec.ports
@@ -70,3 +74,36 @@ tests:
             port: 4181
             protocol: TCP
             targetPort: stateStorage
+      - notContains:
+          path: spec.ports
+          content:
+            name: client-tls
+            port: 456
+            protocol: TCP
+            targetPort: client-tls
+
+  - it: should have tls ports
+    set:
+      global:
+        interComponentTls:
+          enabled: true
+      dataStore:
+        service:
+          ports:
+            client: 123
+            clientTls: 456
+    asserts:
+      - notContains:
+          path: spec.ports
+          content:
+            name: client
+            port: 123
+            targetPort: client
+            protocol: TCP
+      - contains:
+          path: spec.ports
+          content:
+            name: client-tls
+            port: 456
+            protocol: TCP
+            targetPort: client-tls

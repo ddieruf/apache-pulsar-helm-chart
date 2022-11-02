@@ -35,61 +35,109 @@ tests:
             name: broker-configuration
             namespace: xx
 
-  - it: should have extra opts for ssl
+  - it: should add client tls settings to JVM environment
     set:
       global:
-        secureClusterEdge: true
         interComponentTls:
           enabled: true
     asserts:
       - matchRegex:
           path: data.pulsar_env\.sh
-          pattern: "-Djavax.net.ssl.trustStorePassword=/pulsar/jks/jks-password"
+          pattern: "-Dzookeeper.client.secure=true"
       - matchRegex:
           path: data.pulsar_env\.sh
-          pattern: "-Djavax.net.ssl.keyStorePassword=/pulsar/jks/jks-password"
+          pattern: "-Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty"
       - matchRegex:
           path: data.pulsar_env\.sh
-          pattern: "-Djavax.net.ssl.keyStore=/pulsar/jks/keystore.jks"
+          pattern: "-Dzookeeper.ssl.trustStore.type=JKS"
       - matchRegex:
           path: data.pulsar_env\.sh
-          pattern: "-Djavax.net.ssl.trustStore=/pulsar/jks/truststore.jks"
+          pattern: "-Dzookeeper.ssl.trustStore.location=/pulsar/jks/truststore.jks"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Dzookeeper.ssl.trustStore.passwordPath=/pulsar/jks/jks-password"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Dzookeeper.ssl.keyStore.type=JKS"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Dzookeeper.ssl.keyStore.location=/pulsar/jks/keystore.jks"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Dzookeeper.ssl.keyStore.passwordPath=/pulsar/jks/jks-password"
 
   - it: should have correct meta data store service addresses
+    set:
+      global:
+        interComponentTls:
+          enabled: false
+        metaDataStore:
+          service:
+            ports:
+              client: 123
+              clientTls: 456
+        dataStore:
+          service:
+            ports:
+              client: 678
+              clientTls: 789
     asserts:
       - matchRegex:
           path: data.broker\.conf
-          pattern: "bookkeeperMetadataServiceUri=zk\\+hierarchical://meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181;meta-data-store-statefulset-1.meta-data-store-headless.xx.svc.cluster.local:2181"
+          pattern: bookkeeperMetadataServiceUri=zk://meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:123;meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.cluster.local:123;meta-data-store-statefulset-non-persistent-1.meta-data-store-headless.xx.svc.cluster.local:123/ledgers
       - matchRegex:
           path: data.broker\.conf
-          pattern: "configurationMetadataStoreUrl=zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181,meta-data-store-statefulset-1.meta-data-store-headless.xx.svc.cluster.local:2181"
+          pattern: configurationMetadataStoreUrl=meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:123,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.cluster.local:123,meta-data-store-statefulset-non-persistent-1.meta-data-store-headless.xx.svc.cluster.local:123/ledgers
       - matchRegex:
           path: data.broker\.conf
-          pattern: "metadataStoreUrl=zk:meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:2181,meta-data-store-statefulset-1.meta-data-store-headless.xx.svc.cluster.local:2181"
+          pattern: metadataStoreUrl=meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:123,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.cluster.local:123,meta-data-store-statefulset-non-persistent-1.meta-data-store-headless.xx.svc.cluster.local:123/ledgers
 
   - it: should have correct default ports
     set:
       global:
-        secureClusterEdge: false
         interComponentTls:
           enabled: false
       broker:
-        service:
-          ports:
-            pulsar: 123
-            pulsarSsl: 456
-            http: 789
-            https: 012
+        containerPorts:
+          pulsar: 123
+          pulsarSsl: 456
+          http: 789
+          https: 012
     asserts:
       - matchRegex:
           path: data.broker\.conf
           pattern: "brokerServicePort=123"
-      - notMatchRegex:
+      - matchRegex:
           path: data.broker\.conf
-          pattern: "brokerServicePortTls=*"
+          pattern: "brokerServicePortTls="
       - matchRegex:
           path: data.broker\.conf
           pattern: "webServicePort=789"
-      - notMatchRegex:
+      - matchRegex:
           path: data.broker\.conf
-          pattern: "webServicePortTls=*"
+          pattern: "webServicePortTls="
+
+  - it: should have correct TLS ports
+    set:
+      global:
+        interComponentTls:
+          enabled: true
+      broker:
+        containerPorts:
+          pulsar: 123
+          pulsarSsl: 456
+          http: 789
+          https: 222
+    asserts:
+      - matchRegex:
+          path: data.broker\.conf
+          pattern: "brokerServicePort="
+      - matchRegex:
+          path: data.broker\.conf
+          pattern: "brokerServicePortTls=456"
+      - matchRegex:
+          path: data.broker\.conf
+          pattern: "webServicePort="
+      - matchRegex:
+          path: data.broker\.conf
+          pattern: "webServicePortTls=222"

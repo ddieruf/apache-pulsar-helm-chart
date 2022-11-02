@@ -1,6 +1,6 @@
 {{- $configValues := omit .Values.global.dataStore.config "extraConfigValues" -}}
 
-{{- $_ := set $configValues "bookiePort" (coalesce .Values.config.bookiePort ((eq (include "common.tls.require-secure-inter" .) "true") | ternary .Values.service.ports.clientTls .Values.service.ports.client)) -}}
+{{- $_ := set $configValues "bookiePort" (coalesce .Values.config.bookiePort .Values.containerPorts.client) -}}
 {{- $_ := set $configValues "metadataServiceUri" (coalesce .Values.config.metadataServiceUri (printf "zk://%s/ledgers" (include "data-store.config.metadataServiceUri" $))) -}}
 {{- $_ := set $configValues "journalDirectory" (coalesce .Values.config.journalDirectory .Values.persistence.journal.mountPath) -}}
 {{- $_ := set $configValues "ledgerDirectories" (coalesce .Values.config.journalDirectory .Values.persistence.ledgers.mountPath) -}}
@@ -14,23 +14,35 @@
 {{- end -}}
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
+  {{- $_ := set $configValues "bookiePort" (coalesce .Values.config.bookiePort .Values.containerPorts.clientTls) -}}
+
   {{- $_ := set $configValues "tlsProvider" (coalesce .Values.config.tlsProvider "JDK") -}}
-  {{- $_ := set $configValues "tlsProviderFactoryClass" (coalesce .Values.config.tlsProviderFactoryClass "org.apache.bookkeeper.tls.TLSContextFactor") -}}
+  {{- $_ := set $configValues "tlsProviderFactoryClass" (coalesce .Values.config.tlsProviderFactoryClass "org.apache.bookkeeper.tls.TLSContextFactory") -}}
+
   {{- $_ := set $configValues "tlsKeyStoreType" (coalesce .Values.config.tlsKeyStoreType "JKS") -}}
   {{- $_ := set $configValues "tlsKeyStore" (coalesce .Values.config.tlsKeyStore "/pulsar/jks/keystore.jks") -}}
   {{- $_ := set $configValues "tlsKeyStorePasswordPath" (coalesce .Values.config.tlsKeyStorePasswordPath "/pulsar/jks/jks-password") -}}
+
   {{- $_ := set $configValues "tlsTrustStoreType" (coalesce .Values.config.tlsTrustStoreType "JKS") -}}
   {{- $_ := set $configValues "tlsTrustStore" (coalesce .Values.config.tlsTrustStore "/pulsar/jks/truststore.jks") -}}
   {{- $_ := set $configValues "tlsTrustStorePasswordPath" (coalesce .Values.config.tlsTrustStorePasswordPath "/pulsar/jks/jks-password") -}}
-  {{- $_ := set $configValues "tlsHostnameVerificationEnabled" (coalesce .Values.config.tlsHostnameVerificationEnabled "true") -}}
+
+{{/*  {{- $_ := set $configValues "tlsHostnameVerificationEnabled" (coalesce .Values.config.tlsHostnameVerificationEnabled "true") -}}*/}}
 
   {{/* Mutual TLS */}}
-  {{- $_ := set $configValues "tlsClientAuthentication" (coalesce .Values.config.tlsClientAuthentication "true") -}}
-  {{- $_ := set $configValues "bookkeeperTLSClientAuthentication" (coalesce .Values.config.bookkeeperTLSClientAuthentication "true") -}}
-  {{- $_ := set $configValues "bookkeeperTLSTrustCertsFilePath" (coalesce .Values.config.bookkeeperTLSTrustCertsFilePath "/pulsar/certs/ca.crt") -}}
+{{/*  {{- $_ := set $configValues "tlsClientAuthentication" (coalesce .Values.config.tlsClientAuthentication "true") -}}*/}}
+{{/*  {{- $_ := set $configValues "bookkeeperTLSClientAuthentication" (coalesce .Values.config.bookkeeperTLSClientAuthentication "true") -}}*/}}
+{{/*  {{- $_ := set $configValues "bookkeeperTLSTrustCertsFilePath" (coalesce .Values.config.bookkeeperTLSTrustCertsFilePath "/pulsar/certs/ca.crt") -}}*/}}
+
+{{/*  {{- $_ := set $configValues "clientKeyStore" (coalesce .Values.config.tlsKeyStore "/pulsar/jks/keystore.jks") -}}*/}}
+{{/*  {{- $_ := set $configValues "clientKeyStorePasswordPath" (coalesce .Values.config.tlsKeyStorePasswordPath "/pulsar/jks/jks-password") -}}*/}}
+
+{{/*  {{- $_ := set $configValues "clientTrustStore" (coalesce .Values.config.tlsTrustStore "/pulsar/jks/truststore.jks") -}}*/}}
+{{/*  {{- $_ := set $configValues "clientTrustStorePasswordPath" (coalesce .Values.config.tlsTrustStorePasswordPath "/pulsar/jks/jks-password") -}}*/}}
 {{- end -}}
 
 {{- if eq true false -}}
+  {{- $_ := set $configValues "zkEnableSecurity" (coalesce .Values.config.zkEnableSecurity  "false") -}}
   {{- $_ := set $configValues "bookieAuthProviderFactoryClass" (coalesce .Values.config.bookieAuthProviderFactoryClass "xxxx") -}}
 {{- end -}}
 
@@ -55,8 +67,6 @@ metadata:
 data:
   log4j2.yaml: |
     {{ tpl (.Files.Get "files/log4j2.yaml") . | nindent 4 }}
-  pulsar_env.sh: |
-    {{ tpl (.Files.Get "files/pulsar_env.sh") . | nindent 4 }}
   bkenv.sh: |
     {{ tpl (.Files.Get "files/bkenv.sh") . | nindent 4 }}
   bookkeeper.conf: |

@@ -1,19 +1,23 @@
 {{- $component := "data-store" -}}
 {{- $name := (printf "%s-statefulset" (include "data-store.name" $)) -}}
-{{- $secureOnlyPorts := false -}}
 {{- $extraVolMounts := default list .Values.extraVolumeMounts -}}
 {{- $extraVols := default list .Values.extraVolumes -}}
+{{- $containerPorts := .Values.containerPorts -}}
+{{- $jksPassSecretName := "" }}
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
-  {{- $secureOnlyPorts = true -}}
+  {{- $_ := unset $containerPorts "client" -}}
+
   {{- $tlsSecretName := coalesce .Values.certificateResources.tlsSecretName .Values.global.interComponentTls.tlsSecretName (printf "%s-tls" (include "data-store.name" .)) -}}
-  {{- $jksPassSecretName := coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "data-store.name" .)) -}}
+  {{- $jksPassSecretName = coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "data-store.name" .)) -}}
 
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.certs" . | fromJson) -}}
   {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.jks" . | fromJson) -}}
 
   {{- $extraVols = append $extraVols (include "common.tls.volumes.certs" (dict "tlsSecretName" $tlsSecretName "context" $) | fromJson) -}}
   {{- $extraVols = append $extraVols (include "common.tls.volumes.jks-store" (dict "jksPasswordSecretName" $jksPassSecretName "tlsSecretName" $tlsSecretName "context" $) | fromJson) -}}
+{{- else -}}
+  {{- $_ := unset $containerPorts "clientTls" -}}
 {{- end -}}
 
 apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
@@ -82,7 +86,10 @@ spec:
       securityContext: {{ omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "data-store.serviceAccountName" . }}
-      initContainers: {{ include "common.lifeCycle.data-store-cluster-initialized" . | nindent 8 }}
+      initContainers:
+      {{- if .Release.IsInstall -}}
+        {{ include "common.lifeCycle.meta-data-store-running" . | nindent 8 }}
+      {{- end -}}
       {{- if .Values.initContainers }}
         {{ include "common.tplvalues.render" ( dict "value" .Values.initContainers "context" $ ) | nindent 8 }}
       {{- end }}
@@ -118,17 +125,17 @@ spec:
             {{- end }}
           {{- end }}
           ports:
-            {{- if and (eq (include "common.tls.require-secure-inter" .) "false") .Values.containerPorts.client}}
+            {{- if $containerPorts.client}}
             - name: client
-              containerPort: {{ .Values.containerPorts.client }}
+              containerPort: {{ $containerPorts.client }}
             {{- end -}}
-            {{- if and (eq (include "common.tls.require-secure-inter" .) "true") .Values.containerPorts.clientTls}}
+            {{- if $containerPorts.clientTls}}
             - name: client-tls
-              containerPort: {{ .Values.containerPorts.clientTls }}
+              containerPort: {{ $containerPorts.clientTls }}
             {{- end -}}
-            {{- if and (eq (include "data-store.stateStoreEnabled" .) "true") .Values.containerPorts.stateStorage}}
+            {{- if $containerPorts.stateStorage}}
             - name: state-storage
-              containerPort: {{ .Values.containerPorts.stateStorage }}
+              containerPort: {{ $containerPorts.stateStorage }}
             {{- end -}}
             {{- if and (eq .Values.config.httpServerEnabled true) .Values.config.httpServerPort}}
             - name: http

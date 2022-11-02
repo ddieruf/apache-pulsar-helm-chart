@@ -41,6 +41,7 @@ tests:
               app.kubernetes.io/name: meta-data-store
               app.kubernetes.io/part-of: apache-pulsar
               helm.sh/chart: metaDataStore-0.1.0
+              service_monitor: "1"
             name: meta-data-store-service-monitor
             namespace: xx
 

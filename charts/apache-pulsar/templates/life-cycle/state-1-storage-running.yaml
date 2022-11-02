@@ -1,3 +1,4 @@
+{{- if .Release.IsInstall -}}
 {{- $component := "life-cycle" -}}
 {{- $name := "stage.1-storage-running" -}}
 
@@ -22,3 +23,4 @@ spec:
       restartPolicy: Never
       containers: {{ include "common.lifeCycle.meta-data-store-running" . | nindent 8 }}
         {{ include "common.lifeCycle.data-store-running" . | nindent 8 }}
+{{- end -}}

@@ -1,11 +1,22 @@
 {{- $extraOpts := default list .Values.pulsarEnv.extraOpts -}}
+{{ if eq (include "common.tls.require-secure-inter" $) "true" -}}
+  {{- $extraOpts = concat $extraOpts (include "meta-data-store.zookeeper.client" . | fromJsonArray)  -}}
 
-{{- if eq (include "common.tls.require-secure-inter" $) "true" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStorePassword=/pulsar/jks/jks-password" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStorePassword=/pulsar/jks/jks-password" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStore=/pulsar/jks/keystore.jks" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStore=/pulsar/jks/truststore.jks" -}}
-{{- end -}}
+# Clear out temp things & make a new temp
+rm -rdf /pulsar/temp
+mkdir /pulsar/temp
+# Move the conf from readonly drive to local read drive
+cp {{ printf "%s/%s" .Values.pulsarEnv.confPath "broker.conf" }} /pulsar/temp/broker.conf
+# Replace placeholders with sensitive data
+sed -i 's/((brokerClientTlsTrustStorePassword))/'$(cat /pulsar/jks/jks-password)'/g' /pulsar/temp/broker.conf
+sed -i 's/((tlsKeyStorePassword))/'$(cat /pulsar/jks/jks-password)'/g' /pulsar/temp/broker.conf
+sed -i 's/((tlsTrustStorePassword))/'$(cat /pulsar/jks/jks-password)'/g' /pulsar/temp/broker.conf
+# Use the new conf
+PULSAR_BROKER_CONF="/pulsar/temp/broker.conf"
+{{ else }}
+PULSAR_BROKER_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "broker.conf" | quote }}
+
+{{ end }}
 
 PULSAR_EXTRA_CLASSPATH={{ join ";" .Values.pulsarEnv.extraClasspath | quote }}
 PULSAR_EXTRA_OPTS={{ join " " $extraOpts | quote }}

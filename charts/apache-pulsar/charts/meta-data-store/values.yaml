@@ -33,7 +33,7 @@ image:
 
   ## @param image.tag [string,nullable] Component image tag (immutable tags are recommended)
   ##
-  tag: "2.10_2.0"
+  tag: "2.10_2.3"
 
   ## @param image.pullPolicy Component image pull policy
   ## Specify a imagePullPolicy
@@ -125,14 +125,6 @@ config:
   ## The location where ZooKeeper will store in-memory database snapshots as well as the transaction log of updates to the database.
   ##
   dataDir: data/zookeeper
-  ## @skip config.clientPort
-  ## The port on which the ZooKeeper server will listen for connections.
-  ##
-  clientPort:
-  ## @skip config.secureClientPort
-  ## The secure port on which the ZooKeeper server will listen for connections.
-  ##
-  secureClientPort:
   ## @param config.admin.enableServer Enable administrative interface.
   ##
   admin.enableServer: TRUE
@@ -153,7 +145,7 @@ config:
   maxClientCnxns: 60
   ## @param config.sslQuorum Enable Quorum TLS on each node
   ##
-  sslQuorum: FALSE
+  sslQuorum:
   ## @param config.portUnification Specifies that the client port should accept SSL connections (using the same configuration as the secure client port).
   ##
   portUnification: FALSE
@@ -167,46 +159,6 @@ config:
   ##
   metricsProvider.exportJvmInfo: TRUE
   ## @param config.extraConfigValues [nullable] Additional config values
-  ##
-  extraConfigValues: {}
-
-## Meta data store global configuration
-##
-globalConfig:
-  ## @param globalConfig.tickTime The number of milliseconds of each tick
-  ##
-  tickTime: 2000
-  ## @param globalConfig.initLimit The number of ticks that the initial synchronization phase can take
-  ##
-  initLimit: 10
-  ## @param globalConfig.syncLimit The number of ticks that can pass between sending a request and getting an acknowledgement
-  ##
-  syncLimit: 5
-  ## @skip globalConfig.dataDir
-  ## The directory where the snapshot is stored
-  ##
-  dataDir:
-  ## @skip globalConfig.clientPort
-  ## The port at which the clients will connect
-  ##
-  clientPort:
-  ## @param globalConfig.admin.enableServer Weather to enable the admin server option
-  ##
-  admin.enableServer: true
-  ## @skip globalConfig.admin.serverPort
-  ## The port at which the admin will listen
-  ##
-  admin.serverPort:
-  ## @param globalConfig.maxClientCnxns the maximum number of client connections. Increase this if you need to handle more clients
-  ##
-  maxClientCnxns: 60
-  ## @param globalConfig.autopurge.purgeInterval Purge task interval in hours. Set to "0" to disable auto purge feature. , be sure to read the [maintenance section](http://zookeeper.apache.org/doc/current/zookeeperAdmin.html#sc_maintenance) of the administrator guide before turning on autopurge
-  ##
-  autopurge.purgeInterval: 1
-  ## @param globalConfig.autopurge.snapRetainCount The number of snapshots to retain in dataDir
-  ##
-  autopurge.snapRetainCount: 3
-  ## @param globalConfig.extraConfigValues [nullable] Additional config values
   ##
   extraConfigValues: {}
 
@@ -260,10 +212,6 @@ certificateResources:
 ##
 service:
 
-  ## @param service.type Meta Data Store service type
-  ##
-  type: ClusterIP
-
   ## @param service.ports.server Meta Data Store server service port
   ## @param service.ports.leaderElection Meta Data Store leader election service port
   ## @param service.ports.client Meta Data Store client service port
@@ -274,53 +222,13 @@ service:
     client: 2181
     clientTls: 2182
 
-  ## Node ports to expose
-  ## @param service.nodePorts.client Node port for the Meta Data Store external connections
-  ## @param service.nodePorts.clientTls Node port for the Meta Data Store external secure connections
-  ## NOTE: choose port between <30000-32767>
-  ##
-  nodePorts:
-    client: 32181
-    clientTls: 32182
-
-  ## @param service.clusterIP [string,nullable] Component application controller service Cluster IP
-  ## e.g.:
-  ## clusterIP: None
-  ##
-  clusterIP: ""
-
-  ## @param service.loadBalancerSourceRanges [array,nullable] Component application controller service Load Balancer sources
-  ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
-  ## e.g:
-  ## loadBalancerSourceRanges:
-  ##   - 10.10.10.0/24
-  ##
-  loadBalancerSourceRanges: []
-
-  ## @param service.externalTrafficPolicy [string,nullable] Component application controller service external traffic policy
-  ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
-  ##
-  externalTrafficPolicy: Cluster
-
   ## @param service.annotations Additional custom annotations for Beam application controller service
   ##
-  annotations: {}
+  annotations:
 
   ## @param service.extraPorts Extra ports to expose (normally used with the `sidecar` value)
   ##
   extraPorts: []
-
-  ## @param service.sessionAffinity [string,nullable] Session Affinity for Kubernetes service, can be "None" or "ClientIP"
-  ## If "ClientIP", consecutive client requests will be directed to the same Pod
-  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
-  ##
-  sessionAffinity: None
-
-  ## @param service.sessionAffinityConfig [object,nullable] Additional settings for the sessionAffinity
-  ## sessionAffinityConfig:
-  ##   clientIP:
-  ##     timeoutSeconds: 300
-  sessionAffinityConfig: {}
 
 ## ServiceAccount configuration for the Meta Data Store server
 ## @param serviceAccount.create Specifies whether a ServiceAccount should be created
@@ -630,31 +538,37 @@ logPersistence:
 ## @param livenessProbe.timeoutSeconds Timeout seconds for readinessProbe
 ## @param livenessProbe.failureThreshold Failure threshold for readinessProbe
 ## @param livenessProbe.successThreshold Success threshold for readinessProbe
+## @param livenessProbe.initialDelaySeconds Delay before running probe
 ##
 livenessProbe:
-  enabled: false
+  enabled: true
   exec:
     command:
       - "/pulsar/probes/liveness.sh"
-  periodSeconds: 5
-  timeoutSeconds: 30
+  periodSeconds: 20
   failureThreshold: 5
   successThreshold: 1
+  initialDelaySeconds: 5
+  timeoutSeconds: 5
 
 ## @param readinessProbe.enabled Enable readinessProbe on Meta Data Store containers
 ## @param readinessProbe.exec.command Process to monitor for readiness
 ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
 ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
 ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+## @param readinessProbe.initialDelaySeconds Delay before running probe
+## @param readinessProbe.timeoutSeconds Seconds to allow probe to run
 ##
 readinessProbe:
-  enabled: false
+  enabled: true
   exec:
     command:
       - "/pulsar/probes/readiness.sh"
-  periodSeconds: 5
-  failureThreshold: 1
-  successThreshold: 1
+  periodSeconds: 25 #run every X seconds
+  failureThreshold: 2 #allow it to fail X times
+  successThreshold: 1 #success X times
+  initialDelaySeconds: 5 #wait X seconds before running
+  timeoutSeconds: 5 #only allow X seconds to run
 
 ## @param startupProbe.enabled Enable startupProbe on Meta Data Store containers
 ## @param startupProbe.exec.command Process to monitor for readiness
@@ -666,7 +580,7 @@ startupProbe:
   exec:
     command:
       - "/pulsar/probes/startup.sh"
-  periodSeconds: 5
+  periodSeconds: 2
   failureThreshold: 10
 
 ## @param lifecycleHooks lifecycleHooks for the Meta Data Store container to automate configuration before or after startup

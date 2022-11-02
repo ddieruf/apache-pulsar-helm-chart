@@ -1,0 +1,54 @@
+{{- $component := "broker" -}}
+{{- $name := (printf "%s-service-headless" (include "broker.name" .)) -}}
+{{- $ports := .Values.service.ports -}}
+
+{{- if (eq (include "common.tls.require-secure-inter" $) "true") -}}
+  {{- $_ := unset $ports "http" -}}
+  {{- $_ := unset $ports "pulsar" -}}
+{{- else -}}
+  {{- $_ := unset $ports "https" -}}
+  {{- $_ := unset $ports "pulsarSsl" -}}
+{{- end -}}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "broker.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- if .Values.service.annotations }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.service.annotations "context" $ ) | nindent 4 }}
+    {{- end }}
+spec:
+  clusterIP: "None"
+  ports:
+    {{ if $ports.pulsar }}
+    - name: "pulsar"
+      port: {{ $ports.pulsar }}
+      targetPort: "pulsar"
+      protocol: TCP
+    {{ end }}
+    {{ if $ports.pulsarSsl }}
+    - name: "pulsar-ssl"
+      port: {{ $ports.pulsarSsl }}
+      targetPort: "pulsar-ssl"
+      protocol: TCP
+    {{ end }}
+    {{ if $ports.http }}
+    - name: "http"
+      port: {{ $ports.http }}
+      targetPort: "http"
+      protocol: TCP
+    {{ end }}
+    {{ if $ports.https }}
+    - name: "https"
+      port: {{ $ports.https }}
+      targetPort: "https"
+      protocol: TCP
+    {{ end }}
+  selector: {{ include "common.labels.matchLabels" (dict "name" (include "broker.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}

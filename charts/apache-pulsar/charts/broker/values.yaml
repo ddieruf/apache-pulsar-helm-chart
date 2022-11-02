@@ -29,7 +29,7 @@ image:
 
   ## @param image.tag [string,nullable] Component image tag (immutable tags are recommended)
   ##
-  tag: "2.10_2.2"
+  tag: "2.10_2.3"
 
   ## @param image.pullPolicy Component image pull policy
   ## Specify a imagePullPolicy
@@ -298,10 +298,14 @@ config:
   ## @param config.brokerClientTlsCiphers Specify the tls cipher the internal client will use to negotiate during TLS Handshake. (a comma-separated list of ciphers) e.g. [TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256]
   ##
   brokerClientTlsCiphers:
+  ## @skip config.brokerClientTlsEnabled
+  ## Whether internal client uses secure connection
+  ##
+  brokerClientTlsEnabled:
   ## @skip config.brokerClientTlsEnabledWithKeyStore
   ## Whether internal client use KeyStore type to authenticate with Pulsar brokers
   ##
-  brokerClientTlsEnabledWithKeyStore: FALSE
+  brokerClientTlsEnabledWithKeyStore:
   ## @param config.brokerClientTlsProtocols Specify the tls protocols the broker will use to negotiate during TLS handshake. (a comma-separated list of protocol names). e.g. TLSv1.3, TLSv1.2
   ##
   brokerClientTlsProtocols:
@@ -316,7 +320,7 @@ config:
   ## @skip config.brokerClientTlsTrustStoreType
   ## TLS TrustStore type configuration for internal client: JKS, PKCS12, used by the internal client to authenticate with Pulsar brokers
   ##
-  brokerClientTlsTrustStoreType: JKS
+  brokerClientTlsTrustStoreType:
   ## @param config.brokerDeduplicationEnabled Sets the default behavior for message deduplication in the broker. If enabled, the broker will reject messages that were already stored in the topic. This setting can be overridden on a per-namespace basis.
   ##
   brokerDeduplicationEnabled: FALSE
@@ -813,7 +817,7 @@ config:
   systemTopicSchemaCompatibilityStrategy: ALWAYS_COMPATIBLE
   ## @param config.tlsAllowInsecureConnection Accept untrusted TLS certificate from client. If it is set to true, a client with a cert which cannot be verified with the 'tlsTrustCertsFilePath' cert will be allowed to connect to the server, though the cert will not be used for client authentication.
   ##
-  tlsAllowInsecureConnection: FALSE
+  tlsAllowInsecureConnection: true
   ## @skip config.tlsCertificateFilePath
   ## Path for the TLS certificate file
   ##
@@ -824,7 +828,7 @@ config:
   ## @skip config.tlsEnabledWithKeyStore
   ## Enable TLS with KeyStore type configuration in broker
   ##
-  tlsEnabledWithKeyStore: FALSE
+  tlsEnabledWithKeyStore:
   ## @skip config.tlsKeyFilePath
   ## Path for the TLS private key file
   ##
@@ -851,7 +855,7 @@ config:
   ## @skip config.tlsRequireTrustedClientCertOnConnect
   ## Trusted client certificates are required for to connect TLS Reject the Connection if the Client Certificate is not trusted. In effect, this requires that all connecting clients perform TLS client authentication.
   ##
-  tlsRequireTrustedClientCertOnConnect: false
+  tlsRequireTrustedClientCertOnConnect:
   ## @skip config.tlsTrustCertsFilePath
   ## Path for the trusted TLS certificate file. This cert is used to verify that any certs presented by connecting clients are signed by a certificate authority. If this verification fails, then the certs are untrusted and the connections are dropped.
   ##
@@ -1056,10 +1060,6 @@ ingress:
 ##
 service:
 
-  ## @param service.type Broker service type
-  ##
-  type: ClusterIP
-
   ports:
     ## @param service.ports.pulsar [nullable] Broker application controller binary service port
     ##
@@ -1074,62 +1074,9 @@ service:
     ##
     https: 8081
 
-  ## Node ports to expose
-  ## @param service.nodePorts.pulsar Node port for binary connections
-  ## @param service.nodePorts.pulsarSsl Node port for secure binary connections
-  ## @param service.nodePorts.http Node port for web connections
-  ## @param service.nodePorts.https Node port for secure web connections
-  ## NOTE: choose port between <30000-32767>
-  ##
-  nodePorts:
-    pulsar: 30650
-    pulsarSsl: 30651
-    http: 30080
-    https: 30081
-
-  ## @param service.clusterIP Broker application controller service Cluster IP
-  ## e.g.:
-  ## clusterIP: None
-  ##
-  clusterIP: ""
-
-  ## @param service.loadBalancerIP Broker application controller service Load Balancer IP
-  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
-  ##
-  loadBalancerIP: ""
-
-  ## @param service.loadBalancerSourceRanges Broker application controller service Load Balancer sources
-  ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
-  ## e.g:
-  ## loadBalancerSourceRanges:
-  ##   - 10.10.10.0/24
-  ##
-  loadBalancerSourceRanges: []
-
-  ## @param service.externalTrafficPolicy Broker application controller service external traffic policy
-  ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
-  ##
-  externalTrafficPolicy: Cluster
-
   ## @param service.annotations [object,nullable] Additional custom annotations for Component application controller service
   ##
   annotations: {}
-
-  ## @param service.extraPorts [array,nullable] Extra ports to expose (normally used with the `sidecar` value)
-  ##
-  extraPorts: []
-
-  ## @param service.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
-  ## If "ClientIP", consecutive client requests will be directed to the same Pod
-  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
-  ##
-  sessionAffinity: None
-
-  ## @param service.sessionAffinityConfig Additional settings for the sessionAffinity
-  ## sessionAffinityConfig:
-  ##   clientIP:
-  ##     timeoutSeconds: 300
-  sessionAffinityConfig: {}
 
 ## ServiceAccount configuration for the Component
 ##
@@ -1161,6 +1108,10 @@ podDisruptionBudget:
   minAvailable:
 
 ## @section Other Parameters
+
+## @param metricsServiceMonitor Enable component metrics scraping by creating a service monitor that is discoverable by Prometheus.
+##
+metricsServiceMonitor: false
 
 ## @param podManagementPolicy StatefulSet controller supports relax its ordering guarantees while preserving its uniqueness and identity guarantees. There are two valid pod management policies: OrderedReady and Parallel
 ## ref: https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#pod-management-policy
@@ -1401,7 +1352,7 @@ logPersistence:
 ## @param livenessProbe.successThreshold Success threshold for readinessProbe
 ##
 livenessProbe:
-  enabled: true
+  enabled: false
   exec:
     command:
       - "/pulsar/probes/liveness.sh"
@@ -1417,7 +1368,7 @@ livenessProbe:
 ## @param readinessProbe.successThreshold Success threshold for readinessProbe
 ##
 readinessProbe:
-  enabled: true
+  enabled: false
   exec:
     command:
       - "/pulsar/probes/readiness.sh"
@@ -1431,7 +1382,7 @@ readinessProbe:
 ## @param startupProbe.failureThreshold Failure threshold for readinessProbe
 ##
 startupProbe:
-  enabled: true
+  enabled: false
   exec:
     command:
       - "/pulsar/probes/startup.sh"

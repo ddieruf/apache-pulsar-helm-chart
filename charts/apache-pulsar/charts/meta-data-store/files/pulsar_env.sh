@@ -1,10 +1,7 @@
 {{- $extraOpts := default list .Values.pulsarEnv.extraOpts -}}
 
 {{- if eq (include "common.tls.require-secure-inter" $) "true" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStorePassword=/pulsar/jks/jks-password" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStorePassword=/pulsar/jks/jks-password" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.keyStore=/pulsar/jks/keystore.jks" -}}
-  {{- $extraOpts = append $extraOpts "-Djavax.net.ssl.trustStore=/pulsar/jks/truststore.jks" -}}
+  {{- $extraOpts = concat $extraOpts (include "meta-data-store.zookeeper.client" . | fromJsonArray)  -}}
 {{- end -}}
 
 PULSAR_EXTRA_CLASSPATH={{ join ";" .Values.pulsarEnv.extraClasspath | quote }}
@@ -13,7 +10,6 @@ PULSAR_GC={{ join " " .Values.pulsarEnv.gc | quote }}
 PULSAR_MEM={{ join " " .Values.pulsarEnv.mem | quote }}
 PULSAR_LOG_DIR={{ .Values.logPersistence.mountPath }}
 PULSAR_ZK_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "zookeeper.conf" }}
-PULSAR_GLOBAL_ZK_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "global_zookeeper.conf" }}
 PULSAR_STOP_TIMEOUT={{.Values.pulsarEnv.stopTimeout}}
 ZOO_LOG_LEVEL={{ default "error" .Values.pulsarEnv.loggingLevels.root }}
 

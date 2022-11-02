@@ -57,8 +57,8 @@ helm upgrade -i pulsar ddieruf/apache-pulsar \
 |-----------------------------------|-----------------------------------------------|
 | Chart Unit testing                | Edge TLS (encryption)                         |
 | Manage Inter-chart configurations | Integration testing (ie: cluster validations) |
-| Generate parameters readme        | Observability (metrics)                       |
-| Cluster Lifecycle                 | Authentications                               |
-|                                   | Authorizations                                |
-|                                   | Inter-component TLS (encryption)              |
-|                                   | Component certificates                        |
+| Generate parameters readme        | Authentications                               |
+| Cluster Lifecycle                 | Authorizations                                |
+| Observability (metrics)           |                                               |
+| Inter-component TLS (encryption)  |                                               |
+| Component certificates            |                                               |
