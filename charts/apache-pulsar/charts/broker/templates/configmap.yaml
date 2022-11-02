@@ -1,16 +1,16 @@
 {{- $brokerConfigValues := omit .Values.global.broker.config "extraConfigValues" -}}
 
 {{/*{{- $_ := set $brokerConfigValues "bindAddress" (coalesce .Values.config.bindAddress "0.0.0.0") -}}*/}}
-{{- $_ := set $brokerConfigValues "bookkeeperMetadataServiceUri" "zk://meta-data-store-headless.pulsar.svc.cluster.local:2182/ledgers" -}}
+{{- $_ := set $brokerConfigValues "bookkeeperMetadataServiceUri" (coalesce .Values.config.bookkeeperMetadataServiceUri (printf "zk://%s/ledgers" (include "broker.config.bookkeeperMetadataServiceUri" $))) -}}
 {{- $_ := unset $brokerConfigValues "bootstrapNamespaces" -}}
 
 {{- $_ := set $brokerConfigValues "brokerServicePort" .Values.containerPorts.pulsar -}}
 {{- $_ := set $brokerConfigValues "brokerServicePortTls" "" -}}
 
 {{- $_ := set $brokerConfigValues "clusterName" (coalesce .Values.config.clusterName (include "cluster.name" .)) -}}
-{{- $_ := set $brokerConfigValues "configurationMetadataStoreUrl" "meta-data-store-headless.pulsar.svc.cluster.local:2182/ledgers" -}}
+{{- $_ := set $brokerConfigValues "configurationMetadataStoreUrl" (coalesce .Values.config.configurationMetadataStoreUrl (printf "%s/ledgers" (include "broker.config.configurationMetadataStoreUrl" $))) -}}
 {{- $_ := set $brokerConfigValues "functionsWorkerEnabled" (coalesce .Values.config.functionsWorkerEnabled (include "broker.config.functionWorkerEnabled" .)) -}}
-{{- $_ := set $brokerConfigValues "metadataStoreUrl" "meta-data-store-headless.pulsar.svc.cluster.local:2182/ledgers" -}}
+{{- $_ := set $brokerConfigValues "metadataStoreUrl" (coalesce .Values.config.metadataStoreUrl (printf "%s/ledgers" (include "broker.config.metadataStoreUrl" $))) -}}
 
 {{- $_ := set $brokerConfigValues "webServicePort" .Values.containerPorts.http -}}
 {{- $_ := set $brokerConfigValues "webServicePortTls" "" -}}

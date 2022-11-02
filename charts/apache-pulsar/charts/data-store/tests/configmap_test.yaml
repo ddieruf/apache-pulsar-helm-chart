@@ -51,7 +51,7 @@ tests:
     asserts:
       - matchRegex:
           path: data.bookkeeper\.conf
-          pattern: "metadataServiceUri=zk://meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.domain.com:123;meta-data-store-statefulset-1.meta-data-store-headless.xx.svc.domain.com:123;meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.domain.com:123/ledgers"
+          pattern: metadataServiceUri=zk://meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.domain.com:123;meta-data-store-statefulset-1.meta-data-store-headless.xx.svc.domain.com:123;meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.domain.com:123/ledgers
 
   - it: should have tls enabled
     set:
@@ -74,9 +74,6 @@ tests:
           pattern: "tlsProviderFactoryClass=org.apache.bookkeeper.tls.TLSContextFactor"
       - matchRegex:
           path: data.bookkeeper\.conf
-          pattern: "tlsClientAuthentication=true"
-      - matchRegex:
-          path: data.bookkeeper\.conf
           pattern: "tlsKeyStoreType=JKS"
       - matchRegex:
           path: data.bookkeeper\.conf
@@ -94,21 +91,33 @@ tests:
           path: data.bookkeeper\.conf
           pattern: "tlsTrustStorePasswordPath=/pulsar/jks/jks-password"
 
-  - it: should have extra opts for ssl
+  - it: should add client tls settings to JVM environment
     set:
       global:
         interComponentTls:
           enabled: true
     asserts:
       - matchRegex:
-          path: data.pulsar_env\.sh
-          pattern: "-Djavax.net.ssl.trustStorePassword=/pulsar/jks/jks-password"
+          path: data.bkenv\.sh
+          pattern: "-Dzookeeper.client.secure=true"
       - matchRegex:
-          path: data.pulsar_env\.sh
-          pattern: "-Djavax.net.ssl.keyStorePassword=/pulsar/jks/jks-password"
+          path: data.bkenv\.sh
+          pattern: "-Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty"
       - matchRegex:
-          path: data.pulsar_env\.sh
-          pattern: "-Djavax.net.ssl.keyStore=/pulsar/jks/keystore.jks"
+          path: data.bkenv\.sh
+          pattern: "-Dzookeeper.ssl.trustStore.type=JKS"
       - matchRegex:
-          path: data.pulsar_env\.sh
-          pattern: "-Djavax.net.ssl.trustStore=/pulsar/jks/truststore.jks"
+          path: data.bkenv\.sh
+          pattern: "-Dzookeeper.ssl.trustStore.location=/pulsar/jks/truststore.jks"
+      - matchRegex:
+          path: data.bkenv\.sh
+          pattern: "-Dzookeeper.ssl.trustStore.passwordPath=/pulsar/jks/jks-password"
+      - matchRegex:
+          path: data.bkenv\.sh
+          pattern: "-Dzookeeper.ssl.keyStore.type=JKS"
+      - matchRegex:
+          path: data.bkenv\.sh
+          pattern: "-Dzookeeper.ssl.keyStore.location=/pulsar/jks/keystore.jks"
+      - matchRegex:
+          path: data.bkenv\.sh
+          pattern: "-Dzookeeper.ssl.keyStore.passwordPath=/pulsar/jks/jks-password"

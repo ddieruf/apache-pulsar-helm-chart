@@ -114,6 +114,7 @@ pulsarEnv:
     - "-Xms2g"
     - "-Xmx2g"
     - "-XX:MaxDirectMemorySize=4g"
+
   ##
   ##
   loggingLevels:
@@ -123,6 +124,7 @@ pulsarEnv:
     ## @param pulsarEnv.loggingLevels.pulsar Applies the PULSAR_LOG_LEVEL env var
     ##
     pulsar: "error"
+
   ## @param pulsarEnv.extraOpts A collection of extra options to be passed to the jvm. Format each as the entire key/value
   ##
   extraOpts:
@@ -133,7 +135,7 @@ pulsarEnv:
     - "-Dio.netty.recycler.linkCapacity=1024"
     - "-Dlog4j2.formatMsgNoLookups=true"
     - "-Dio.netty.leakDetectionLevel=disabled"
-    -
+
   ## @param pulsarEnv.extraClasspath A collection of extra paths for the pulsar classpath. Include just the folder or file path, no delimiter.
   ##
   extraClasspath: []

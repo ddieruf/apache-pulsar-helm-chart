@@ -3,6 +3,7 @@
 {{- $_ := set $configValues "clientPort" .Values.containerPorts.client -}}
 {{- $_ := unset $configValues "secureClientPort" -}}
 {{- $_ := set $configValues "dataDir" (coalesce .Values.config.dataDir .Values.persistence.mountPath) -}}
+{{- $_ := set $configValues "ssl.quorum.clientAuth" "NONE" -}}
 
 {{- $clusterAddresses := (include "meta-data-store.quorum-cluster-addresses" $ | fromJson) -}}
 {{- range $idx,$address := $clusterAddresses -}}
@@ -38,7 +39,7 @@
   WANT(default) - request a client certificate, but allow anonymous clients to connect.
   NEED - require a client certificate, disconnect anonymous clients.
   */}}
-  {{- $_ := set $configValues "ssl.quorum.clientAuth" "WANT" -}}
+  {{- $_ := set $configValues "ssl.quorum.clientAuth" "NEED" -}}
 {{- end -}}
 
 {{/*

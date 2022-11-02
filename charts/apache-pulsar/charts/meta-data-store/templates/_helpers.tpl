@@ -231,3 +231,26 @@ For more information about headless services with statefulsets and K8s DNS - htt
 
   {{- $enabled -}}
 {{- end -}}
+
+{{/*
+ Add specific zookeeper client TLS values
+
+ usage: {{ include "meta-data-store.zookeeper.client" $ }}
+ returns: map
+*/}}
+{{- define "meta-data-store.zookeeper.client" -}}
+  {{- $clientConfig := list -}}
+
+  {{- $clientConfig = append $clientConfig "-Dzookeeper.client.secure=true" -}}
+  {{- $clientConfig = append $clientConfig "-Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty" -}}
+
+  {{- $clientConfig = append $clientConfig "-Dzookeeper.ssl.trustStore.type=JKS" -}}
+  {{- $clientConfig = append $clientConfig "-Dzookeeper.ssl.trustStore.location=/pulsar/jks/truststore.jks" -}}
+  {{- $clientConfig = append $clientConfig "-Dzookeeper.ssl.trustStore.passwordPath=/pulsar/jks/jks-password" -}}
+
+  {{- $clientConfig = append $clientConfig "-Dzookeeper.ssl.keyStore.type=JKS" -}}
+  {{- $clientConfig = append $clientConfig "-Dzookeeper.ssl.keyStore.location=/pulsar/jks/keystore.jks" -}}
+  {{- $clientConfig = append $clientConfig "-Dzookeeper.ssl.keyStore.passwordPath=/pulsar/jks/jks-password" -}}
+
+  {{- $clientConfig | toJson -}}
+{{- end -}}

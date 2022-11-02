@@ -63,3 +63,55 @@ tests:
             port: 123
             targetPort: metrics
             protocol: TCP
+
+  - it: should not have tls ports
+    set:
+      global:
+        interComponentTls:
+          enabled: false
+      metaDataStore:
+        service:
+          ports:
+            client: 123
+            clientTls: 456
+    asserts:
+      - contains:
+          path: spec.ports
+          content:
+            name: client
+            port: 123
+            targetPort: client
+            protocol: TCP
+      - notContains:
+          path: spec.ports
+          content:
+            name: clientTls
+            port: 456
+            targetPort: clientTls
+            protocol: TCP
+
+  - it: should only have tls ports
+    set:
+      global:
+        interComponentTls:
+          enabled: true
+      metaDataStore:
+        service:
+          ports:
+            client: 123
+            clientTls: 456
+    asserts:
+      - notContains:
+          path: spec.ports
+          content:
+            name: client
+            port: 123
+            targetPort: client
+            protocol: TCP
+      - contains:
+          path: spec.ports
+          content:
+            name: client-tls
+            port: 456
+            targetPort: client-tls
+            protocol: TCP

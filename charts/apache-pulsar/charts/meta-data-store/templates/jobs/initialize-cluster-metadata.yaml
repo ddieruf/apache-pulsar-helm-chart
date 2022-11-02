@@ -46,10 +46,10 @@ spec:
                 --cluster "{{ include "cluster.name" $ }}" \
                 --metadata-store "{{ $metaDataStoreUrls }}" \
                 --configuration-metadata-store "{{ $metaDataStoreUrls }}" \
-                {{- if eq (include "common.tls.require-secure-inter" $) "true" -}}
+                {{- if eq (include "common.tls.require-secure-inter" $) "true" }}
                 --web-service-url-tls "{{ $webServiceUrl }}" \
                 --broker-service-url-tls "{{ $binaryServiceUrl }}" \
-                {{- end -}}
+                {{- end }}
                 --web-service-url "{{ $webServiceUrl }}" \
                 --broker-service-url "{{ $binaryServiceUrl }}"
           volumeMounts:

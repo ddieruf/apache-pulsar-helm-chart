@@ -1,17 +1,7 @@
 {{- $extraOpts := default list .Values.pulsarEnv.extraOpts -}}
 
 {{- if eq (include "common.tls.require-secure-inter" $) "true" -}}
-  {{/* Configure the zookeeper client to be secure */}}
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.client.secure=true" -}}
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty" -}}
-
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.trustStore.type=JKS" -}}
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.trustStore.location=/pulsar/jks/truststore.jks" -}}
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.trustStore.passwordPath=/pulsar/jks/jks-password" -}}
-
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.keyStore.type=JKS" -}}
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.keyStore.location=/pulsar/jks/keystore.jks" -}}
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.keyStore.passwordPath=/pulsar/jks/jks-password" -}}
+  {{- $extraOpts = concat $extraOpts (include "meta-data-store.zookeeper.client" . | fromJsonArray)  -}}
 {{- end -}}
 
 PULSAR_EXTRA_CLASSPATH={{ join ";" .Values.pulsarEnv.extraClasspath | quote }}

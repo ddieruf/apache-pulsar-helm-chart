@@ -538,6 +538,7 @@ logPersistence:
 ## @param livenessProbe.timeoutSeconds Timeout seconds for readinessProbe
 ## @param livenessProbe.failureThreshold Failure threshold for readinessProbe
 ## @param livenessProbe.successThreshold Success threshold for readinessProbe
+## @param livenessProbe.initialDelaySeconds Delay before running probe
 ##
 livenessProbe:
   enabled: true
@@ -555,6 +556,8 @@ livenessProbe:
 ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
 ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
 ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+## @param readinessProbe.initialDelaySeconds Delay before running probe
+## @param readinessProbe.timeoutSeconds Seconds to allow probe to run
 ##
 readinessProbe:
   enabled: true

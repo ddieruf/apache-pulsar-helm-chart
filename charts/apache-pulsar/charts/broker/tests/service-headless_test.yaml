@@ -1,4 +1,4 @@
-suite: Test broker service
+suite: Test broker headless service
 release:
   name: zz
   namespace: xx
@@ -37,7 +37,7 @@ tests:
               app.kubernetes.io/name: broker
               app.kubernetes.io/part-of: apache-pulsar
               helm.sh/chart: broker-0.1.0
-            name: broker-service
+            name: broker-service-headless
             namespace: xx
 
   - it: should only have secure ports

@@ -1,15 +1,6 @@
 {{- $extraOpts := default list .Values.pulsarEnv.extraOpts -}}
 {{ if eq (include "common.tls.require-secure-inter" $) "true" -}}
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.client.secure=true" -}}
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty" -}}
-
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.trustStore.type=JKS" -}}
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.trustStore.location=/pulsar/jks/truststore.jks" -}}
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.trustStore.passwordPath=/pulsar/jks/jks-password" -}}
-
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.keyStore.type=JKS" -}}
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.keyStore.location=/pulsar/jks/keystore.jks" -}}
-  {{- $extraOpts = append $extraOpts "-Dzookeeper.ssl.keyStore.passwordPath=/pulsar/jks/jks-password" -}}
+  {{- $extraOpts = concat $extraOpts (include "meta-data-store.zookeeper.client" . | fromJsonArray)  -}}
 
 # Clear out temp things & make a new temp
 rm -rdf /pulsar/temp
@@ -24,6 +15,7 @@ sed -i 's/((tlsTrustStorePassword))/'$(cat /pulsar/jks/jks-password)'/g' /pulsar
 PULSAR_BROKER_CONF="/pulsar/temp/broker.conf"
 {{ else }}
 PULSAR_BROKER_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "broker.conf" | quote }}
+
 {{ end }}
 
 PULSAR_EXTRA_CLASSPATH={{ join ";" .Values.pulsarEnv.extraClasspath | quote }}
