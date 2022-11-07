@@ -1,0 +1,46 @@
+{{- $pulsarCluster := .Values.global.pulsarCluster -}}
+config create --file /setup/client.conf {{$pulsarCluster.name}}
+config use {{$pulsarCluster.name}}
+admin clusters create {{ $pulsarCluster.name }}
+
+{{- if $pulsarCluster.tenants -}}
+  {{- range $pulsarCluster.tenants -}}
+    {{- $tenant := . -}}
+
+    {{- if not $tenant.name -}}
+      {{- fail "Provide a name for each tenant in .pulsarCluster.tenants" -}}
+    {{- end -}}
+
+    {{- printf "admin tenants create %s -c %s" $tenant.name $pulsarCluster.name | nindent 0 -}}
+
+    {{- if $tenant.namespaces -}}
+      {{- range $tenant.namespaces -}}
+        {{- $namespace := . -}}
+
+        {{- if not $namespace.name -}}
+          {{- fail "Provide a name for each namespace in .pulsarCluster.tenants.namespaces" -}}
+        {{- end -}}
+
+        {{- printf "admin namespaces create %s/%s -c %s" $tenant.name $namespace.name $pulsarCluster.name | nindent 0 -}}
+
+        {{- if  $namespace.topics -}}
+          {{- range $namespace.topics -}}
+            {{- $topic := . -}}
+
+            {{- if not $topic.name -}}
+              {{- fail "Provide a name for each topic in .pulsarCluster.tenants.namespaces.topics" -}}
+            {{- end -}}
+
+            {{- if not (eq ($topic.persistent | typeOf) "bool") -}}
+              {{- fail "Mark each topic as persistent: true|false in each topic of .pulsarCluster.tenants.namespaces.topics" -}}
+            {{- end -}}
+
+            {{- $topicType := ($topic.persistent | ternary "persistent" "non-persistent") -}}
+            {{- printf "admin topics create %s://%s/%s/%s" $topicType $tenant.name $namespace.name $topic.name | nindent 0 -}}
+
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}

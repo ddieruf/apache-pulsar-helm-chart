@@ -1,0 +1,18 @@
+{{- $component := "broker" -}}
+{{- $name := (printf "%s-setup-cluster" (include "broker.name" $)) -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "broker.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+data:
+  client.conf: |
+    {{ tpl (.Files.Get "files/setup/client.conf") . | nindent 4 }}
+  setup-cluster.txt: |
+    {{ tpl (.Files.Get "files/setup/setup-cluster.txt") . | nindent 4 }}
