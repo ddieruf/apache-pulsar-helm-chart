@@ -1,0 +1,78 @@
+{{- $configValues := omit .Values.global.proxy.config "extraConfigValues" -}}
+
+{{- $_ := set $configValues "brokerServiceURL" (coalesce .Values.config.brokerServiceURL (include "proxy.config.brokerServiceURL" .)) -}}
+{{- $_ := unset $configValues "brokerServiceURLTLS" -}}
+{{- $_ := set $configValues "brokerWebServiceURL" (coalesce .Values.config.brokerWebServiceURL (include "proxy.config.brokerWebServiceURL" .)) -}}
+{{- $_ := unset $configValues "brokerWebServiceURLTLS" -}}
+{{- $_ := set $configValues "clusterName" (coalesce .Values.config.clusterName (include "proxy.config.clusterName" .)) -}}
+{{- $_ := set $configValues "functionWorkerWebServiceURL" (coalesce .Values.config.functionWorkerWebServiceURL (include "proxy.config.functionWorkerWebServiceURL" .)) -}}
+{{- $_ := unset $configValues "functionWorkerWebServiceURLTLS" -}}
+{{- $_ := set $configValues "servicePort" (coalesce .Values.config.servicePort .Values.containerPorts.pulsar) -}}
+{{- $_ := unset $configValues "servicePortTls" -}}
+{{- $_ := set $configValues "webServicePort" (coalesce .Values.config.webServicePort .Values.containerPorts.http) -}}
+{{- $_ := unset $configValues "webServicePortTls" -}}
+{{- $_ := set $configValues "brokerProxyAllowedHostNames" (printf "%s-*.%s.%s.svc.%s"
+                                                                      (printf "%s-statefulset" (include "broker.name" $))
+                                                                      (printf "%s-service-headless" (include "broker.name" .))
+                                                                      (include "common.names.namespace" .)
+                                                                      (include "common.names.domain" .)) -}}
+{{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
+  {{- $_ := set $configValues "tlsEnabledWithBroker" "true" -}}
+
+  {{- $_ := set $configValues "brokerClientTrustCertsFilePath" "/pulsar/certs/ca.crt" -}}
+
+  {{- $_ := unset $configValues "brokerServiceURL" -}}
+  {{- $_ := set $configValues "brokerServiceURLTLS" (coalesce .Values.config.brokerServiceURLTLS (include "proxy.config.brokerServiceURLTLS" .)) -}}
+  {{- $_ := unset $configValues "brokerWebServiceURL" -}}
+  {{- $_ := set $configValues "brokerWebServiceURLTLS" (coalesce .Values.config.brokerWebServiceURLTLS (include "proxy.config.brokerWebServiceURLTLS" .)) -}}
+  {{- $_ := unset $configValues "functionWorkerWebServiceURL" -}}
+  {{- $_ := set $configValues "functionWorkerWebServiceURLTLS" (coalesce .Values.config.functionWorkerWebServiceURLTLS (include "proxy.config.functionWorkerWebServiceURLTLS" .)) -}}
+{{- end -}}
+
+{{- if and (eq (include "common.tls.require-secure-edge" .) "true") -}}
+  {{- $_ := set $configValues "tlsCertificateFilePath" "/pulsar/certs/ca.crt" -}}
+  {{- $_ := set $configValues "tlsKeyFilePath" "/pulsar/certs/tls.key" -}}
+  {{- $_ := set $configValues "tlsTrustCertsFilePath" "/pulsar/certs/tls.crt" -}}
+  {{- $_ := set $configValues "tlsAllowInsecureConnection" "false" -}}
+  {{- $_ := set $configValues "tlsHostnameVerificationEnabled" "false" -}}
+  {{- $_ := set $configValues "tlsRequireTrustedClientCertOnConnect" "false" -}}
+
+  {{- $_ := unset $configValues "servicePort" -}}
+  {{- $_ := set $configValues "servicePortTls" (coalesce .Values.config.servicePortTls .Values.containerPorts.pulsarSsl) -}}
+  {{- $_ := unset $configValues "webServicePort" -}}
+  {{- $_ := set $configValues "webServicePortTls" (coalesce .Values.config.webServicePortTls .Values.containerPorts.https) -}}
+{{- end -}}
+
+{{- if eq true false -}}
+  {{- $_ := set $configValues "authenticationEnabled" "true" -}}
+  {{- $_ := set $configValues "authorizationEnabled" "true" -}}
+  {{- $_ := set $configValues "superUserRoles" "" -}}
+  {{- $_ := set $configValues "authenticationProviders" "" -}}
+  {{- $_ := set $configValues "tokenPublicKey" "" -}}
+  {{- $_ := set $configValues "brokerClientAuthenticationPlugin" "" -}}
+  {{- $_ := set $configValues "brokerClientAuthenticationParameters" "" -}}
+{{- end -}}
+
+{{- $component := "proxy" -}}
+{{- $name := (printf "%s-configuration" (include "proxy.name" $)) -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "proxy.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+data:
+  log4j2.yaml: |
+    {{ tpl (.Files.Get "files/log4j2.yaml") . | nindent 4 }}
+  pulsar_env.sh: |
+    {{ tpl (.Files.Get "files/pulsar_env.sh") . | nindent 4 }}
+  proxy.conf: |
+    {{ include "common.formatting.toToml" (dict "configValues" $configValues "context" $) | nindent 4 }}
+    {{ if .Values.config.extraConfigValues }}
+    {{- include "common.formatting.toToml" (dict "configValues" .Values.config.extraConfigValues "context" $) | nindent 4 -}}
+    {{ end }}

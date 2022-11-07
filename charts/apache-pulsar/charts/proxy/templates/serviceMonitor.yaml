@@ -1,0 +1,33 @@
+{{- if (eq (include "proxy.metrics-enabled" .) "true") }}
+  {{- $component := "proxy" -}}
+  {{- $name := (printf "%s-service-monitor" (include "proxy.name" $)) -}}
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "proxy.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    service_monitor: "1"
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+spec:
+  selector:
+    matchLabels: {{ (include "common.labels.matchLabels" (dict "name" (include "proxy.name" $) "context" $ )) | nindent 6 }}
+      app.kubernetes.io/component: {{ $component | quote }}
+  endpoints:
+    {{ if (eq (include "common.tls.require-secure-edge" $) "true") }}
+    - port: https
+      path: /metrics
+      scheme: https
+      tlsConfig:
+        caFile: /pulsar/cert/ca.crt
+        certFile: /pulsar/cert/tls.crt
+        keyFile: /pulsar/cert/tls.key
+    {{ else }}
+    - port: http
+      path: /metrics
+    {{ end }}
+{{- end -}}

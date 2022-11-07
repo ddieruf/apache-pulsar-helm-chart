@@ -1,6 +1,6 @@
 # Apache Pulsar chart
 
-This is an opinionated chart for deploying an Apache Pulsar cluster. It is dependent on the upstream [Pulsar project](https://pulsar.apache.org) and adds in components that enhance a cluster's usability and management.
+This is an opinionated chart for deploying an Apache Pulsar cluster. It is dependent on [DataStax's Luna project](https://github.com/datastax/pulsar) which contributes to the upstream [Pulsar project](https://pulsar.apache.org).
 
 The chart follows Helm's recommended patterns of using sub-charts as discrete parts of an overall chart. The chart also takes -heavy- influence from [Bitnami's common library](https://github.com/bitnami/charts/tree/master/bitnami/common) and template structures.
 
@@ -8,7 +8,7 @@ The chart follows Helm's recommended patterns of using sub-charts as discrete pa
 
 The goals of this chart are:
 - Expose every possible configuration value for each supported component
-- Prove every component is in an expected state before existing
+- Prove every component is in an expected state before deploying the next component
 - Make the right way the easy way - best practices by default
 - Create a simple experience for someone getting started with Apache Pulsar and also offer deep customization for someone going to production
 
@@ -42,23 +42,24 @@ helm upgrade -i pulsar ddieruf/apache-pulsar \
 |-----------------|--------------------------------|
 | Meta Data Store | Zoo Navigator                  |
 | Data Store      | Pulsar SQL                     |
-| Pulsar Broker   | Pulsar Proxy                   |
-|                 | DS Bastion                     |
+| Pulsar Broker   | Auto Recovery                  |
+| Pulsar Proxy    | DS Bastion                     |
 |                 | DS Admin Console               |
 |                 | DS Burnell                     |
 |                 | DS Beam                        |
 |                 | Pulsar Websocket               |
 |                 | Pulsar Function Worker         |
-|                 | Auto Recovery                  |
 
 ## Feature Set Currently Supported
 
 | Supported                         | To Do                                         |
 |-----------------------------------|-----------------------------------------------|
-| Chart Unit testing                | Edge TLS (encryption)                         |
-| Manage Inter-chart configurations | Integration testing (ie: cluster validations) |
-| Generate parameters readme        | Authentications                               |
-| Cluster Lifecycle                 | Authorizations                                |
+| Chart Unit testing                | Integration testing (ie: cluster validations) |
+| Manage Inter-chart configurations | Authentications                               |
+| Generate parameters readme        | Authorizations                                |
+| Cluster Lifecycle                 |                                               |
 | Observability (metrics)           |                                               |
 | Inter-component TLS (encryption)  |                                               |
 | Component certificates            |                                               |
+| External Load Balancers           |                                               |
+| Edge TLS (encryption)             |                                               |

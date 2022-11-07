@@ -1,0 +1,152 @@
+suite: Test proxy config map
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/proxy/templates/configmap.yaml
+tests:
+  - it: should be correct document
+    asserts:
+      - containsDocument:
+          kind: ConfigMap
+          apiVersion: v1
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          something: somewhere
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              something: somewhere
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: proxy
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: proxy
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: proxy-0.1.0
+            name: proxy-configuration
+            namespace: xx
+
+  - it: should have correct non-secure broker addresses and ports
+    set:
+      global:
+        clusterDomain: domain.com
+        secureClusterEdge: false
+        interComponentTls:
+          enabled: false
+        broker:
+          service:
+            ports:
+              http: 123
+              https: 456
+              pulsar: 678
+              pulsarSsl: 789
+      proxy:
+        containerPorts:
+          http: 555
+          https: 777
+          pulsar: 888
+          pulsarSsl: 999
+    asserts:
+      - matchRegex:
+          path: data.proxy\.conf
+          pattern: brokerServiceURL=pulsar://broker-service-headless.xx.svc.domain.com:678
+      - matchRegex:
+          path: data.proxy\.conf
+          pattern: brokerWebServiceURL=http://broker-service-headless.xx.svc.domain.com:123
+      - notMatchRegex:
+          path: data.proxy\.conf
+          pattern: brokerServiceURLTLS=
+      - notMatchRegex:
+          path: data.proxy\.conf
+          pattern: brokerWebServiceURLTLS=
+      - matchRegex:
+          path: data.proxy\.conf
+          pattern: servicePort=888
+      - matchRegex:
+          path: data.proxy\.conf
+          pattern: webServicePort=555
+      - notMatchRegex:
+          path: data.proxy\.conf
+          pattern: servicePortTls=
+      - notMatchRegex:
+          path: data.proxy\.conf
+          pattern: webServicePortTls=
+
+  - it: should have correct secure broker addresses and ports
+    set:
+      global:
+        clusterDomain: domain.com
+        secureClusterEdge: true
+        interComponentTls:
+          enabled: true
+        broker:
+          service:
+            ports:
+              http: 123
+              https: 456
+              pulsar: 678
+              pulsarSsl: 789
+      proxy:
+        containerPorts:
+          http: 555
+          https: 777
+          pulsar: 888
+          pulsarSsl: 999
+    asserts:
+      - notMatchRegex:
+          path: data.proxy\.conf
+          pattern: brokerServiceURL=
+      - notMatchRegex:
+          path: data.proxy\.conf
+          pattern: brokerWebServiceURL=
+      - matchRegex:
+          path: data.proxy\.conf
+          pattern: brokerServiceURLTLS=pulsar\+ssl://broker-service-headless.xx.svc.domain.com:789
+      - matchRegex:
+          path: data.proxy\.conf
+          pattern: brokerWebServiceURLTLS=https://broker-service-headless.xx.svc.domain.com:456
+      - notMatchRegex:
+          path: data.proxy\.conf
+          pattern: servicePort=
+      - notMatchRegex:
+          path: data.proxy\.conf
+          pattern: webServicePort=
+      - matchRegex:
+          path: data.proxy\.conf
+          pattern: servicePortTls=999
+      - matchRegex:
+          path: data.proxy\.conf
+          pattern: webServicePortTls=777
+
+  - it: should have tls settings
+    set:
+      global:
+        secureClusterEdge: true
+    asserts:
+      - matchRegex:
+          path: data.proxy\.conf
+          pattern: tlsCertificateFilePath=/pulsar/certs/ca.crt
+      - matchRegex:
+          path: data.proxy\.conf
+          pattern: tlsKeyFilePath=/pulsar/certs/tls.key
+      - matchRegex:
+          path: data.proxy\.conf
+          pattern: tlsTrustCertsFilePath=/pulsar/certs/tls.crt
+      - matchRegex:
+          path: data.proxy\.conf
+          pattern: tlsAllowInsecureConnection=false
+      - matchRegex:
+          path: data.proxy\.conf
+          pattern: tlsHostnameVerificationEnabled=false
+      - matchRegex:
+          path: data.proxy\.conf
+          pattern: tlsRequireTrustedClientCertOnConnect=false

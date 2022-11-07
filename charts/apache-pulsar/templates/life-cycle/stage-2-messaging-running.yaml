@@ -22,4 +22,5 @@ spec:
     spec:
       restartPolicy: Never
       containers: {{ include "common.lifeCycle.broker-running" . | nindent 8 }}
+        {{ include "common.lifeCycle.proxy-running" . | nindent 8 }}
 {{- end -}}

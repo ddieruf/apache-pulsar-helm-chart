@@ -1,0 +1,150 @@
+suite: Test proxy service
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/proxy/templates/service.yaml
+tests:
+  - it: should be correct document
+    asserts:
+      - containsDocument:
+          kind: Service
+          apiVersion: v1
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          ccc: ddd
+      proxy:
+        service:
+          annotations:
+            somethingelse: somewherelese
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              ccc: ddd
+              somethingelse: somewherelese
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: proxy
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: proxy
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: proxy-0.1.0
+            name: proxy-service
+            namespace: xx
+
+  - it: should only have secure ports
+    set:
+      global:
+        secureClusterEdge: true
+      proxy:
+        service:
+          ports:
+            https: 123
+            http: 456
+            pulsar: 678
+            pulsarSsl: 789
+          nodePorts:
+            https: 987
+            http: 876
+            pulsar: 765
+            pulsarSsl: 654
+    asserts:
+      - contains:
+          path: spec.ports
+          content:
+            name: https
+            port: 123
+            protocol: TCP
+            targetPort: https
+            nodePort: 987
+      - contains:
+          path: spec.ports
+          content:
+            name: pulsar-ssl
+            port: 789
+            protocol: TCP
+            targetPort: pulsar-ssl
+            nodePort: 654
+      - notContains:
+          path: spec.ports
+          content:
+            name: http
+            port: 456
+            protocol: TCP
+            targetPort: http
+            nodePort: 876
+      - notContains:
+          path: spec.ports
+          content:
+            name: pulsar
+            port: 678
+            protocol: TCP
+            targetPort: pulsar
+            nodePort: 765
+
+  - it: should only have non-secure ports
+    set:
+      global:
+        secureClusterEdge: false
+      proxy:
+        service:
+          ports:
+            https: 123
+            http: 456
+            pulsar: 678
+            pulsarSsl: 789
+          nodePorts:
+            https: 987
+            http: 876
+            pulsar: 765
+            pulsarSsl: 654
+    asserts:
+      - notContains:
+          path: spec.ports
+          content:
+            name: https
+            port: 123
+            protocol: TCP
+            targetPort: https
+            nodePort: 987
+      - notContains:
+          path: spec.ports
+          content:
+            name: pulsarSsl
+            port: 789
+            protocol: TCP
+            targetPort: pulsarSsl
+            nodePort: 654
+      - contains:
+          path: spec.ports
+          content:
+            name: http
+            port: 456
+            protocol: TCP
+            targetPort: http
+            nodePort: 876
+      - contains:
+          path: spec.ports
+          content:
+            name: pulsar
+            port: 678
+            protocol: TCP
+            targetPort: pulsar
+            nodePort: 765
+
+  - it: should select the correct pod
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/component: proxy
+            app.kubernetes.io/instance: zz
+            app.kubernetes.io/name: proxy

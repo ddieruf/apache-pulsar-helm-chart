@@ -56,6 +56,15 @@ example: {{ include "common.lifeCycle.meta-data-store-statefulset-running" $ }}
     - "-lapp.kubernetes.io/component=life-cycle"
 {{- end -}}
 
+{{- define "common.lifeCycle.broker-statefulset-running" -}}
+- name: meta-data-store-statefulset-running
+  image: groundnuty/k8s-wait-for:latest
+  imagePullPolicy: IfNotPresent
+  args:
+    - "pod"
+    - {{ printf "-lapp.kubernetes.io/component=broker" | quote }}
+{{- end -}}
+
 {{- define "common.lifeCycle.broker-running" -}}
 - name: data-store-running
   image: groundnuty/k8s-wait-for:latest
@@ -63,4 +72,13 @@ example: {{ include "common.lifeCycle.meta-data-store-statefulset-running" $ }}
   args:
     - "pod"
     - {{ printf "-lapp.kubernetes.io/component=broker" | quote }}
+{{- end -}}
+
+{{- define "common.lifeCycle.proxy-running" -}}
+- name: proxy-running
+  image: groundnuty/k8s-wait-for:latest
+  imagePullPolicy: IfNotPresent
+  args:
+    - "pod"
+    - {{ printf "-lapp.kubernetes.io/component=proxy" | quote }}
 {{- end -}}

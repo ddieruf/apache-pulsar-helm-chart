@@ -1,0 +1,23 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+To access your Apache Pulsar cluster use the following values:
+
+  Web Service: {{ include "proxy.webAddress" . }}
+  Pulsar Service: {{ include "proxy.binaryAddress" . }}
+
+Example commands:
+  ./bin/pulsar-admin --admin-url http://192.168.50.20:8080 tenants list
+
+Client.conf:
+  webServiceUrl={{ include "proxy.webAddress" . }}
+  brokerServiceUrl={{ include "proxy.binaryAddress" . }}
+  tlsAllowInsecureConnection=true
+  tlsEnableHostnameVerification=false
+  tlsTrustCertsFilePath=

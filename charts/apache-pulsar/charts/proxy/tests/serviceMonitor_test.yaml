@@ -1,0 +1,85 @@
+suite: Test proxy service monitor
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/proxy/templates/serviceMonitor.yaml
+tests:
+  - it: should be correct document
+    set:
+      proxy:
+        metricsServiceMonitor: true
+    asserts:
+      - containsDocument:
+          kind: ServiceMonitor
+          apiVersion: monitoring.coreos.com/v1
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          ccc: ddd
+      proxy:
+        metricsServiceMonitor: true
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              ccc: ddd
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: proxy
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: proxy
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: proxy-0.1.0
+              service_monitor: "1"
+            name: proxy-service-monitor
+            namespace: xx
+
+  - it: should select the correct pod
+    set:
+      proxy:
+        metricsServiceMonitor: true
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/component: proxy
+            app.kubernetes.io/instance: zz
+            app.kubernetes.io/name: proxy
+
+  - it: should use secure endpoint
+    set:
+      global:
+        secureClusterEdge: true
+      proxy:
+        metricsServiceMonitor: true
+    asserts:
+      - contains:
+          path: spec.endpoints
+          content:
+            port: https
+            path: /metrics
+            scheme: https
+            tlsConfig:
+              caFile: /pulsar/cert/ca.crt
+              certFile: /pulsar/cert/tls.crt
+              keyFile: /pulsar/cert/tls.key
+
+  - it: should use non secure endpoint
+    set:
+      global:
+        secureClusterEdge: false
+      proxy:
+        metricsServiceMonitor: true
+    asserts:
+      - contains:
+          path: spec.endpoints
+          content:
+            port: http
+            path: /metrics

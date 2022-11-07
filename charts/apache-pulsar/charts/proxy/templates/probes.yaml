@@ -1,0 +1,27 @@
+{{- $component := "proxy" -}}
+{{- $name := (printf "%s-probes" (include "proxy.name" $)) -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "proxy.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+data:
+  liveness.sh: |
+    #!/bin/bash
+    #curl -s --max-time 60 --fail http://localhost:8080/metrics/ > /dev/null
+    exit 0;
+  readiness.sh: |
+    #!/bin/bash
+    #curl -s --max-time 60 --fail http://localhost:8080/metrics/ > /dev/null
+    set -e
+    exit 0;
+  startup.sh: |
+    #!/bin/bash
+    #curl -s --max-time 60 --fail http://localhost:8080/metrics/ > /dev/null
+    exit 0;

@@ -1,0 +1,101 @@
+{{- $component := "proxy" -}}
+{{- $name := (printf "%s-service" (include "proxy.name" .)) -}}
+
+{{- $ports := .Values.service.ports -}}
+
+{{- if (eq (include "common.tls.require-secure-edge" $) "true") -}}
+  {{- $_ := unset $ports "http" -}}
+  {{- $_ := unset $ports "pulsar" -}}
+{{- else -}}
+  {{- $_ := unset $ports "https" -}}
+  {{- $_ := unset $ports "pulsarSsl" -}}
+{{- end -}}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "proxy.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- if .Values.service.annotations }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.service.annotations "context" $ ) | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- if and .Values.service.clusterIP (eq .Values.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.service.clusterIP }}
+  {{- end }}
+  {{- if (or (eq .Values.service.type "LoadBalancer") (eq .Values.service.type "NodePort")) }}
+  externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- if eq .Values.service.type "LoadBalancer" }}
+  loadBalancerSourceRanges: {{ .Values.service.loadBalancerSourceRanges }}
+  {{- end }}
+  {{- if .Values.service.sessionAffinity }}
+  sessionAffinity: {{ .Values.service.sessionAffinity }}
+  {{- end }}
+  {{- if .Values.service.sessionAffinityConfig }}
+  sessionAffinityConfig: {{ include "common.tplvalues.render" (dict "value" .Values.service.sessionAffinityConfig "context" $) | nindent 4 }}
+  {{- end }}
+  ports:
+    {{ if $ports.pulsar }}
+    - name: "pulsar"
+      port: {{ $ports.pulsar }}
+      targetPort: "pulsar"
+      protocol: TCP
+      {{- if .Values.service.type }}
+      {{- if (and (or (eq .Values.service.type "NodePort") (eq .Values.service.type "LoadBalancer")) (index .Values.service.nodePorts "pulsar")) }}
+      nodePort: {{ index .Values.service.nodePorts "pulsar" }}
+      {{- else if eq .Values.service.type "ClusterIP" }}
+      nodePort:
+      {{- end }}
+      {{- end }}
+    {{ end }}
+    {{ if $ports.pulsarSsl }}
+    - name: "pulsar-ssl"
+      port: {{ $ports.pulsarSsl }}
+      targetPort: "pulsar-ssl"
+      protocol: TCP
+      {{- if .Values.service.type }}
+      {{- if (and (or (eq .Values.service.type "NodePort") (eq .Values.service.type "LoadBalancer")) (index .Values.service.nodePorts "pulsarSsl")) }}
+      nodePort: {{ index .Values.service.nodePorts "pulsarSsl" }}
+      {{- else if eq .Values.service.type "ClusterIP" }}
+      nodePort:
+      {{- end }}
+      {{- end }}
+    {{ end }}
+    {{ if $ports.http }}
+    - name: "http"
+      port: {{ $ports.http }}
+      targetPort: "http"
+      protocol: TCP
+      {{- if .Values.service.type }}
+      {{- if (and (or (eq .Values.service.type "NodePort") (eq .Values.service.type "LoadBalancer")) (index .Values.service.nodePorts "http")) }}
+      nodePort: {{ index .Values.service.nodePorts "http" }}
+      {{- else if eq .Values.service.type "ClusterIP" }}
+      nodePort:
+      {{- end }}
+      {{- end }}
+    {{ end }}
+    {{ if $ports.https }}
+    - name: "https"
+      port: {{ $ports.https }}
+      targetPort: "https"
+      protocol: TCP
+      {{- if .Values.service.type }}
+      {{- if (and (or (eq .Values.service.type "NodePort") (eq .Values.service.type "LoadBalancer")) (index .Values.service.nodePorts "https")) }}
+      nodePort: {{ index .Values.service.nodePorts "https" }}
+      {{- else if eq .Values.service.type "ClusterIP" }}
+      nodePort:
+      {{- end }}
+      {{- end }}
+    {{ end }}
+    {{- if .Values.service.extraPorts }}
+    {{ include "common.tplvalues.render" (dict "value" .Values.service.extraPorts "context" $) | nindent 4 }}
+    {{- end }}
+  selector: {{ include "common.labels.matchLabels" (dict "name" (include "proxy.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}

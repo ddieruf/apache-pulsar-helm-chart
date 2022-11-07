@@ -1,0 +1,174 @@
+suite: Test proxy deployment
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/proxy/templates/deployment.yaml
+  - charts/proxy/templates/configmap.yaml
+tests:
+  - it: should be correct deployment document
+    template: charts/proxy/templates/deployment.yaml
+    asserts:
+      - containsDocument:
+          kind: Deployment
+          apiVersion: apps/v1
+
+  - it: should have correct metadata
+    template: charts/proxy/templates/deployment.yaml
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          something: somewhere
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              something: somewhere
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: proxy
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: proxy
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: proxy-0.1.0
+            name: proxy-deployment
+            namespace: xx
+
+  - it: should have correct template metadata
+    template: charts/proxy/templates/deployment.yaml
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          something: somewhere
+      restartOnConfigMapChange: true
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels
+          value:
+            app.kubernetes.io/component: proxy
+            app.kubernetes.io/instance: zz
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: proxy
+            helm.sh/chart: proxy-0.1.0
+
+  - it: should add jks stores and cert with TLS
+    template: charts/proxy/templates/deployment.yaml
+    set:
+      global:
+        secureClusterEdge: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: jks
+            projected:
+              sources:
+                - secret:
+                    items:
+                      - key: truststore.jks
+                        path: truststore.jks
+                      - key: keystore.jks
+                        path: keystore.jks
+                    name: proxy-tls
+                - secret:
+                    items:
+                      - key: jks-password
+                        path: jks-password
+                    name: proxy-jks
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: certs
+            secret:
+              secretName: proxy-tls
+              items:
+                - key: ca.crt
+                  path: ca.crt
+                - key: tls.key
+                  path: tls.key
+                - key: tls.crt
+                  path: tls.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: certs
+            mountPath: /pulsar/certs
+            readOnly: true
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: jks
+            mountPath: /pulsar/jks
+            readOnly: true
+
+  - it: should have non secure ports
+    template: charts/proxy/templates/deployment.yaml
+    set:
+      global:
+        secureClusterEdge: false
+      proxy:
+        containerPorts:
+          http: 123
+          https: 234
+          pulsar: 345
+          pulsarSsl: 567
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: http
+            containerPort: 123
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: pulsar
+            containerPort: 345
+      - notContains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: https
+            containerPort: 234
+      - notContains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: pulsar-ssl
+            containerPort: 567
+
+  - it: should have secure ports
+    template: charts/proxy/templates/deployment.yaml
+    set:
+      global:
+        secureClusterEdge: true
+      proxy:
+        containerPorts:
+          http: 123
+          https: 234
+          pulsar: 345
+          pulsarSsl: 567
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: http
+            containerPort: 123
+      - notContains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: pulsar
+            containerPort: 345
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: https
+            containerPort: 234
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: pulsar-ssl
+            containerPort: 567

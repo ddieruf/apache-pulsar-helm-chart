@@ -1,0 +1,170 @@
+suite: Test proxy certificate
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/proxy/templates/certificate.yaml
+  - charts/proxy/templates/jks_secret.yaml
+tests:
+  - it: should be correct certificate document
+    set:
+      global:
+        secureClusterEdge: true
+      proxy:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: some-issuer
+              kind: ClusterIssuer
+    asserts:
+      - containsDocument:
+          kind: Certificate
+          apiVersion: cert-manager.io/v1
+    template: charts/proxy/templates/certificate.yaml
+
+  - it: should be correct secret document
+    set:
+      global:
+        secureClusterEdge: true
+      proxy:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: some-issuer
+              kind: ClusterIssuer
+    asserts:
+      - containsDocument:
+          kind: Secret
+          apiVersion: v1
+    template: charts/proxy/templates/jks_secret.yaml
+
+  - it: should have correct certificate metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          ccc: ddd
+        secureClusterEdge: true
+      proxy:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: some-issuer
+              kind: ClusterIssuer
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              ccc: ddd
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: proxy
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: proxy
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: proxy-0.1.0
+            name: proxy-certificate
+            namespace: xx
+    template: charts/proxy/templates/certificate.yaml
+
+  - it: should have correct secret metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          ccc: ddd
+        secureClusterEdge: true
+      proxy:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: some-issuer
+              kind: ClusterIssuer
+      asserts:
+        - equal:
+            path: metadata
+            value:
+              annotations:
+                ccc: ddd
+              labels:
+                aaa: bbb
+                app.kubernetes.io/component: proxy
+                app.kubernetes.io/instance: zz
+                app.kubernetes.io/managed-by: Helm
+                app.kubernetes.io/name: proxy
+                app.kubernetes.io/part-of: pulsar-luna
+                helm.sh/chart: proxy-0.1.0
+              name: proxy-jks
+              namespace: xx
+      template: charts/proxy/templates/jks_secret.yaml
+
+  - it: should use dns name in certificate request
+    template: charts/proxy/templates/certificate.yaml
+    set:
+      global:
+        clusterDomain: domain.com
+        secureClusterEdge: true
+        proxy:
+          dnsName: some.domain.com
+      proxy:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: cert-issuer
+              kind: ClusterIssuer
+    asserts:
+      - equal:
+          path: spec.commonName
+          value: zz-proxy
+      - equal:
+          path: spec.secretName
+          value: proxy-tls
+      - contains:
+          path: spec.dnsNames
+          content: some.domain.com
+      - contains:
+          path: spec.dnsNames
+          content: 127.0.0.1
+      - contains:
+          path: spec.dnsNames
+          content: localhost
+
+
+  - it: should use service name in certificate request
+    template: charts/proxy/templates/certificate.yaml
+    set:
+      global:
+        clusterDomain: domain.com
+        secureClusterEdge: true
+      proxy:
+        certificateResources:
+          tlsSecretName: null
+          jksPasswordSecretName: null
+          certificateRequest:
+            issuerRef:
+              name: cert-issuer
+              kind: ClusterIssuer
+    asserts:
+      - contains:
+          path: spec.dnsNames
+          content: proxy-service.xx.svc.domain.com
+      - contains:
+          path: spec.dnsNames
+          content: 127.0.0.1
+      - contains:
+          path: spec.dnsNames
+          content: localhost

@@ -40,3 +40,13 @@ dependencies:
         parent: global.broker.config
       - child: service
         parent: global.broker.service
+
+  - name: proxy
+    version: "0.1.0"
+    import-values:
+      - child: globalData
+        parent: global.proxy
+      - child: config
+        parent: global.proxy.config
+      - child: service
+        parent: global.proxy.service
