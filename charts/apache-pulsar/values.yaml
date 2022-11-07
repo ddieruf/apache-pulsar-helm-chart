@@ -76,3 +76,23 @@ global:
     ## @param global.observability.dashboards Deploy configmaps with pre-configured dashboards that are discoverable by Grafana.
     ##
     dashboards: false
+
+  ## @section Tenant, Namespace, and Topic Setup
+  ## @descriptionStart
+  ## Specify the initial tenant/namespace/topics created
+  ## @descriptionEnd
+  ##
+  pulsarCluster:
+    name: "my-cluster"
+    tenants:
+      - name: "public"
+        namespaces:
+          - name: "default"
+      - name: "a-tenant"
+        namespaces:
+          - name: "a-namespace"
+            topics:
+              - name: "first"
+                persistent: true
+              - name: "second"
+                persistent: false
