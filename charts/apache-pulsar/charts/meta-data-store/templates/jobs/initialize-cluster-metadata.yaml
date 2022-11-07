@@ -33,7 +33,7 @@ metadata:
 spec:
   template:
     spec:
-      restartPolicy: OnFailure
+      restartPolicy: Never
       initContainers: {{ include "common.lifeCycle.meta-data-store-statefulset-running" . | nindent 8 }}
       containers:
         - name: "initialize-cluster-metadata"
