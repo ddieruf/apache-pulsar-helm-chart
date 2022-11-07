@@ -38,7 +38,7 @@ spec:
   selector:
     matchLabels: {{ (include "common.labels.matchLabels" (dict "name" (include "broker.name" $) "context" $ )) | nindent 6 }}
       app.kubernetes.io/component: {{ $component | quote }}
-  serviceName: {{ printf "%s-service" (include "broker.name" .) }}
+  serviceName: {{ printf "%s-service-headless" (include "broker.name" .) }}
   updateStrategy: {{ include "common.tplvalues.render" (dict "value" .Values.updateStrategy "context" $ ) | nindent 4 }}
   template:
     metadata:

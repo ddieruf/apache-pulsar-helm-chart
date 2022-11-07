@@ -136,7 +136,7 @@ tests:
       - contains:
           path: spec.dnsNames
           content:
-            broker-service-headless.xx.svc.domain.com
+            "*.broker-service-headless.xx.svc.domain.com"
       - contains:
           path: spec.dnsNames
           content:
@@ -174,7 +174,7 @@ tests:
       - contains:
           path: spec.dnsNames
           content:
-            broker-service-headless.xx.svc.domain.com
+            "*.broker-service-headless.xx.svc.domain.com"
       - contains:
           path: spec.dnsNames
           content:
