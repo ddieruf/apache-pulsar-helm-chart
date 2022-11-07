@@ -9,9 +9,6 @@ tests:
     set:
       broker:
         metricsServiceMonitor: true
-        config:
-          httpServerEnabled: true
-          httpServerPort: 123
     asserts:
       - containsDocument:
           kind: ServiceMonitor
@@ -26,9 +23,6 @@ tests:
           ccc: ddd
       broker:
         metricsServiceMonitor: true
-        config:
-          httpServerEnabled: true
-          httpServerPort: 123
     asserts:
       - equal:
           path: metadata
@@ -51,9 +45,6 @@ tests:
     set:
       broker:
         metricsServiceMonitor: true
-        config:
-          httpServerEnabled: true
-          httpServerPort: 123
     asserts:
       - equal:
           path: spec.selector.matchLabels
@@ -61,3 +52,36 @@ tests:
             app.kubernetes.io/component: broker
             app.kubernetes.io/instance: zz
             app.kubernetes.io/name: broker
+
+  - it: should use secure endpoint
+    set:
+      global:
+        interComponentTls:
+          enabled: true
+      broker:
+        metricsServiceMonitor: true
+    asserts:
+      - contains:
+          path: spec.endpoints
+          content:
+            port: https
+            path: /metrics
+            scheme: https
+            tlsConfig:
+              caFile: /pulsar/cert/ca.crt
+              certFile: /pulsar/cert/tls.crt
+              keyFile: /pulsar/cert/tls.key
+
+  - it: should use non secure endpoint
+    set:
+      global:
+        interComponentTls:
+          enabled: false
+      broker:
+        metricsServiceMonitor: true
+    asserts:
+      - contains:
+          path: spec.endpoints
+          content:
+            port: http
+            path: /metrics

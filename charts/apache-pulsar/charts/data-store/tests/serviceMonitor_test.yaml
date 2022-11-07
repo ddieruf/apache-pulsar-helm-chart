@@ -72,3 +72,19 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: To enable metrics .config.httpServerEnabled should be true and .config.httpServerPort should be a valid port number.
+
+  - it: should use non secure endpoint
+    set:
+      global:
+        interComponentTls:
+          enabled: false
+      dataStore:
+        metricsServiceMonitor: true
+        config:
+          httpServerEnabled: true
+    asserts:
+      - contains:
+          path: spec.endpoints
+          content:
+            port: http
+            path: /metrics

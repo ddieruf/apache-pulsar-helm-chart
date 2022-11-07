@@ -18,6 +18,16 @@ spec:
     matchLabels: {{ (include "common.labels.matchLabels" (dict "name" (include "broker.name" $) "context" $ )) | nindent 6 }}
       app.kubernetes.io/component: {{ $component | quote }}
   endpoints:
+    {{ if (eq (include "common.tls.require-secure-inter" $) "true") }}
+    - port: https
+      path: /metrics
+      scheme: https
+      tlsConfig:
+        caFile: /pulsar/cert/ca.crt
+        certFile: /pulsar/cert/tls.crt
+        keyFile: /pulsar/cert/tls.key
+    {{ else }}
     - port: http
       path: /metrics
+    {{ end }}
 {{- end -}}
