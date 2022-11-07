@@ -2,7 +2,7 @@
 Expand the name of the broker chart.
 */}}
 {{- define "broker.name" -}}
-  {{- default "broker" .Values.global.broker.nameOverride | trunc 63 | trimSuffix "-" -}}
+  {{- .Values.global.broker.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*

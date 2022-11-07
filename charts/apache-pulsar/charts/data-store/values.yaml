@@ -1,13 +1,15 @@
 globalData:
-  ## @skip globalData.nameOverride
-  ## [string,nullable] String to partially override common.names.name
+  ## @param globalData.name [string] String to name component
   ##
-  nameOverride: ""
+  name: "data-store"
 
-  ## @skip globalData.fullnameOverride
-  ## [string,nullable] String to fully override common.names.fullname
+  ## @param globalData.fullnameOverride [string,nullable] String to fully override component naming
   ##
-  fullnameOverride: ""
+  fullnameOverride:
+
+  ## @param globalData.replicas The number of bookies to deploy
+  ##
+  replicas: 1
 
 ## @section Image parameters
 ## @descriptionStart
@@ -150,9 +152,6 @@ pulsarEnv:
 ## > Note, the values not documented here are set by the parent chart
 ## @descriptionEnd
 ##
-## @param replicas The number of bookies to deploy
-##
-replicas: 3
 
 config:
   ## @skip config.advertisedAddress

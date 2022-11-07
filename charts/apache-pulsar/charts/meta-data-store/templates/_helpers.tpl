@@ -2,7 +2,7 @@
 Expand the name of the meta data store chart.
 */}}
 {{- define "meta-data-store.name" -}}
-  {{- default "meta-data-store" .Values.global.metaDataStore.nameOverride | trunc 63 | trimSuffix "-" -}}
+  {{- .Values.global.metaDataStore.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*

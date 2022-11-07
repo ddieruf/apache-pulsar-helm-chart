@@ -1,17 +1,15 @@
 globalData:
-  ## @skip globalData.nameOverride
-  ## [string,nullable] String to partially override common.names.name
+  ## @param globalData.name [string] String to name component
   ##
-  nameOverride: ""
+  name: "broker"
 
-  ## @skip globalData.fullnameOverride
-  ## [string,nullable] String to fully override common.names.fullname
+  ## @param globalData.fullnameOverride [string,nullable] String to fully override component naming
   ##
-  fullnameOverride: ""
+  fullnameOverride:
 
   ## @param globalData.replicas The number of brokers to deploy
   ##
-  replicas: 3
+  replicas: 1
 
 ## @section Image parameters
 ## @descriptionStart

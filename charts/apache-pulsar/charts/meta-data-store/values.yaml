@@ -1,21 +1,19 @@
 globalData:
-  ## @skip globalData.nameOverride
-  ## [string,nullable] String to partially override common.names.name
+  ## @param globalData.name [string] String to name component
   ##
-  nameOverride: ""
+  name: "meta-data-store"
 
-  ## @skip globalData.fullnameOverride
-  ## [string,nullable] String to fully override common.names.fullname
+  ## @param globalData.fullnameOverride [string,nullable] String to fully override component naming
   ##
-  fullnameOverride: ""
+  fullnameOverride:
 
-  ## @param globalData.replicas The number of meta data stores to deploy
+  ## @param globalData.replicas The number of metadata stores to deploy
   ##
   replicas: 1
 
-  ## @param globalData.nonPersistentReplicas Number of non-persistent Meta Data Store nodes. Used as floating Meta Data Store to maintain quorum in AZ failures
+  ## @param globalData.nonPersistentReplicas Number of non-persistent Metadata Store nodes. Used as floating Meta dta Store to maintain quorum in AZ failures
   ##
-  nonPersistentReplicas: 2
+  nonPersistentReplicas: 0
 
 ## @section Image parameters
 ## @descriptionStart

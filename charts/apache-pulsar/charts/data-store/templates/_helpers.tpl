@@ -2,7 +2,7 @@
 Expand the name of the data store chart.
 */}}
 {{- define "data-store.name" -}}
-  {{- default "data-store" .Values.global.dataStore.nameOverride | trunc 63 | trimSuffix "-" -}}
+  {{- .Values.global.dataStore.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
