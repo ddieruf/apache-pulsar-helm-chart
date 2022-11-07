@@ -1,6 +1,5 @@
 {{- $brokerConfigValues := omit .Values.global.broker.config "extraConfigValues" -}}
 
-{{/*{{- $_ := set $brokerConfigValues "bindAddress" (coalesce .Values.config.bindAddress "0.0.0.0") -}}*/}}
 {{- $_ := set $brokerConfigValues "bookkeeperMetadataServiceUri" (coalesce .Values.config.bookkeeperMetadataServiceUri (printf "zk://%s/ledgers" (include "broker.config.bookkeeperMetadataServiceUri" $))) -}}
 {{- $_ := unset $brokerConfigValues "bootstrapNamespaces" -}}
 
@@ -17,6 +16,20 @@
 
 {{- $_ := set $brokerConfigValues "webServiceUrl" (printf "http://localhost:%d/" ($brokerConfigValues.webServicePort | int)) -}}
 {{- $_ := set $brokerConfigValues "brokerServiceUrl" (printf "pulsar://localhost:%d/" ($brokerConfigValues.brokerServicePort | int)) -}}
+
+{{- $_ := set $brokerConfigValues "managedLedgerDefaultEnsembleSize" (coalesce .Values.config.managedLedgerDefaultEnsembleSize .Values.global.dataStore.replicas) -}}
+{{- $_ := set $brokerConfigValues "managedLedgerDefaultAckQuorum" (coalesce .Values.config.managedLedgerDefaultAckQuorum .Values.global.dataStore.replicas) -}}
+{{- $_ := set $brokerConfigValues "managedLedgerDefaultWriteQuorum" (coalesce .Values.config.managedLedgerDefaultWriteQuorum .Values.global.dataStore.replicas) -}}
+
+{{- if lt ($brokerConfigValues.managedLedgerDefaultEnsembleSize | int) (.Values.global.dataStore.replicas | int) -}}
+  {{- fail "The broker .config.managedLedgerDefaultEnsembleSize should be >= the number of writable bookies (.dataStore.replicas)" -}}
+{{- end -}}
+{{- if lt ($brokerConfigValues.managedLedgerDefaultAckQuorum | int) (.Values.global.dataStore.replicas | int) -}}
+  {{- fail "The broker .config.managedLedgerDefaultAckQuorum should be >= the number of writable bookies (.dataStore.replicas)" -}}
+{{- end -}}
+{{- if lt ($brokerConfigValues.managedLedgerDefaultWriteQuorum | int) (.Values.global.dataStore.replicas | int) -}}
+  {{- fail "The broker .config.managedLedgerDefaultWriteQuorum should be >= the number of writable bookies (.dataStore.replicas)" -}}
+{{- end -}}
 
 {{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
   {{/* TLS certificate config  */}}
