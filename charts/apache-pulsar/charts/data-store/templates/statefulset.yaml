@@ -32,7 +32,7 @@ metadata:
     {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
 spec:
   podManagementPolicy: {{ .Values.podManagementPolicy | quote }}
-  replicas: {{ int .Values.replicas }}
+  replicas: {{ int .Values.global.dataStore.replicas }}
   selector:
     matchLabels: {{ (include "common.labels.matchLabels" (dict "name" (include "data-store.name" $) "context" $ )) | nindent 6 }}
       app.kubernetes.io/component: {{ $component | quote }}
