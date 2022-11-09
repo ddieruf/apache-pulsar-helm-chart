@@ -1,0 +1,63 @@
+{{- $component := "metadata-store" -}}
+{{- $name := (printf "%s-headless" (include "metadata-store.name" .)) -}}
+{{- $ports := .Values.service.ports -}}
+
+{{- if and (eq (include "metadata-store.metrics-enabled" .) "true") (not (index .Values "config" "metricsProvider.httpPort")) -}}
+  {{- fail "Provide an httpPort when metrics are enabled." -}}
+{{- end -}}
+
+{{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
+  {{- $_ := unset $ports "client" -}}
+{{- else -}}
+  {{- $_ := unset $ports "clientTls" -}}
+{{- end -}}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "metadata-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- if .Values.service.annotations }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.service.annotations "context" $ ) | nindent 4 }}
+    {{- end }}
+spec:
+  clusterIP: "None"
+  publishNotReadyAddresses: true
+  ports:
+    {{- if $ports.client }}
+    - name: client
+      port: {{ $ports.client }}
+      targetPort: client
+      protocol: TCP
+    {{- end }}
+    {{- if $ports.clientTls }}
+    - name: client-tls
+      port: {{ $ports.clientTls }}
+      targetPort: client-tls
+      protocol: TCP
+    {{- end }}
+    {{- if $ports.server }}
+    - name: server
+      port: {{ $ports.server }}
+      targetPort: server
+      protocol: TCP
+    {{- end }}
+    {{- if $ports.leaderElection }}
+    - name: leader-election
+      port: {{ $ports.leaderElection }}
+      targetPort: leader-election
+      protocol: TCP
+    {{- end }}
+    {{- if and (eq (include "metadata-store.metrics-enabled" .) "true") (index .Values "config" "metricsProvider.httpPort") }}
+    - name: metrics
+      port: {{ index .Values "config" "metricsProvider.httpPort" }}
+      targetPort: metrics
+      protocol: TCP
+    {{- end }}
+  selector: {{ include "common.labels.matchLabels" (dict "name" (include "metadata-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}

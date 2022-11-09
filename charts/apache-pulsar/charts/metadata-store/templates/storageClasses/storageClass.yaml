@@ -1,0 +1,30 @@
+{{- if and (not .Values.persistence.existingClaim) (eq (.Values.persistence.storageClass | typeOf) "map[string]interface {}") -}}
+
+{{- $component := "metadata-store" -}}
+{{- $name := (printf "%s" (include "metadata-store.name" $)) -}}
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "metadata-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: {{ .Values.persistence.storageClass.reclaimPolicy }}
+provisioner: {{ .Values.persistence.storageClass.provisioner }}
+parameters:
+  {{- if .Values.persistence.storageClass.type }}
+  type: {{ .Values.persistence.storageClass.type }}
+  {{- end }}
+  {{- if .Values.persistence.storageClass.fsType }}
+  fsType: {{ .Values.persistence.storageClass.fsType }}
+  {{- end }}
+  {{- if .Values.persistence.storageClass.extraParams }}
+{{ toYaml .Values.persistence.storageClass.extraParams | indent 2 }}
+  {{- end }}
+{{- end }}

@@ -1,6 +1,0 @@
-apiVersion: v2
-appVersion: "0.1.0"
-description: Apache Pulsar Meta Data Store Helm chart for Kubernetes
-name: meta-data-store
-version: "0.1.0"
-type: application

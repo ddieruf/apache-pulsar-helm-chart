@@ -1,0 +1,194 @@
+suite: Test meta data store config map
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/metadataStore/templates/configmap.yaml
+tests:
+  - it: should be correct document
+    asserts:
+      - containsDocument:
+          kind: ConfigMap
+          apiVersion: v1
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          something: somewhere
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              something: somewhere
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: metadata-store
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: metadata-store
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: metadataStore-0.1.0
+            name: metadata-store-configuration
+            namespace: xx
+
+  - it: should have correct server addresses
+    set:
+      global:
+        clusterDomain: domain.com
+        interComponentTls:
+          enabled: false
+        metadataStore:
+          replicas: 2
+          nonPersistentReplicas: 1
+          service:
+            ports:
+              server: 123
+              leaderElection: 567
+    asserts:
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "server.1=metadata-store-statefulset-0.metadata-store-headless.xx.svc.domain.com:123:567"
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "server.2=metadata-store-statefulset-1.metadata-store-headless.xx.svc.domain.com:123:567"
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "server.3=metadata-store-statefulset-non-persistent-0.metadata-store-headless.xx.svc.domain.com:123:567"
+
+  - it: should have no tls
+    set:
+      global:
+        interComponentTls:
+          enabled: false
+      metadataStore:
+        containerPorts:
+          client: 123
+          clientTls: 567
+    asserts:
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "clientPort=123"
+      - notMatchRegex:
+          path: data.zookeeper\.conf
+          pattern: "secureClientPort="
+
+  - it: should have tls enabled
+    set:
+      global:
+        interComponentTls:
+          enabled: true
+      metadataStore:
+        globalData:
+          replicas: 2
+          nonPersistentReplicas: 0
+        containerPorts:
+          client: 123
+          clientTls: 567
+    asserts:
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "secureClientPort=567"
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "sslQuorum=true"
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "serverCnxnFactory=org.apache.zookeeper.server.NettyServerCnxnFactory"
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "ssl.quorum.keyStore.location=/pulsar/jks/keystore.jks"
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "ssl.quorum.keyStore.passwordPath=/pulsar/jks/jks-password"
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "ssl.quorum.trustStore.location=/pulsar/jks/truststore.jks"
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "ssl.quorum.trustStore.passwordPath=/pulsar/jks/jks-password"
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "ssl.quorum.trustStore.type=JKS"
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "ssl.quorum.clientAuth=NEED"
+
+  - it: should allow additional config data
+    set:
+      metadataStore:
+        config:
+          extraConfigValues:
+            aaaa: bbbb
+            cccc: "123"
+    asserts:
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "aaaa=bbbb"
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "cccc=123"
+
+  - it: should add client tls settings to JVM environment
+    set:
+      global:
+        interComponentTls:
+          enabled: true
+    asserts:
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Dzookeeper.client.secure=true"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Dzookeeper.ssl.trustStore.type=JKS"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Dzookeeper.ssl.trustStore.location=/pulsar/jks/truststore.jks"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Dzookeeper.ssl.trustStore.passwordPath=/pulsar/jks/jks-password"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Dzookeeper.ssl.keyStore.type=JKS"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Dzookeeper.ssl.keyStore.location=/pulsar/jks/keystore.jks"
+      - matchRegex:
+          path: data.pulsar_env\.sh
+          pattern: "-Dzookeeper.ssl.keyStore.passwordPath=/pulsar/jks/jks-password"
+
+  - it: should enable metrics
+    set:
+      metadataStore:
+        metricsServiceMonitor: true
+        config:
+          "metricsProvider.className": someClass.name
+          "metricsProvider.httpPort": 8000
+    asserts:
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "metricsProvider.className=someClass.name"
+      - matchRegex:
+          path: data.zookeeper\.conf
+          pattern: "metricsProvider.httpPort=8000"
+
+  - it: should disable metrics
+    set:
+      global:
+        observability:
+          serviceMonitors: false
+      metadataStore:
+        metricsServiceMonitor: false
+    asserts:
+      - notMatchRegex:
+          path: data.zookeeper\.conf
+          pattern: "metricsProvider.className"
+      - notMatchRegex:
+          path: data.zookeeper\.conf
+          pattern: "metricsProvider.httpPort"

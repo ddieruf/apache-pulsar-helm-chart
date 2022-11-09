@@ -11,16 +11,16 @@ dependencies:
   - name: common
     version: "0.1.0"
 
-  - name: meta-data-store
+  - name: metadata-store
     version: "0.1.0"
-    alias: metaDataStore
+    alias: metadataStore
     import-values:
       - child: globalData
-        parent: global.metaDataStore
+        parent: global.metadataStore
       - child: config
-        parent: global.metaDataStore.config
+        parent: global.metadataStore.config
       - child: service
-        parent: global.metaDataStore.service
+        parent: global.metadataStore.service
 
   - name: data-store
     version: "0.1.0"

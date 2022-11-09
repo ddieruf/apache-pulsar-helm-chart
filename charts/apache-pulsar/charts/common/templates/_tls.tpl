@@ -67,7 +67,7 @@ Params:
 Get the needed volumes for jks store
 
 Usage:
-{{ include "common.tls.volumes.jks-store" (dict "tlsSecretName" "meta-data-store-tls" "context" $) | fromJson }}
+{{ include "common.tls.volumes.jks-store" (dict "tlsSecretName" "metadata-store-tls" "context" $) | fromJson }}
 
 Params:
   - volumeName - String - Required - The nanme of the volume

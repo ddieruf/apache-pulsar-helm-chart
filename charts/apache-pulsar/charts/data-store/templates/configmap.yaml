@@ -2,8 +2,8 @@
 
 {{- $_ := set $configValues "bookiePort" (coalesce .Values.config.bookiePort .Values.containerPorts.client) -}}
 {{- $_ := set $configValues "metadataServiceUri" (coalesce .Values.config.metadataServiceUri (printf "zk://%s/ledgers" (include "data-store.config.metadataServiceUri" $))) -}}
-{{- $_ := set $configValues "journalDirectory" (.Values.persistence.enabled | ternary (coalesce .Values.config.journalDirectory (.Values.persistence.oneDisk.enabled | ternary .Values.persistence.oneDisk.mountPath .Values.persistence.journal.mountPath))) -}}
-{{- $_ := set $configValues "ledgerDirectories" (.Values.persistence.enabled | ternary (coalesce .Values.config.ledgerDirectories (.Values.persistence.oneDisk.enabled | ternary .Values.persistence.oneDisk.mountPath .Values.persistence.ledgers.mountPath))) -}}
+{{- $_ := set $configValues "journalDirectory" (.Values.persistence.enabled | ternary (coalesce .Values.config.journalDirectory (.Values.persistence.oneDisk.enabled | ternary .Values.persistence.oneDisk.mountPath .Values.persistence.journal.mountPath)) "/pulsar/data/bookeeper/journal") -}}
+{{- $_ := set $configValues "ledgerDirectories" (.Values.persistence.enabled | ternary (coalesce .Values.config.ledgerDirectories (.Values.persistence.oneDisk.enabled | ternary .Values.persistence.oneDisk.mountPath .Values.persistence.ledgers.mountPath)) "/pulsar/data/bookeeper/ledgers") -}}
 
 {{- if (eq (include "data-store.metrics-enabled" .) "true") }}
   {{- $_ := set $configValues "enableStatistics" (coalesce .Values.config.enableStatistics "true") -}}

@@ -1,0 +1,67 @@
+{{- $component := "metadata-store" -}}
+{{- $name := (printf "%s-initialize-cluster-metadata" (include "metadata-store.name" $)) -}}
+
+{{- $webServiceUrl := (include "broker.webAddress" .) -}}
+{{- $binaryServiceUrl := (include "broker.binaryAddress" .) -}}
+{{- $metadataStoreUrls := (printf "zk:%s" (join "," ((include "metadata-store.client-cluster-addresses" $) | fromJsonArray)))}}
+
+{{- $extraVolMounts := default list .Values.extraVolumeMounts -}}
+{{- $extraVols := default list .Values.extraVolumes -}}
+{{- $jksPassSecretName := "" }}
+
+{{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
+  {{- $tlsSecretName := coalesce .Values.certificateResources.tlsSecretName .Values.global.interComponentTls.tlsSecretName (printf "%s-tls" (include "metadata-store.name" .)) -}}
+  {{- $jksPassSecretName = coalesce .Values.certificateResources.jksPasswordSecretName .Values.global.interComponentTls.jksPasswordSecretName (printf "%s-jks" (include "metadata-store.name" .)) -}}
+
+  {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.certs" . | fromJson) -}}
+  {{- $extraVolMounts = append $extraVolMounts (include "common.tls.volumeMounts.jks" . | fromJson) -}}
+
+  {{- $extraVols = append $extraVols (include "common.tls.volumes.certs" (dict "tlsSecretName" $tlsSecretName "context" $) | fromJson) -}}
+  {{- $extraVols = append $extraVols (include "common.tls.volumes.jks-store" (dict "jksPasswordSecretName" $jksPassSecretName "tlsSecretName" $tlsSecretName "context" $) | fromJson) -}}
+{{- end -}}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "metadata-store.name" $) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      initContainers: {{ include "common.lifeCycle.metadata-store-statefulset-running" . | nindent 8 }}
+      containers:
+        - name: "initialize-cluster-metadata"
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.global.image "global" .Values.global) }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy | quote }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - >
+              /pulsar/bin/pulsar initialize-cluster-metadata \
+                --cluster "{{ include "cluster.name" $ }}" \
+                --metadata-store "{{ $metadataStoreUrls }}" \
+                --configuration-metadata-store "{{ $metadataStoreUrls }}" \
+                {{- if eq (include "common.tls.require-secure-inter" $) "true" }}
+                --web-service-url-tls "{{ $webServiceUrl }}" \
+                --broker-service-url-tls "{{ $binaryServiceUrl }}" \
+                {{- end }}
+                --web-service-url "{{ $webServiceUrl }}" \
+                --broker-service-url "{{ $binaryServiceUrl }}"
+          volumeMounts:
+            - name: "conf"
+              mountPath: {{ .Values.pulsarEnv.confPath }}
+            {{- if $extraVolMounts }}
+            {{ include "common.tplvalues.render" (dict "value" $extraVolMounts "context" $) | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: "conf"
+          configMap:
+            name: {{ printf "%s-configuration" (include "metadata-store.name" .) }}
+        {{- if $extraVols }}
+        {{ include "common.tplvalues.render" (dict "value" $extraVols "context" $) | nindent 8 }}
+        {{- end }}

@@ -172,14 +172,13 @@ spec:
         {{ include "common.tplvalues.render" (dict "value" .Values.sidecars "context" $) | nindent 8 }}
         {{- end }}
       volumes:
-        {{- if not .Values.logPersistence.enabled -}}
         - name: "logs"
+        {{ if eq .Values.logPersistence.enabled false }}
           emptyDir: {}
-        {{- else if .Values.logPersistence.existingClaim -}}
-        - name: "logs"
+        {{ else if .Values.logPersistence.existingClaim }}
           persistentVolumeClaim:
             claimName: {{ printf "%s" (tpl .Values.logPersistence.existingClaim .) }}
-        {{- end -}}
+        {{ end }}
         - name: "conf"
           configMap:
             name: {{ printf "%s-configuration" (include "broker.name" .) }}
@@ -190,7 +189,7 @@ spec:
         {{- if $extraVols }}
         {{ include "common.tplvalues.render" (dict "value" $extraVols "context" $) | nindent 8 }}
         {{- end }}
-{{- if and .Values.logPersistence.enabled (not .Values.logPersistence.existingClaim) }}
+{{- if and (eq .Values.logPersistence.enabled true) (not .Values.logPersistence.existingClaim) }}
   volumeClaimTemplates:
     - metadata:
         name: "logs"

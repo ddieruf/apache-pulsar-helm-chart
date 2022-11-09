@@ -22,7 +22,7 @@ usage: {{- include "cluster.name" $ -}}
                 DATA STORE OVERRIDABLES
 ==========================================================*/}}
 {{- define "data-store.config.metadataServiceUri" -}}
-  {{- join ";" ((include "meta-data-store.client-cluster-addresses" .) | fromJsonArray) -}}
+  {{- join ";" ((include "metadata-store.client-cluster-addresses" .) | fromJsonArray) -}}
 {{- end -}}
 
 {{- define "data-store.stateStoreEnabled" -}}
@@ -34,16 +34,16 @@ usage: {{- include "cluster.name" $ -}}
                 BROKER OVERRIDABLES
 ==========================================================*/}}
 {{- define "broker.config.bookkeeperMetadataServiceUri" -}}
-  {{- printf "%s" (join ";" ((include "meta-data-store.client-cluster-addresses" .) | fromJsonArray)) -}}
+  {{- printf "%s" (join ";" ((include "metadata-store.client-cluster-addresses" .) | fromJsonArray)) -}}
 {{- end -}}
 {{- define "broker.config.clusterName" -}}
   {{- (include "cluster.name" .) -}}
 {{- end -}}
 {{- define "broker.config.metadataStoreUrl" -}}
-  {{- printf "%s" (join "," ((include "meta-data-store.client-cluster-addresses" .) | fromJsonArray)) -}}
+  {{- printf "%s" (join "," ((include "metadata-store.client-cluster-addresses" .) | fromJsonArray)) -}}
 {{- end -}}
 {{- define "broker.config.configurationMetadataStoreUrl" -}}
-  {{- printf "%s" (join "," ((include "meta-data-store.client-cluster-addresses" .) | fromJsonArray)) -}}
+  {{- printf "%s" (join "," ((include "metadata-store.client-cluster-addresses" .) | fromJsonArray)) -}}
 {{- end -}}
 {{- define "broker.config.functionWorkerEnabled" -}}
   {{- "false" -}}
@@ -54,7 +54,7 @@ usage: {{- include "cluster.name" $ -}}
                 PROXY OVERRIDABLES
 ==========================================================*/}}
 {{- define "proxy.config.metadataStoreUrl" -}}
-  {{- printf "%s" (join "," ((include "meta-data-store.client-cluster-addresses" .) | fromJsonArray)) -}}
+  {{- printf "%s" (join "," ((include "metadata-store.client-cluster-addresses" .) | fromJsonArray)) -}}
 {{- end -}}
 {{- define "proxy.config.brokerServiceURL" -}}
   {{- printf "%s" (include "broker.binaryAddress" .) -}}

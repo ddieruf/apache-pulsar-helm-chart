@@ -1,0 +1,76 @@
+suite: Test metadata-store service monitor
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/metadataStore/templates/serviceMonitor.yaml
+tests:
+  - it: should be correct document
+    set:
+      metadataStore:
+        metricsServiceMonitor: true
+        config:
+          "metricsProvider.httpPort": 123
+    asserts:
+      - containsDocument:
+          kind: ServiceMonitor
+          apiVersion: monitoring.coreos.com/v1
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          ccc: ddd
+      metadataStore:
+        metricsServiceMonitor: true
+        config:
+          "metricsProvider.httpPort": 123
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              ccc: ddd
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: metadata-store
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: metadata-store
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: metadataStore-0.1.0
+              service_monitor: "1"
+            name: metadata-store-service-monitor
+            namespace: xx
+
+  - it: should select the correct pod
+    set:
+      metadataStore:
+        metricsServiceMonitor: true
+        config:
+          "metricsProvider.httpPort": 123
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/component: metadata-store
+            app.kubernetes.io/instance: zz
+            app.kubernetes.io/name: metadata-store
+
+  - it: should use non secure endpoint
+    set:
+      global:
+        interComponentTls:
+          enabled: false
+      metadataStore:
+        metricsServiceMonitor: true
+        config:
+          "metricsProvider.httpPort": 123
+    asserts:
+      - contains:
+          path: spec.endpoints
+          content:
+            port: metrics
+            path: /metrics

@@ -71,7 +71,7 @@ tests:
       global:
         interComponentTls:
           enabled: false
-        metaDataStore:
+        metadataStore:
           service:
             ports:
               client: 123
@@ -84,13 +84,13 @@ tests:
     asserts:
       - matchRegex:
           path: data.broker\.conf
-          pattern: bookkeeperMetadataServiceUri=zk://meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:123;meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.cluster.local:123;meta-data-store-statefulset-non-persistent-1.meta-data-store-headless.xx.svc.cluster.local:123/ledgers
+          pattern: bookkeeperMetadataServiceUri=zk://metadata-store-statefulset-0.metadata-store-headless.xx.svc.cluster.local:123;metadata-store-statefulset-non-persistent-0.metadata-store-headless.xx.svc.cluster.local:123;metadata-store-statefulset-non-persistent-1.metadata-store-headless.xx.svc.cluster.local:123/ledgers
       - matchRegex:
           path: data.broker\.conf
-          pattern: configurationMetadataStoreUrl=meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:123,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.cluster.local:123,meta-data-store-statefulset-non-persistent-1.meta-data-store-headless.xx.svc.cluster.local:123/ledgers
+          pattern: configurationMetadataStoreUrl=metadata-store-statefulset-0.metadata-store-headless.xx.svc.cluster.local:123,metadata-store-statefulset-non-persistent-0.metadata-store-headless.xx.svc.cluster.local:123,metadata-store-statefulset-non-persistent-1.metadata-store-headless.xx.svc.cluster.local:123/ledgers
       - matchRegex:
           path: data.broker\.conf
-          pattern: metadataStoreUrl=meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.cluster.local:123,meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.cluster.local:123,meta-data-store-statefulset-non-persistent-1.meta-data-store-headless.xx.svc.cluster.local:123/ledgers
+          pattern: metadataStoreUrl=metadata-store-statefulset-0.metadata-store-headless.xx.svc.cluster.local:123,metadata-store-statefulset-non-persistent-0.metadata-store-headless.xx.svc.cluster.local:123,metadata-store-statefulset-non-persistent-1.metadata-store-headless.xx.svc.cluster.local:123/ledgers
 
   - it: should have correct default ports
     set:

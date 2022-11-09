@@ -1,0 +1,27 @@
+{{- $clusterAddresses := (include "metadata-store.quorum-cluster-addresses" $ | fromJson) -}}
+
+{{- $component := "metadata-store" -}}
+{{- $name := (printf "%s-probes" (include "metadata-store.name" $)) -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "metadata-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+data:
+  liveness.sh: |
+    #!/bin/bash
+    /pulsar/bin/pulsar zookeeper-shell -server localhost:{{ (eq (include "common.tls.require-secure-inter" .) "true") | ternary .Values.containerPorts.clientTls .Values.containerPorts.client }} -client-configuration /pulsar/conf/zk_client.conf version
+    exit $?
+  readiness.sh: |
+    #!/bin/bash
+    /pulsar/bin/pulsar zookeeper-shell -server localhost:{{ (eq (include "common.tls.require-secure-inter" .) "true") | ternary .Values.containerPorts.clientTls .Values.containerPorts.client }} -client-configuration /pulsar/conf/zk_client.conf "ls -R /"
+    exit $?
+  startup.sh: |
+    #!/bin/bash
+    exit 0

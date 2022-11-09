@@ -1,0 +1,79 @@
+{{- $configValues := omit .Values.global.metadataStore.config "extraConfigValues" -}}
+
+{{- $_ := set $configValues "clientPort" .Values.containerPorts.client -}}
+{{- $_ := unset $configValues "secureClientPort" -}}
+{{- $_ := set $configValues "dataDir" (.Values.persistence.enabled | ternary (coalesce .Values.config.dataDir .Values.persistence.mountPath) "/pulsar/data") -}}
+{{- $_ := set $configValues "ssl.quorum.clientAuth" "NONE" -}}
+
+{{- $clusterAddresses := (include "metadata-store.quorum-cluster-addresses" $ | fromJson) -}}
+{{- range $idx,$address := $clusterAddresses -}}
+  {{- $_ := set $configValues (printf "server.%s" $idx) $address -}}
+{{- end -}}
+
+{{- if (eq (include "metadata-store.metrics-enabled" .) "true") }}
+  {{- $_ := set $configValues "metricsProvider.className" (coalesce (index .Values "config" "metricsProvider.className") "org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider") -}}
+{{- else -}}
+  {{- $_ := unset $configValues "metricsProvider.className" -}}
+  {{- $_ := unset $configValues "metricsProvider.httpPort" -}}
+{{- end -}}
+
+{{- if eq (include "common.tls.require-secure-inter" .) "true" -}}
+  {{- $_ := set $configValues "secureClientPort" .Values.containerPorts.clientTls -}}
+  {{- $_ := unset $configValues "clientPort" -}}
+
+  {{- $_ := set $configValues "leader.closeSocketAsync" "true" -}}
+  {{- $_ := set $configValues "learner.closeSocketAsync" "true" -}}
+  {{- $_ := set $configValues "serverCnxnFactory" "org.apache.zookeeper.server.NettyServerCnxnFactory" -}}
+
+  {{- $_ := set $configValues "sslQuorum" (coalesce .Values.config.sslQuorum "true") -}}
+  {{- $_ := set $configValues "ssl.quorum.trustStore.type" "JKS" -}}
+  {{- $_ := set $configValues "ssl.quorum.trustStore.location" "/pulsar/jks/truststore.jks" -}}
+  {{- $_ := set $configValues "ssl.quorum.trustStore.passwordPath" "/pulsar/jks/jks-password" -}}
+  {{- $_ := set $configValues "ssl.quorum.keyStore.type" "JKS" -}}
+  {{- $_ := set $configValues "ssl.quorum.keyStore.location" "/pulsar/jks/keystore.jks" -}}
+  {{- $_ := set $configValues "ssl.quorum.keyStore.passwordPath" "/pulsar/jks/jks-password" -}}
+
+  {{/*
+  Enum specifying the client auth requirement of server-side TLS sockets created by this X509Util.
+  NONE - do not request a client certificate.
+  WANT(default) - request a client certificate, but allow anonymous clients to connect.
+  NEED - require a client certificate, disconnect anonymous clients.
+  */}}
+  {{- $_ := set $configValues "ssl.quorum.clientAuth" "NEED" -}}
+{{- end -}}
+
+{{/*
+  Zookeeper is using a reverse DNS lookup to decide hostname, which resolves with ip addressing, which the certificate has no provision for.
+  To set this to "true", core dns needs some tweaking read more: https://github.com/strimzi/strimzi-kafka-operator/issues/3111
+
+  Also this - Hostname verification can not be turned one due to the inability get the keystore alias, distinguished name, and host name to all match
+  https://zookeeper.apache.org/doc/current/zookeeperAdmin.html#Quorum+TLS
+*/}}
+{{- $_ := set $configValues "ssl.quorum.hostnameVerification" "false" -}}
+{{- $_ := set $configValues "ssl.hostnameVerification" "false" -}}
+
+{{- $component := "metadata-store" -}}
+{{- $name := (printf "%s-configuration" (include "metadata-store.name" $)) -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "metadata-store.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
+data:
+  log4j2.yaml: |
+    {{ tpl (.Files.Get "files/log4j2.yaml") . | nindent 4 }}
+  pulsar_env.sh: |
+    {{ tpl (.Files.Get "files/pulsar_env.sh") . | nindent 4 }}
+  zookeeper.conf: |
+    {{- include "common.formatting.toToml" (dict "configValues" $configValues "context" $) | nindent 4 -}}
+    {{ if .Values.config.extraConfigValues }}
+    {{- include "common.formatting.toToml" (dict "configValues" .Values.config.extraConfigValues "context" $) | nindent 4 -}}
+    {{ end }}
+  zk_client.conf: |
+    {{ tpl (.Files.Get "files/zk_client.conf") . | nindent 4 }}

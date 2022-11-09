@@ -1,6 +1,6 @@
 {{- $extraOpts := default list .Values.pulsarEnv.extraOpts -}}
 {{ if eq (include "common.tls.require-secure-inter" $) "true" -}}
-  {{- $extraOpts = concat $extraOpts (include "meta-data-store.zookeeper.client" . | fromJsonArray)  -}}
+  {{- $extraOpts = concat $extraOpts (include "metadata-store.zookeeper.client" . | fromJsonArray)  -}}
 
 # Clear out temp things & make a new temp
 rm -rdf /pulsar/temp

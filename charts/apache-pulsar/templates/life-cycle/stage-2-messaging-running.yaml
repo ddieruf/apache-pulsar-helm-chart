@@ -7,7 +7,7 @@ kind: Job
 metadata:
   name: {{ $name | quote }}
   namespace: {{ (include "common.names.namespace" .) | quote }}
-  labels: {{ include "common.labels.standard" (dict "name" (include "meta-data-store.name" $) "context" $ ) | nindent 4 }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "metadata-store.name" $) "context" $ ) | nindent 4 }}
     app.kubernetes.io/component: {{ $component | quote }}
     {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
   annotations:

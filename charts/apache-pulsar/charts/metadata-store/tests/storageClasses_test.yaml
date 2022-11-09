@@ -1,0 +1,107 @@
+suite: Test meta data store storage classes
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/metadataStore/templates/storageClasses/storageClass.yaml
+tests:
+  - it: should be correct document
+    set:
+      metadataStore:
+        persistence:
+          existingClaim:
+          storageClass:
+            reclaimPolicy: asdf
+            provisioner: dfghhh
+        logPersistence:
+          existingClaim:
+          storageClass:
+            reclaimPolicy: asdf
+            provisioner: dfghhh
+    asserts:
+      - containsDocument:
+          apiVersion: storage.k8s.io/v1
+          kind: StorageClass
+
+  - it: should have correct metadata
+    set:
+      global:
+        storageClass: null
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          something: somewhere
+      metadataStore:
+        persistence:
+          existingClaim:
+          storageClass:
+            reclaimPolicy: asdf
+            provisioner: dfghhh
+        logPersistence:
+          existingClaim:
+          storageClass:
+            reclaimPolicy: asdf
+            provisioner: dfghhh
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              something: somewhere
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: metadata-store
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: metadata-store
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: metadataStore-0.1.0
+            name: metadata-store
+            namespace: xx
+
+  - it: should have correct values
+    set:
+      global:
+        storageClass: null
+        commonLabels:
+          aaa: bbb
+        annotations:
+          something: somewhere
+      metadataStore:
+        persistence:
+          existingClaim:
+          storageClass:
+            provisioner: kubernetes.io/gce-pd
+            type: pd-ssd
+            fsType: ext4
+            extraParams:
+              replication-type: none
+            reclaimPolicy: Retain
+        logPersistence:
+          existingClaim:
+          storageClass:
+            provisioner: kubernetes.io/gce-pd
+            type: pd-ssd
+            fsType: ext4
+            extraParams:
+              replication-type: none
+            reclaimPolicy: Retain
+    asserts:
+      - equal:
+          path: allowVolumeExpansion
+          value:  true
+      - equal:
+          path: volumeBindingMode
+          value:  WaitForFirstConsumer
+      - equal:
+          path: reclaimPolicy
+          value:  Retain
+      - equal:
+          path: provisioner
+          value:  kubernetes.io/gce-pd
+      - equal:
+          path: parameters
+          value:
+            type: pd-ssd
+            fsType: ext4
+            replication-type: none

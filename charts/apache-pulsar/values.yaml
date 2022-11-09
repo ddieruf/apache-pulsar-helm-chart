@@ -63,7 +63,7 @@ global:
 
   ## @param global.secureClusterEdge Only allow secure ports to be opened at the edge of the Pulsar cluster (also force TLS in all ingresses)
   ##
-  secureClusterEdge: true
+  secureClusterEdge: false
 
   interComponentTls:
 

@@ -41,7 +41,7 @@ tests:
         clusterDomain: domain.com
         interComponentTls:
           enabled: false
-        metaDataStore:
+        metadataStore:
           replicas: 2
           nonPersistentReplicas: 1
           service:
@@ -51,7 +51,7 @@ tests:
     asserts:
       - matchRegex:
           path: data.bookkeeper\.conf
-          pattern: metadataServiceUri=zk://meta-data-store-statefulset-0.meta-data-store-headless.xx.svc.domain.com:123;meta-data-store-statefulset-1.meta-data-store-headless.xx.svc.domain.com:123;meta-data-store-statefulset-non-persistent-0.meta-data-store-headless.xx.svc.domain.com:123/ledgers
+          pattern: metadataServiceUri=zk://metadata-store-statefulset-0.metadata-store-headless.xx.svc.domain.com:123;metadata-store-statefulset-1.metadata-store-headless.xx.svc.domain.com:123;metadata-store-statefulset-non-persistent-0.metadata-store-headless.xx.svc.domain.com:123/ledgers
 
   - it: should have tls enabled
     set:

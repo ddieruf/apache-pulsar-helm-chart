@@ -1,0 +1,117 @@
+suite: Test metadata-store service
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/metadataStore/templates/service-headless.yaml
+tests:
+  - it: should be correct document
+    asserts:
+      - containsDocument:
+          kind: Service
+          apiVersion: v1
+
+  - it: should have correct metadata
+    set:
+      global:
+        commonLabels:
+          aaa: bbb
+        commonAnnotations:
+          ccc: ddd
+      metadataStore:
+        service:
+          annotations:
+            somethingelse: somewherelese
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            annotations:
+              ccc: ddd
+              somethingelse: somewherelese
+            labels:
+              aaa: bbb
+              app.kubernetes.io/component: metadata-store
+              app.kubernetes.io/instance: zz
+              app.kubernetes.io/managed-by: Helm
+              app.kubernetes.io/name: metadata-store
+              app.kubernetes.io/part-of: apache-pulsar
+              helm.sh/chart: metadataStore-0.1.0
+            name: metadata-store-headless
+            namespace: xx
+
+  - it: should select the correct pod
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/component: metadata-store
+            app.kubernetes.io/instance: zz
+            app.kubernetes.io/name: metadata-store
+
+  - it: should enable metrics
+    set:
+      metadataStore:
+        metricsServiceMonitor: true
+        config:
+          "metricsProvider.httpPort": 123
+    asserts:
+      - contains:
+          path: spec.ports
+          content:
+            name: metrics
+            port: 123
+            targetPort: metrics
+            protocol: TCP
+
+  - it: should not have tls ports
+    set:
+      global:
+        interComponentTls:
+          enabled: false
+      metadataStore:
+        service:
+          ports:
+            client: 123
+            clientTls: 456
+    asserts:
+      - contains:
+          path: spec.ports
+          content:
+            name: client
+            port: 123
+            targetPort: client
+            protocol: TCP
+      - notContains:
+          path: spec.ports
+          content:
+            name: clientTls
+            port: 456
+            targetPort: clientTls
+            protocol: TCP
+
+  - it: should only have tls ports
+    set:
+      global:
+        interComponentTls:
+          enabled: true
+      metadataStore:
+        service:
+          ports:
+            client: 123
+            clientTls: 456
+    asserts:
+      - notContains:
+          path: spec.ports
+          content:
+            name: client
+            port: 123
+            targetPort: client
+            protocol: TCP
+      - contains:
+          path: spec.ports
+          content:
+            name: client-tls
+            port: 456
+            targetPort: client-tls
+            protocol: TCP
