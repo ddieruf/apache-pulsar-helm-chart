@@ -13,7 +13,7 @@ globalData:
 
   ## @param globalData.nonPersistentReplicas Number of non-persistent Metadata Store nodes. Used as floating Meta dta Store to maintain quorum in AZ failures
   ##
-  nonPersistentReplicas: 0
+  nonPersistentReplicas: 2
 
 ## @section Image parameters
 ## @descriptionStart
@@ -441,6 +441,10 @@ containerPorts:
 ##
 persistence:
 
+  ## @param persistence.enabled Enable data persistence
+  ##
+  enabled: true
+
   ## @param persistence.mountPath Mount path to store meta data
   ##
   mountPath: /pulsar/data/zookeeper
@@ -487,6 +491,10 @@ persistence:
 ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
 ##
 logPersistence:
+
+  ## @param logPersistence.enabled Enable log storage
+  ##
+  enabled: false
 
   ## @param logPersistence.mountPath Mount path of Pulsar home
   ##

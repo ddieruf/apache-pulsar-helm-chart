@@ -1,4 +1,4 @@
-{{- if gt (int .Values.globalData.replicas) 0 -}}
+{{- if gt (int .Values.global.metaDataStore.replicas) 0 -}}
 {{- $component := "meta-data-store" -}}
 {{- $name := (printf "%s-statefulset" (include "meta-data-store.name" $)) -}}
 {{- $extraVolMounts := default list .Values.extraVolumeMounts -}}
@@ -32,7 +32,7 @@ metadata:
     {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
 spec:
   podManagementPolicy: {{ .Values.podManagementPolicy | quote }}
-  replicas: {{ int .Values.globalData.replicas }}
+  replicas: {{ int .Values.global.metaDataStore.replicas }}
   selector:
     matchLabels: {{ (include "common.labels.matchLabels" (dict "name" (include "meta-data-store.name" $) "context" $ )) | nindent 6 }}
       app.kubernetes.io/component: {{ $component | quote }}
@@ -89,7 +89,7 @@ spec:
       initContainers:
         - name: install
           image: busybox:stable
-          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy | quote }}
           env:
             - name: POD_NAME
               valueFrom:
@@ -104,8 +104,8 @@ spec:
       {{- end }}
       containers:
         - name: "meta-data-store"
-          image: {{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
-          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.global.image "global" .Values.global) }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy | quote }}
           {{- if .Values.containerSecurityContext.enabled }}
           securityContext: {{ omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
@@ -177,9 +177,9 @@ spec:
         {{- end }}
           volumeMounts:
             - name: "data"
-              mountPath: {{ .Values.persistence.mountPath }}
+              mountPath: {{ .Values.persistence.enabled | ternary (coalesce .Values.config.dataDir .Values.persistence.mountPath) "/pulsar/data" }}
             - name: "logs"
-              mountPath: {{ .Values.logPersistence.mountPath }}
+              mountPath: {{ .Values.logPersistence.enabled | ternary .Values.logPersistence.mountPath "/pulsar/logs" }}
             - name: "conf"
               mountPath: {{ .Values.pulsarEnv.confPath }}
             - name: "probes"
@@ -188,16 +188,23 @@ spec:
             {{ include "common.tplvalues.render" (dict "value" $extraVolMounts "context" $) | nindent 12 }}
             {{- end }}
       volumes:
-{{- if .Values.persistence.existingClaim }}
+        {{- if eq .Values.persistence.enabled false }}
+        - name: "data"
+          emptyDir: {}
+        {{- end }}
+        {{- if and (eq .Values.persistence.enabled true) .Values.persistence.existingClaim }}
         - name: "data"
           persistentVolumeClaim:
             claimName: {{ printf "%s" (tpl .Values.persistence.existingClaim .) }}
-{{- end }}
-{{- if .Values.logPersistence.existingClaim }}
+        {{- end }}
+        {{- if not .Values.logPersistence.enabled -}}
+        - name: "logs"
+          emptyDir: {}
+        {{- else if .Values.logPersistence.existingClaim -}}
         - name: "logs"
           persistentVolumeClaim:
             claimName: {{ printf "%s" (tpl .Values.logPersistence.existingClaim .) }}
-{{- end }}
+        {{- end -}}
         - name: "conf"
           configMap:
             name: {{ printf "%s-configuration" (include "meta-data-store.name" .) }}
@@ -208,10 +215,10 @@ spec:
         {{- if $extraVols }}
         {{ include "common.tplvalues.render" (dict "value" $extraVols "context" $) | nindent 8 }}
         {{- end }}
-{{- if or (not .Values.persistence.existingClaim) (not .Values.logPersistence.existingClaim) }}
+{{- if and (eq .Values.persistence.enabled true) (or (not .Values.persistence.existingClaim) (not .Values.logPersistence.existingClaim)) }}
   volumeClaimTemplates:
 {{- end }}
-{{- if not .Values.persistence.existingClaim }}
+{{- if and (eq .Values.persistence.enabled true) (not .Values.persistence.existingClaim) }}
       - metadata:
           name: "data"
           {{- if .Values.persistence.annotations }}
@@ -230,7 +237,7 @@ spec:
           selector: {{ include "common.tplvalues.render" (dict "value" .Values.persistence.selector "context" $) | nindent 10 }}
           {{- end }}
 {{- end }}
-{{- if not .Values.logPersistence.existingClaim }}
+{{- if and (eq .Values.logPersistence.enabled true) (not .Values.logPersistence.existingClaim) }}
       - metadata:
           name: "logs"
           {{- if .Values.logPersistence.annotations }}

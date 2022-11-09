@@ -18,7 +18,7 @@ BOOKIE_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "bookkeeper.conf" }}
 BOOKIE_LOG_CONF={{ printf "%s/%s" .Values.pulsarEnv.confPath "log4j2.yaml" }}
 
 # Logs location
-BOOKIE_LOG_DIR={{ .Values.logPersistence.mountPath }}
+BOOKIE_LOG_DIR={{ .Values.logPersistence.enabled | ternary .Values.logPersistence.mountPath "/pulsar/logs" }}
 
 # Memory size options
 BOOKIE_MEM=${BOOKIE_MEM:-${PULSAR_MEM:-"-Xms2g -Xmx2g -XX:MaxDirectMemorySize=2g"}}

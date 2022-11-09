@@ -4,13 +4,37 @@
 ## @descriptionEnd
 ##
 global:
-  ## @param global.imageRegistry [string,nullable] The image registry used by all charts.
-  ##
-  imageRegistry: "docker.io"
 
-  ## @param global.imagePullSecrets [array,nullable] A collection of image pull secrets used to retrieve images.
-  ##
-  imagePullSecrets: []
+  image:
+
+    ## @param global.image.registry [string,nullable] The image registry used by all charts
+    ##
+    registry: "docker.io"
+
+    ## @param image.repository [string,nullable] Component image repository
+    ##
+    repository: "datastax/lunastreaming"
+
+    ## @param image.tag [string,nullable] Component image tag (immutable tags are recommended)
+    ##
+    tag: "2.10_2.3"
+
+    ## @param image.pullPolicy Component image pull policy
+    ## Specify a imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+
+    ## @param image.pullSecrets [array,nullable] Specify docker-registry secret names as an array
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ## e.g:
+    ## pullSecrets:
+    ##   - myRegistryKeySecretName
+    ##
+    pullSecrets: [ ]
 
   ## @param global.storageClass [string,nullable] The storage class used by all sub charts when using persistence.
   ##
@@ -39,7 +63,7 @@ global:
 
   ## @param global.secureClusterEdge Only allow secure ports to be opened at the edge of the Pulsar cluster (also force TLS in all ingresses)
   ##
-  secureClusterEdge: false
+  secureClusterEdge: true
 
   interComponentTls:
 
@@ -75,24 +99,30 @@ global:
 
     ## @param global.observability.dashboards Deploy configmaps with pre-configured dashboards that are discoverable by Grafana.
     ##
-    dashboards: false
+    dashboards: true
 
   ## @section Tenant, Namespace, and Topic Setup
   ## @descriptionStart
-  ## Specify the initial tenant/namespace/topics created
+  ## Specify the initial tenant/namespace/topics created. lobal.pulsarCluster.name is required but tenants, namespaces, and topics are all optional.
   ## @descriptionEnd
+  ## Example:
+  ##  pulsarCluster:
+  ##    name: "my-cluster"
+  ##    tenants:
+  ##      - name: "public"
+  ##        namespaces:
+  ##          - name: "default"
+  ##      - name: "sample-tenant"
+  ##        namespaces:
+  ##          - name: "some-namespace"
+  ##            topics:
+  ##              - name: "first"
+  ##                persistent: true
+  ##              - name: "second"
+  ##                persistent: false
   ##
   pulsarCluster:
-    name: "my-cluster"
-    tenants:
-      - name: "public"
-        namespaces:
-          - name: "default"
-      - name: "a-tenant"
-        namespaces:
-          - name: "a-namespace"
-            topics:
-              - name: "first"
-                persistent: true
-              - name: "second"
-                persistent: false
+
+    ## @param global.pulsarCluster.name The required name of the Pulsar cluster
+    ##
+    name: "pulsar-cluster-1"

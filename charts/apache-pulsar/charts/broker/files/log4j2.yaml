@@ -7,7 +7,7 @@ Configuration:
   Properties:
     Property:
       - name: "pulsar.log.dir"
-        value: "{{ .Values.logPersistence.mountPath }}"
+        value: "{{ default "/pulsar/logs" .Values.logPersistence.mountPath }}"
       - name: "pulsar.log.file"
         value: "pulsar.log"
       - name: "pulsar.log.appender"

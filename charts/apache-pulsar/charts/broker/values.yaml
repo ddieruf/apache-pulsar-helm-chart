@@ -9,42 +9,7 @@ globalData:
 
   ## @param globalData.replicas The number of brokers to deploy
   ##
-  replicas: 1
-
-## @section Image parameters
-## @descriptionStart
-## @descriptionEnd
-##
-image:
-
-  ## @param image.registry [string,nullable] Component image registry
-  ##
-  registry: ""
-
-  ## @param image.repository [string,nullable] Component image repository
-  ##
-  repository: "datastax/lunastreaming"
-
-  ## @param image.tag [string,nullable] Component image tag (immutable tags are recommended)
-  ##
-  tag: "2.10_2.3"
-
-  ## @param image.pullPolicy Component image pull policy
-  ## Specify a imagePullPolicy
-  ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
-  ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
-  ##
-  pullPolicy: IfNotPresent
-
-  ## @param image.pullSecrets [array,nullable] Specify docker-registry secret names as an array
-  ## Optionally specify an array of imagePullSecrets.
-  ## Secrets must be manually created in the namespace.
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-  ## e.g:
-  ## pullSecrets:
-  ##   - myRegistryKeySecretName
-  ##
-  pullSecrets: []
+  replicas: 3
 
 ## @section Certificate Resources
 ## @descriptionStart
@@ -1183,6 +1148,10 @@ containerPorts:
 ##
 logPersistence:
 
+  ## @param logPersistence.enabled Enable log persistence
+  ##
+  enabled: false
+
   ## @param logPersistence.mountPath Mount path of Pulsar home
   ##
   mountPath: /pulsar/logs
@@ -1191,7 +1160,7 @@ logPersistence:
   ##
   size: 5Gi
 
-  ## @param logPersistence.storageClass PVC Storage Class for Kafka data volume
+  ## @param logPersistence.storageClass PVC Storage Class for data volume
   ## If defined, storageClassName: <storageClass>
   ## If set to "-", storageClassName: "", which disables dynamic provisioning
   ## If undefined (the default) or set to null, no storageClassName spec is

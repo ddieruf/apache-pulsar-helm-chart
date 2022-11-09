@@ -2,7 +2,7 @@
 
 {{- $_ := set $configValues "clientPort" .Values.containerPorts.client -}}
 {{- $_ := unset $configValues "secureClientPort" -}}
-{{- $_ := set $configValues "dataDir" (coalesce .Values.config.dataDir .Values.persistence.mountPath) -}}
+{{- $_ := set $configValues "dataDir" (.Values.persistence.enabled | ternary (coalesce .Values.config.dataDir .Values.persistence.mountPath) "/pulsar/data") -}}
 {{- $_ := set $configValues "ssl.quorum.clientAuth" "NONE" -}}
 
 {{- $clusterAddresses := (include "meta-data-store.quorum-cluster-addresses" $ | fromJson) -}}

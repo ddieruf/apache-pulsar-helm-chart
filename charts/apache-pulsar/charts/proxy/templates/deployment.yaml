@@ -33,7 +33,7 @@ metadata:
   annotations:
     {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
 spec:
-  replicas: {{ int .Values.replicas }}
+  replicas: {{ int .Values.global.proxy.replicas }}
   selector:
     matchLabels: {{ (include "common.labels.matchLabels" (dict "name" (include "proxy.name" $) "context" $ )) | nindent 6 }}
       app.kubernetes.io/component: {{ $component | quote }}
@@ -95,9 +95,9 @@ spec:
       {{- end }}
       containers:
         - name: "proxy"
-          image: {{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
-          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
-          {{ include "common.images.renderPullSecrets" ( dict "images" (list .Values.image) "context" $) }}
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.global.image "global" .Values.global) }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy | quote }}
+          {{ include "common.images.renderPullSecrets" ( dict "images" (list .Values.global.image) "context" $) }}
           {{- if .Values.containerSecurityContext.enabled }}
           securityContext: {{ omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
@@ -161,7 +161,7 @@ spec:
           {{- end }}
           volumeMounts:
             - name: "logs"
-              mountPath: {{ .Values.logPersistence.mountPath }}
+              mountPath: /pulsar/log
             - name: "conf"
               mountPath: {{ .Values.pulsarEnv.confPath }}
             - name: "probes"

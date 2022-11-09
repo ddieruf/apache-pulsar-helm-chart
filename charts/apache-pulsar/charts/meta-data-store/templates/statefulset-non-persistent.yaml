@@ -1,4 +1,4 @@
-{{- if gt (int .Values.globalData.nonPersistentReplicas) 0 -}}
+{{- if gt (int .Values.global.metaDataStore.nonPersistentReplicas) 0 -}}
 {{- $component := "meta-data-store" -}}
 {{- $name := (printf "%s-statefulset-non-persistent" (include "meta-data-store.name" $)) -}}
 {{- $extraVolMounts := default list .Values.extraVolumeMounts -}}
@@ -30,7 +30,7 @@ metadata:
     {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
 spec:
   podManagementPolicy: {{ .Values.podManagementPolicy | quote }}
-  replicas: {{ int .Values.globalData.nonPersistentReplicas }}
+  replicas: {{ int .Values.global.metaDataStore.nonPersistentReplicas }}
   selector:
     matchLabels: {{ (include "common.labels.matchLabels" (dict "name" (include "meta-data-store.name" $) "context" $ )) | nindent 6 }}
       app.kubernetes.io/component: {{ $component | quote }}
@@ -87,13 +87,13 @@ spec:
       initContainers:
         - name: install
           image: busybox:stable
-          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy | quote }}
           env:
             - name: POD_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-          command: [ "sh", "-c", "podindex=${POD_NAME##*-} && echo $((podindex+{{ add .Values.globalData.replicas 1 }})) >> /work/myid"]
+          command: [ "sh", "-c", "podindex=${POD_NAME##*-} && echo $((podindex+{{ add .Values.global.metaDataStore.replicas 1 }})) >> /work/myid"]
           volumeMounts:
             - name: data
               mountPath: "/work"
@@ -102,8 +102,8 @@ spec:
       {{- end }}
       containers:
         - name: meta-data-store
-          image: {{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
-          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.global.image "global" .Values.global) }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy | quote }}
           {{- if .Values.containerSecurityContext.enabled }}
           securityContext: {{ omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
@@ -175,7 +175,7 @@ spec:
         {{- end }}
           volumeMounts:
             - name: "data"
-              mountPath: {{ .Values.persistence.mountPath }}
+              mountPath: {{ .Values.persistence.enabled | ternary (coalesce .Values.config.dataDir .Values.persistence.mountPath) "/pulsar/data" }}
             - name: "logs"
               mountPath: {{ .Values.logPersistence.mountPath }}
             - name: "conf"

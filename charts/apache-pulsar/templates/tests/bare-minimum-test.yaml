@@ -1,0 +1,56 @@
+# This is as test suite that accompanies a deployment using /examples/bare-minimum.yaml
+
+{{- $component := "chart-tests" -}}
+{{- $testSuite := "bare-minimum" -}}
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "bare-minimum-test-pulsar"
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "broker.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    test-suite: {{ $testSuite | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  restartPolicy: Never
+  containers:
+    - name: "broker-test"
+      image: {{ include "common.images.image" (dict "imageRoot" .Values.global.image "global" .Values.global) }}
+      imagePullPolicy: {{ .Values.global.image.pullPolicy | quote }}
+      {{ include "common.images.renderPullSecrets" ( dict "images" (list .Values.global.image) "context" $) }}
+      command: [ "/bin/sh", "-c" ]
+      args:
+        - "/pulsar/bin/pulsar-shell -f /pulsar/setup/broker-test.txt --fail-on-error"
+      volumeMounts:
+        - name: "setup"
+          mountPath: /pulsar/setup
+  volumes:
+    - name: "setup"
+      configMap:
+        name: "setup-cluster-config"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "bare-minimum-test-k8s"
+  namespace: {{ (include "common.names.namespace" .) | quote }}
+  labels: {{ include "common.labels.standard" (dict "name" (include "broker.name" .) "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component | quote }}
+    test-suite: {{ $testSuite | quote }}
+    {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  restartPolicy: Never
+  containers:
+    - name: "broker-test"
+      image: quay.io/helmpack/chart-testing:latest
+      imagePullPolicy: {{ .Values.global.image.pullPolicy | quote }}
+      {{ include "common.images.renderPullSecrets" ( dict "images" (list .Values.global.image) "context" $) }}
+      command:
+        - "kubectl xxxxx"
+      args:
+        - "yyyy"

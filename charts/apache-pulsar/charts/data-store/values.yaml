@@ -9,7 +9,7 @@ globalData:
 
   ## @param globalData.replicas The number of bookies to deploy
   ##
-  replicas: 1
+  replicas: 3
 
 ## @section Image parameters
 ## @descriptionStart
@@ -811,7 +811,7 @@ containerPorts:
 ##
 persistence:
 
-  ## @param persistence.enabled Enable Bookkeeper data persistence using PVC
+  ## @param persistence.enabled Enable data persistence
   ##
   enabled: true
 
@@ -990,6 +990,10 @@ persistence:
 ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
 ##
 logPersistence:
+
+  ## @param logPersistence.enabled Enable log storage
+  ##
+  enabled: false
 
   ## @param logPersistence.mountPath Mount path of Pulsar home
   ##

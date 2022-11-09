@@ -34,7 +34,7 @@ metadata:
     {{ include "common.tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 4 }}
 spec:
   podManagementPolicy: {{ .Values.podManagementPolicy | quote }}
-  replicas: {{ int .Values.globalData.replicas }}
+  replicas: {{ int .Values.global.broker.replicas }}
   selector:
     matchLabels: {{ (include "common.labels.matchLabels" (dict "name" (include "broker.name" $) "context" $ )) | nindent 6 }}
       app.kubernetes.io/component: {{ $component | quote }}
@@ -97,9 +97,9 @@ spec:
       {{- end }}
       containers:
         - name: "broker"
-          image: {{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
-          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
-          {{ include "common.images.renderPullSecrets" ( dict "images" (list .Values.image) "context" $) }}
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.global.image "global" .Values.global) }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy | quote }}
+          {{ include "common.images.renderPullSecrets" ( dict "images" (list .Values.global.image) "context" $) }}
           {{- if .Values.containerSecurityContext.enabled }}
           securityContext: {{ omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
@@ -160,7 +160,7 @@ spec:
           {{- end }}
           volumeMounts:
             - name: "logs"
-              mountPath: {{ .Values.logPersistence.mountPath }}
+              mountPath: {{ .Values.logPersistence.enabled | ternary .Values.logPersistence.mountPath "/pulsar/logs" }}
             - name: "conf"
               mountPath: {{ .Values.pulsarEnv.confPath }}
             - name: "probes"
@@ -172,11 +172,14 @@ spec:
         {{ include "common.tplvalues.render" (dict "value" .Values.sidecars "context" $) | nindent 8 }}
         {{- end }}
       volumes:
-        {{- if .Values.logPersistence.existingClaim }}
+        {{- if not .Values.logPersistence.enabled -}}
+        - name: "logs"
+          emptyDir: {}
+        {{- else if .Values.logPersistence.existingClaim -}}
         - name: "logs"
           persistentVolumeClaim:
             claimName: {{ printf "%s" (tpl .Values.logPersistence.existingClaim .) }}
-        {{- end }}
+        {{- end -}}
         - name: "conf"
           configMap:
             name: {{ printf "%s-configuration" (include "broker.name" .) }}
@@ -187,7 +190,7 @@ spec:
         {{- if $extraVols }}
         {{ include "common.tplvalues.render" (dict "value" $extraVols "context" $) | nindent 8 }}
         {{- end }}
-{{- if not .Values.logPersistence.existingClaim }}
+{{- if and .Values.logPersistence.enabled (not .Values.logPersistence.existingClaim) }}
   volumeClaimTemplates:
     - metadata:
         name: "logs"

@@ -11,6 +11,10 @@ globalData:
   ##
   dnsName:
 
+  ## @param globalData.replicas The number of proxies to deploy
+  ##
+  replicas: 3
+
 ## @section Image parameters
 ## @descriptionStart
 ## @descriptionEnd
@@ -148,9 +152,6 @@ pulsarEnv:
 ## > Note, the values not documented here are set by the parent chart
 ## @descriptionEnd
 ##
-## @param replicas The number of proxies to deploy
-##
-replicas: 1
 
 config:
   ## @param config.amqpAuthenticationMechanisms Comma-separated authentication mechanism name list for AMQP. For example: PLAIN, EXTERNAL
@@ -759,51 +760,6 @@ containerPorts:
   ## @param containerPorts.https Broker secure web
   ##
   https: 8081
-
-## @section Persistence parameters
-
-## Enable log persistence using Persistent Volume Claims
-## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
-##
-logPersistence:
-
-  ## @param logPersistence.mountPath Mount path of Pulsar home
-  ##
-  mountPath: /pulsar/logs
-
-  ## @param logPersistence.size PVC storage size
-  ##
-  size: 5Gi
-
-  ## @param logPersistence.storageClass PVC Storage Class for Kafka data volume
-  ## If defined, storageClassName: <storageClass>
-  ## If set to "-", storageClassName: "", which disables dynamic provisioning
-  ## If undefined (the default) or set to null, no storageClassName spec is
-  ## set, choosing the default provisioner.
-  ##
-  storageClass:
-
-  ## @param logPersistence.existingClaim A manually managed Persistent Volume and Claim
-  ## If defined, PVC must be created manually before volume will be bound
-  ## The value is evaluated as a template
-  ##
-  existingClaim: ""
-
-  ## @param logPersistence.accessModes Persistent Volume Access Modes
-  ##
-  accessModes:
-    - ReadWriteOnce
-
-  ## @param logPersistence.annotations Annotations for the PVC
-  ##
-  annotations: {}
-
-  ## @param logPersistence.selector Selector to match an existing Persistent Volume. If set, the PVC can't have a PV dynamically provisioned for it
-  ## selector:
-  ##   matchLabels:
-  ##     app: my-app
-  ##
-  selector: {}
 
 ## @section Pod Liveness & Readyness
 

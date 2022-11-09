@@ -22,18 +22,29 @@ Each component of the cluster is a sub-chart. Where all the specifics are held a
 
 ## Getting Started
 
-The default values in this chart are meant as a production ready Apache Pulsar cluster (that's where the opinions come in). Multiple instance for high availability and redundancy are used. Secure 
-communications are used. If you would like to install this chart in a development environment, things will need to be altered.
+To add the repository
 
 ```bash
 helm repo add ddieruf https://ddieruf.github.io/helm-charts
 ```
 
+### Production
+
+The default values in this chart are meant as a production ready Apache Pulsar cluster (that's where the opinions come in). Multiple instance for high availability and redundancy are used. Secure communications are used. If you would like to install this chart in a development environment, things will need to be altered.
+
 ```bash
-helm upgrade -i pulsar ddieruf/apache-pulsar \
+helm install my-pulsar-cluster ddieruf/apache-pulsar \
   --create-namespace \
-  --namespace pulsar \
-  -f ./values.yaml
+  --namespace apache-pulsar
+```
+
+### Not production
+
+```bash
+helm install my-pulsar-cluster ddieruf/apache-pulsar \
+  --create-namespace \
+  --namespace apache-pulsar
+  -f https://gist.github.com/ddieruf/xxxxxxxx/not-production-values.yaml
 ```
 
 ## Components Currently Supported
@@ -63,3 +74,46 @@ helm upgrade -i pulsar ddieruf/apache-pulsar \
 | Component certificates            |                                               |
 | External Load Balancers           |                                               |
 | Edge TLS (encryption)             |                                               |
+
+## Parameters
+
+### Pulsar global settings
+
+These are global values that all sub charts will inherit
+
+| Name                                             | Description                                                                                                                            | Value           |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| `global.imageRegistry`                           | The image registry used by all charts.                                                                                                 | `docker.io`     |
+| `global.imagePullSecrets`                        | A collection of image pull secrets used to retrieve images.                                                                            | `[]`            |
+| `global.storageClass`                            | The storage class used by all sub charts when using persistence.                                                                       | `nil`           |
+| `global.kubeVersion`                             | Override Kubernetes version                                                                                                            | `""`            |
+| `global.clusterDomain`                           | Default Kubernetes cluster domain                                                                                                      | `cluster.local` |
+| `global.namespaceOverride`                       | Override the release namespace                                                                                                         | `""`            |
+| `global.commonLabels`                            | Labels to add to all deployed objects                                                                                                  | `undefined`     |
+| `global.commonAnnotations`                       | Annotations to add to all deployed objects                                                                                             | `{}`            |
+| `global.secureClusterEdge`                       | Only allow secure ports to be opened at the edge of the Pulsar cluster (also force TLS in all ingresses)                               | `true`          |
+| `global.interComponentTls.enabled`               | Only allow communication over secure ports between all cluster components                                                              | `false`         |
+| `global.interComponentTls.tlsSecretName`         | The name of an existing tls secret that includes a JKS store                                                                           | `nil`           |
+| `global.interComponentTls.jksPasswordSecretName` | The name of the secret used to create the JKS store in an existing tls secret                                                          | `nil`           |
+| `global.interComponentTls.issuerRef`             | IssuerRef is a reference to the issuer of all certificates. Note that each component can have their own issuerRef that overrides this. | `undefined`     |
+
+
+### Observability
+
+Values related to enabling or disabling metrics endpoints and pre-configured dashboards. Note these values override an individual component's metrics settings.
+Read more in the [chart wiki](https://github.com/ddieruf/apache-pulsar-helm-chart/wiki)
+
+| Name                                   | Description                                                                                                        | Value  |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------ |
+| `global.observability.serviceMonitors` | Globally enable all components' metrics scraping by creating service monitors that are discoverable by Prometheus. | `true` |
+| `global.observability.dashboards`      | Deploy configmaps with pre-configured dashboards that are discoverable by Grafana.                                 | `true` |
+
+
+### Tenant, Namespace, and Topic Setup
+
+Specify the initial tenant/namespace/topics created. pulsarCluster.name is required but tenants, namespaces, and topics are all optional.
+
+| Name                        | Description                             | Value              |
+| --------------------------- | --------------------------------------- | ------------------ |
+| `global.pulsarCluster.name` | The required name of the Pulsar cluster | `pulsar-cluster-1` |
+

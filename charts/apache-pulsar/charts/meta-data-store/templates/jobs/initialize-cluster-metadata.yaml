@@ -37,8 +37,8 @@ spec:
       initContainers: {{ include "common.lifeCycle.meta-data-store-statefulset-running" . | nindent 8 }}
       containers:
         - name: "initialize-cluster-metadata"
-          image: {{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
-          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.global.image "global" .Values.global) }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy | quote }}
           command: ["/bin/sh", "-c"]
           args:
             - >
