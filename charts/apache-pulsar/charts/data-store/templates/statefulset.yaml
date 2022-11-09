@@ -163,14 +163,14 @@ spec:
               mountPath: {{ .Values.pulsarEnv.confPath }}
             - name: "probes"
               mountPath: /pulsar/probes
-            {{- if eq .Values.persistence.oneDisk.enabled true }}
+            {{- if and (eq .Values.persistence.enabled true) (eq .Values.persistence.oneDisk.enabled true) }}
             - name: oneDisk
               mountPath: {{ .Values.persistence.oneDisk.mountPath }}
             {{- else }}
             - name: journal
-              mountPath: {{ .Values.persistence.journal.mountPath }}
+              mountPath: {{ (.Values.persistence.enabled | ternary (coalesce .Values.config.journalDirectory .Values.persistence.journal.mountPath) "/pulsar/data/bookeeper/journal") }}
             - name: ledgers
-              mountPath: {{ .Values.persistence.ledgers.mountPath }}
+              mountPath: {{ (.Values.persistence.enabled | ternary (coalesce .Values.config.ledgerDirectories .Values.persistence.ledgers.mountPath) "/pulsar/data/bookeeper/ledgers") }}
             {{- if eq (include "data-store.stateStoreEnabled" .) "true" }}
             - name: ranges
               mountPath: {{ .Values.persistence.ranges.mountPath }}
@@ -197,11 +197,7 @@ spec:
           configMap:
             name: {{ printf "%s-probes" (include "data-store.name" .) }}
             defaultMode: 0755
-      {{- if eq .Values.persistence.enabled false }}
-        {{- if eq .Values.persistence.oneDisk.enabled true }}
-        - name: "oneDisk"
-          emptyDir: {}
-        {{- else }}
+        {{- if eq .Values.persistence.enabled false }}
         - name: "journal"
           emptyDir: {}
         - name: "ledgers"
@@ -211,7 +207,6 @@ spec:
           emptyDir: {}
         {{- end }}
         {{- end }}
-      {{- end }}
         {{- if $extraVols }}
         {{ include "common.tplvalues.render" (dict "value" $extraVols "context" $) | nindent 8 }}
         {{- end }}

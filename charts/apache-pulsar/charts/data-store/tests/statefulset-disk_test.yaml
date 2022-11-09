@@ -1,0 +1,318 @@
+suite: Test data-store statefulset disk test
+release:
+  name: zz
+  namespace: xx
+templates:
+  - charts/dataStore/templates/statefulset.yaml
+  - charts/dataStore/templates/configmap.yaml
+tests:
+  - it: should set oneDisk mount path
+    template: charts/dataStore/templates/statefulset.yaml
+    set:
+      dataStore:
+        persistence:
+          enabled: true
+          oneDisk:
+            enabled: true
+            mountPath: /a/disk
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: oneDisk
+            mountPath: /a/disk
+
+  - it: should set journal & ledgers mount path from persistence values area
+    template: charts/dataStore/templates/statefulset.yaml
+    set:
+      dataStore:
+        config:
+          journalDirectory:
+          ledgerDirectories:
+        persistence:
+          enabled: true
+          oneDisk:
+            enabled: false
+          journal:
+            mountPath: /a/disk
+          ledgers:
+            mountPath: /another/disk
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: journal
+            mountPath: /a/disk
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: ledgers
+            mountPath: /another/disk
+
+  - it: should set journal & ledgers mount path from config values area
+    template: charts/dataStore/templates/statefulset.yaml
+    set:
+      dataStore:
+        config:
+          journalDirectory: /config/disk1
+          ledgerDirectories: /config/disk2
+        persistence:
+          enabled: true
+          oneDisk:
+            enabled: false
+          journal:
+            mountPath: aaaa
+          ledgers:
+            mountPath: bbbb
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: journal
+            mountPath: /config/disk1
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: ledgers
+            mountPath: /config/disk2
+
+  - it: should use empty journal & ledgers dir when persistence is disabled
+    template: charts/dataStore/templates/statefulset.yaml
+    set:
+      dataStore:
+        persistence:
+          enabled: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: journal
+            mountPath: /pulsar/data/bookeeper/journal
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: ledgers
+            mountPath: /pulsar/data/bookeeper/ledgers
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: "journal"
+            emptyDir: {}
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: "ledgers"
+            emptyDir: {}
+
+  - it: should use one disk with default storage
+    template: charts/dataStore/templates/statefulset.yaml
+    set:
+      global:
+        storageClass: some-class
+      dataStore:
+        persistence:
+          enabled: true
+          oneDisk:
+            enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: oneDisk
+            mountPath: /pulsar/data/bookkeeper
+        any: true
+      - contains:
+          path: spec.volumeClaimTemplates
+          content:
+            metadata:
+              name: oneDisk
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 75Gi
+              storageClassName: local-path
+        any: true
+
+  - it: should use individual disks with default storage and custom naming
+    template: charts/dataStore/templates/statefulset.yaml
+    set:
+      global:
+        storageClass: local-path
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: journal
+            mountPath: /pulsar/data/bookkeeper/journal
+        any: true
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: ledgers
+            mountPath: /pulsar/data/bookkeeper/ledgers
+        any: true
+      - contains:
+          path: spec.volumeClaimTemplates
+          content:
+            metadata:
+              name: journal
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 20Gi
+              storageClassName: local-path
+        any: true
+      - contains:
+          path: spec.volumeClaimTemplates
+          content:
+            metadata:
+              name: ledgers
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 50Gi
+              storageClassName: local-path
+
+  - it: should include ranges disk for state storage with custom name
+    template: charts/dataStore/templates/statefulset.yaml
+    set:
+      global:
+        functionWorker:
+          enabled: true
+          stateStorage:
+            enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: ranges
+            mountPath: /pulsar/data/bookkeeper/ranges
+      - contains:
+          path: spec.volumeClaimTemplates
+          content:
+            metadata:
+              name: ranges
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 5Gi
+              storageClassName: default
+
+  - it: should override individual disk storageClassName with cloud storage class
+    template: charts/dataStore/templates/statefulset.yaml
+    set:
+      global:
+        storageClass: local-path
+        functionWorker:
+          enabled: true
+          stateStorage:
+            enabled: true
+      dataStore:
+        persistence:
+          journal:
+            storageClassName:
+            storageClass:
+              provisioner: kubernetes.io/gce-pd
+              type: pd-ssd
+              fsType: ext4
+              extraParams:
+                replication-type: none
+          ledgers:
+            storageClassName:
+            storageClass:
+              provisioner: kubernetes.io/gce-pd
+              type: pd-ssd
+              fsType: ext4
+              extraParams:
+                replication-type: none
+          ranges:
+            storageClassName:
+            storageClass:
+              provisioner: kubernetes.io/gce-pd
+              type: pd-ssd
+              fsType: ext4
+              extraParams:
+                replication-type: none
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: journal
+            mountPath: /pulsar/data/bookkeeper/journal
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: ledgers
+            mountPath: /pulsar/data/bookkeeper/ledgers
+      #      - contains:
+      #          path: spec.template.spec.containers[0].volumeMounts
+      #          content:
+      #            name: ranges
+      #            mountPath: /pulsar/data/bookkeeper/ranges
+      - contains:
+          path: spec.volumeClaimTemplates
+          content:
+            metadata:
+              name: journal
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 20Gi
+              storageClassName: local-path
+      - contains:
+          path: spec.volumeClaimTemplates
+          content:
+            metadata:
+              name: ledgers
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 50Gi
+              storageClassName: local-path
+
+  - it: should override one disk storageClassName with cloud storage class
+    template: charts/dataStore/templates/statefulset.yaml
+    set:
+      global:
+        storageClass: local-path
+      dataStore:
+        persistence:
+          oneDisk:
+            enabled: true
+            storageClassName:
+            storageClass:
+              provisioner: kubernetes.io/gce-pd
+              type: pd-ssd
+              fsType: ext4
+              extraParams:
+                replication-type: none
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: oneDisk
+            mountPath: /pulsar/data/bookkeeper
+      - contains:
+          path: spec.volumeClaimTemplates
+          content:
+            metadata:
+              name: oneDisk
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 75Gi
+              storageClassName: local-path
