@@ -11,41 +11,6 @@ globalData:
   ##
   replicas: 3
 
-## @section Image parameters
-## @descriptionStart
-## @descriptionEnd
-##
-image:
-
-  ## @param image.registry [string,nullable] Component image registry
-  ##
-  registry: ""
-
-  ## @param image.repository [string,nullable] Component image repository
-  ##
-  repository: "datastax/lunastreaming"
-
-  ## @param image.tag [string,nullable] Component image tag (immutable tags are recommended)
-  ##
-  tag: "2.10_2.3"
-
-  ## @param image.pullPolicy Component image pull policy
-  ## Specify a imagePullPolicy
-  ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
-  ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
-  ##
-  pullPolicy: IfNotPresent
-
-  ## @param image.pullSecrets [array,nullable] Specify docker-registry secret names as an array
-  ## Optionally specify an array of imagePullSecrets.
-  ## Secrets must be manually created in the namespace.
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-  ## e.g:
-  ## pullSecrets:
-  ##   - myRegistryKeySecretName
-  ##
-  pullSecrets: []
-
 ## @section Certificate Resources
 ## @descriptionStart
 ## Configure the component's certificate
@@ -252,7 +217,7 @@ config:
   ## @param config.disableServerSocketBind Whether the bookie is allowed to disable bind on network interfaces. This bookie will be available only to BookKeeper clients executed on the local JVM.
   ##
   disableServerSocketBind:
-  ## @param config.diskCheckInterval Disk check interval in milli seconds, interval to check the ledger dirs usage.
+  ## @param config.diskCheckInterval Disk check interval in milliseconds, interval to check the ledger dirs usage.
   ##
   diskCheckInterval: 10000
   ## @param config.diskUsageThreshold For each ledger dir, maximum disk space which can be used. Default is 0.95f. i.e. 95% of disk can be used at most after which nothing will be written to that  partition. If all ledger dir partitions are full, then bookie will turn to readonly mode if 'readOnlyModeEnabled=true' is set, else it will shutdown
@@ -270,9 +235,6 @@ config:
   ## @param config.enableLocalTransport Whether the bookie is allowed to listen for the BookKeeper clients executed on the local JVM.
   ##
   enableLocalTransport:
-  ## @param config.enableStatistics Whether the bookie should make metrics available.
-  ##
-  enableStatistics:
   ## @param config.ensemblePlacementPolicy The ensemble placement policy used for re-replicating entries. Options: org.apache.bookkeeper.client.RackawareEnsemblePlacementPolicy or org.apache.bookkeeper.client.RegionAwareEnsemblePlacementPolicy
   ##
   ensemblePlacementPolicy: "org.apache.bookkeeper.client.RackawareEnsemblePlacementPolicy"

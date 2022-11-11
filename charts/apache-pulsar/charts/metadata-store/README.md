@@ -1,53 +1,8 @@
-# Pulsar Meta Data Store
+# Apache Pulsar Metadata Store Subchart
 
-Pulsar creates its own version of Zookeeper but follows the general principles of Zookeeper administration. There are noticeably less config values
-to choose from because Pulsar can make assumptions from it's own configuration.
-
-## Startup Flow
-
-As the helm chart starts a pulsar based Zookeeper instance there is work done to get it's configuration ready. One of the jobs of this chart is to
-make configuration straight forward and do the work of converting the desired values into a format that Pulsar Zookeeper understands. The chart also
-manages things like converting multiple replicas into a quorum of servers, and exposing the option for some of the members of that quorum to not have
-persistent disks attached (more on that below).
-
-1. Write the provided values in `.config` into a configmap that uses a preferred prefix label
-2. Attach that configmap to each zookeeper instance
-3. Use `scripts/apply-config-from-env.py` python script (provided in the Pulsar container) as a container arg, to convert the attached env values into `conf/zookeeper.conf`
-4. Use `scripts/generate-zookeeper-config.sh` script (provided in the Pulsar container) as a container arg, to append the addresses of each zookeeper in the quorum into `conf/zookeeper.conf`
-5. Start the Pulsar Zookeeper instance, providing the location of the conf file
-
-## Configuration
-
-Given the version tag of Pulsar container being used in this chart, the labels and values within the `.config` area should follow Pulsar's options. Refer to [Pulsar's Zookeeper documentation](https://pulsar.apache.org/docs/next/reference-configuration-zookeeper) for more.
-
-*Note* - this chart does not assume any default values in `.config`. They are left blank. By doing this, default values of Pulsar Zookeeper are respected.
-
-*Note* - the use of the prefix "PULSAR_PREFIX_" with some values. This is used so when `scripts/apply-config-from-env.py` runs, these values will be converted into Zookeeper conf.
-
-## Non persistent instances
-
-In a highly available Pulsar cluster, a single Zookeeper instance becomes a failure point. Naturally one would start multiple instances to overcome this. But as a meta data store, each Zookeeper instance has it's own disk and holds it's own values. To create a compliance between Zookeeper wanting quorum and Pulsar brokers always working with the same configurations, the chart offers an option to configure Zookeeper with no attached persistent volumes. Instead using a local folder that will follow the lifecycle of it's instance. Refer to the [zookeeper-non-persistent-quorum](../../../examples/add-ons/zookeeper-non-persistent-quorum.yaml) example to see this in action.
-
-## Services
-
-The chart makes a distinction between types of traffic by separating the "[tls]client" traffic into a configurable service object and a [headless](https://kubernetes.io/docs/concepts/services-networking/service/#headless-services) service for "leader election" and "sever" traffic. This is considered a best practice when deploying Zookeeper in kubernetes. [Here](https://kubernetes.io/docs/tutorials/stateful-application/zookeeper/) is an example.
-
-## Leader Election
-
-To facilitate leader election but still provision for pod scheduling, the FQDN of each instance is used as the quorum address. The A records in Kubernetes DNS resolve the FQDNs to the Pods' IP addresses. If Kubernetes reschedules the Pods, it will update the A records with the Pods' new IP addresses, but the A records names will not change.
+This is a sub chart to a parent chart which installs an Apache Pulsar cluster. This sub chart can not be installed individually. Below are the chart's values. Refer to the [chart's wiki](https://github.com/ddieruf/apache-pulsar-helm-chart/wiki) for more information.
 
 ## Parameters
-
-### Image parameters
-
-| Name                | Description                                          | Value                    |
-| ------------------- | ---------------------------------------------------- | ------------------------ |
-| `image.registry`    | Component image registry                             | `""`                     |
-| `image.repository`  | Component image repository                           | `datastax/lunastreaming` |
-| `image.tag`         | Component image tag (immutable tags are recommended) | `2.10_2.3`               |
-| `image.pullPolicy`  | Component image pull policy                          | `IfNotPresent`           |
-| `image.pullSecrets` | Specify docker-registry secret names as an array     | `[]`                     |
-
 
 ### Pulsar Environment Configuration
 
@@ -80,7 +35,6 @@ Configure meta data store settings. Refer to the [project's documentation](https
 | `config.autopurge.purgeInterval`       | The time interval, in hours, by which the ZooKeeper database purge task is triggered. Setting to a non-zero number will enable auto purge; setting to 0 will disable. Read this guide before enabling auto purge.                                                                        | `1`     |
 | `config.forceSync`                     | Requires updates to be synced to media of the transaction log before finishing processing the update. If this option is set to 'no', ZooKeeper will not require updates to be synced to the media. WARNING: it's not recommended to run a production ZK cluster with forceSync disabled. | `""`    |
 | `config.maxClientCnxns`                | The maximum number of client connections. Increase this if you need to handle more ZooKeeper clients.                                                                                                                                                                                    | `60`    |
-| `config.sslQuorum`                     | Enable Quorum TLS on each node                                                                                                                                                                                                                                                           | `nil`   |
 | `config.portUnification`               | Specifies that the client port should accept SSL connections (using the same configuration as the secure client port).                                                                                                                                                                   | `false` |
 | `config.metricsProvider.className`     | Metrics provider class name                                                                                                                                                                                                                                                              | `nil`   |
 | `config.metricsProvider.httpPort`      | Metrics port                                                                                                                                                                                                                                                                             | `8000`  |
@@ -169,23 +123,24 @@ Meta Data Store application controller service parameters
 
 ### Persistence parameters
 
-| Name                             | Description                                                                                                     | Value                           |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| `persistence.mountPath`          | Mount path to store meta data                                                                                   | `/pulsar/data/zookeeper`        |
-| `persistence.mountPathForGlobal` | Mount path of the global data store (where snapshots are stored)                                                | `/pulsar/data/global-zookeeper` |
-| `persistence.size`               | PVC storage size                                                                                                | `5Gi`                           |
-| `persistence.storageClass`       | PVC Storage Class for Kafka data volume                                                                         | `nil`                           |
-| `persistence.existingClaim`      | A manually managed Persistent Volume and Claim                                                                  | `""`                            |
-| `persistence.accessModes`        | Persistent Volume Access Modes                                                                                  | `["ReadWriteOnce"]`             |
-| `persistence.annotations`        | Annotations for the PVC                                                                                         | `{}`                            |
-| `persistence.selector`           | Selector to match an existing Persistent Volume. If set, the PVC can't have a PV dynamically provisioned for it | `{}`                            |
-| `logPersistence.mountPath`       | Mount path of Pulsar home                                                                                       | `/pulsar/logs`                  |
-| `logPersistence.size`            | PVC storage size                                                                                                | `5Gi`                           |
-| `logPersistence.storageClass`    | PVC Storage Class for Kafka data volume                                                                         | `nil`                           |
-| `logPersistence.existingClaim`   | A manually managed Persistent Volume and Claim                                                                  | `""`                            |
-| `logPersistence.accessModes`     | Persistent Volume Access Modes                                                                                  | `["ReadWriteOnce"]`             |
-| `logPersistence.annotations`     | Annotations for the PVC                                                                                         | `{}`                            |
-| `logPersistence.selector`        | Selector to match an existing Persistent Volume. If set, the PVC can't have a PV dynamically provisioned for it | `{}`                            |
+| Name                           | Description                                                                                                     | Value                    |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `persistence.enabled`          | Enable data persistence                                                                                         | `true`                   |
+| `persistence.mountPath`        | Mount path to store meta data                                                                                   | `/pulsar/data/zookeeper` |
+| `persistence.size`             | PVC storage size                                                                                                | `5Gi`                    |
+| `persistence.storageClass`     | PVC Storage Class for Kafka data volume                                                                         | `nil`                    |
+| `persistence.existingClaim`    | A manually managed Persistent Volume and Claim                                                                  | `""`                     |
+| `persistence.accessModes`      | Persistent Volume Access Modes                                                                                  | `["ReadWriteOnce"]`      |
+| `persistence.annotations`      | Annotations for the PVC                                                                                         | `{}`                     |
+| `persistence.selector`         | Selector to match an existing Persistent Volume. If set, the PVC can't have a PV dynamically provisioned for it | `{}`                     |
+| `logPersistence.enabled`       | Enable log storage                                                                                              | `false`                  |
+| `logPersistence.mountPath`     | Mount path of Pulsar home                                                                                       | `/pulsar/logs`           |
+| `logPersistence.size`          | PVC storage size                                                                                                | `5Gi`                    |
+| `logPersistence.storageClass`  | PVC Storage Class for Kafka data volume                                                                         | `nil`                    |
+| `logPersistence.existingClaim` | A manually managed Persistent Volume and Claim                                                                  | `""`                     |
+| `logPersistence.accessModes`   | Persistent Volume Access Modes                                                                                  | `["ReadWriteOnce"]`      |
+| `logPersistence.annotations`   | Annotations for the PVC                                                                                         | `{}`                     |
+| `logPersistence.selector`      | Selector to match an existing Persistent Volume. If set, the PVC can't have a PV dynamically provisioned for it | `{}`                     |
 
 
 ### Pod Liveness & Readyness

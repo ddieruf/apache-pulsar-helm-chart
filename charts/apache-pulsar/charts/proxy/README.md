@@ -1,22 +1,8 @@
-# proxy
+# Apache Pulsar Proxy Subchart
 
-
-## Introduction
-
-## Prerequisites
+This is a sub chart to a parent chart which installs an Apache Pulsar cluster. This sub chart can not be installed individually. Below are the chart's values. Refer to the [chart's wiki](https://github.com/ddieruf/apache-pulsar-helm-chart/wiki) for more information.
 
 ## Parameters
-
-### Image parameters
-
-| Name                | Description                                          | Value                    |
-| ------------------- | ---------------------------------------------------- | ------------------------ |
-| `image.registry`    | Component image registry                             | `""`                     |
-| `image.repository`  | Component image repository                           | `datastax/lunastreaming` |
-| `image.tag`         | Component image tag (immutable tags are recommended) | `2.10_2.3`               |
-| `image.pullPolicy`  | Component image pull policy                          | `IfNotPresent`           |
-| `image.pullSecrets` | Specify docker-registry secret names as an array     | `[]`                     |
-
 
 ### Certificate Resources
 

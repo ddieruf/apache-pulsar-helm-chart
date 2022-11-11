@@ -15,41 +15,6 @@ globalData:
   ##
   nonPersistentReplicas: 2
 
-## @section Image parameters
-## @descriptionStart
-## @descriptionEnd
-##
-image:
-
-  ## @param image.registry [string,nullable] Component image registry
-  ##
-  registry: ""
-
-  ## @param image.repository [string,nullable] Component image repository
-  ##
-  repository: "datastax/lunastreaming"
-
-  ## @param image.tag [string,nullable] Component image tag (immutable tags are recommended)
-  ##
-  tag: "2.10_2.3"
-
-  ## @param image.pullPolicy Component image pull policy
-  ## Specify a imagePullPolicy
-  ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
-  ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
-  ##
-  pullPolicy: IfNotPresent
-
-  ## @param image.pullSecrets [array,nullable] Specify docker-registry secret names as an array
-  ## Optionally specify an array of imagePullSecrets.
-  ## Secrets must be manually created in the namespace.
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-  ## e.g:
-  ## pullSecrets:
-  ##   - myRegistryKeySecretName
-  ##
-  pullSecrets: []
-
 ## @section Pulsar Environment Configuration
 ## @descriptionStart
 
@@ -122,10 +87,10 @@ config:
   ## @skip config.dataDir
   ## The location where ZooKeeper will store in-memory database snapshots as well as the transaction log of updates to the database.
   ##
-  dataDir: data/zookeeper
+  dataDir:
   ## @param config.admin.enableServer Enable administrative interface.
   ##
-  admin.enableServer: TRUE
+  admin.enableServer: true
   ## @param config.admin.serverPort The port at which the admin listens.
   ##
   admin.serverPort: 8080
@@ -141,12 +106,9 @@ config:
   ## @param config.maxClientCnxns The maximum number of client connections. Increase this if you need to handle more ZooKeeper clients.
   ##
   maxClientCnxns: 60
-  ## @param config.sslQuorum Enable Quorum TLS on each node
-  ##
-  sslQuorum:
   ## @param config.portUnification Specifies that the client port should accept SSL connections (using the same configuration as the secure client port).
   ##
-  portUnification: FALSE
+  portUnification: false
   ## @param config.metricsProvider.className Metrics provider class name
   ##
   metricsProvider.className:
@@ -155,8 +117,8 @@ config:
   metricsProvider.httpPort: 8000
   ## @param config.metricsProvider.exportJvmInfo Include JVM info with metrics
   ##
-  metricsProvider.exportJvmInfo: TRUE
-  ## @param config.extraConfigValues [nullable] Additional config values
+  metricsProvider.exportJvmInfo: true
+  ## @param config.extraConfigValues [object,nullable] Additional config values
   ##
   extraConfigValues: {}
 
@@ -448,10 +410,6 @@ persistence:
   ## @param persistence.mountPath Mount path to store meta data
   ##
   mountPath: /pulsar/data/zookeeper
-
-  ## @param persistence.mountPathForGlobal Mount path of the global data store (where snapshots are stored)
-  ##
-  mountPathForGlobal: /pulsar/data/global-zookeeper
 
   ## @param persistence.size PVC storage size
   ##

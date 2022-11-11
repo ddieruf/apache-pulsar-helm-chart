@@ -5,28 +5,33 @@
 ##
 global:
 
+  ## @section Image
+  ## @descriptionStart
+  ## The container image all components will use
+  ## @descriptionEnd
+  ##
   image:
 
     ## @param global.image.registry [string,nullable] The image registry used by all charts
     ##
     registry: "docker.io"
 
-    ## @param image.repository [string,nullable] Component image repository
+    ## @param global.image.repository [string,nullable] Component image repository
     ##
     repository: "datastax/lunastreaming"
 
-    ## @param image.tag [string,nullable] Component image tag (immutable tags are recommended)
+    ## @param global.image.tag [string,nullable] Component image tag (immutable tags are recommended)
     ##
     tag: "2.10_2.3"
 
-    ## @param image.pullPolicy Component image pull policy
+    ## @param global.image.pullPolicy Component image pull policy
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
     ##
     pullPolicy: IfNotPresent
 
-    ## @param image.pullSecrets [array,nullable] Specify docker-registry secret names as an array
+    ## @param global.image.pullSecrets [array,nullable] Specify docker-registry secret names as an array
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.
     ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
@@ -36,31 +41,11 @@ global:
     ##
     pullSecrets: [ ]
 
-  ## @param global.storageClass [string,nullable] The storage class used by all sub charts when using persistence.
+  ## @section Secure Communications
+  ## @descriptionStart
+  ## Values related to securing the cluster's edge and inter component communicaitons
+  ## @descriptionEnd
   ##
-  storageClass:
-
-  ## @param global.kubeVersion [string,nullable] Override Kubernetes version
-  ##
-  kubeVersion: ""
-
-  ## @param global.clusterDomain [string,nullable] Default Kubernetes cluster domain
-  ##
-  clusterDomain: cluster.local
-
-  ## @param global.namespaceOverride [string,nullable] Override the release namespace
-  ##
-  namespaceOverride: ""
-
-  ## @param global.commonLabels [array,nullable] Labels to add to all deployed objects
-  ##
-  commonLabels:
-    app.kubernetes.io/part-of: apache-pulsar
-
-  ## @param global.commonAnnotations [object,nullable] Annotations to add to all deployed objects
-  ##
-  commonAnnotations: {}
-
   ## @param global.secureClusterEdge Only allow secure ports to be opened at the edge of the Pulsar cluster (also force TLS in all ingresses)
   ##
   secureClusterEdge: false
@@ -79,7 +64,7 @@ global:
     ##
     jksPasswordSecretName:
 
-    ## @param global.interComponentTls.issuerRef [object,nullable] IssuerRef is a reference to the issuer of all certificates. Note that each component can have their own issuerRef that overrides this.
+    ## @param global.interComponentTls.issuerRef [string,nullable] IssuerRef is a reference to the issuer of all certificates. Note that each component can have their own issuerRef that overrides this.
     ##
     issuerRef:
       name:
@@ -126,3 +111,34 @@ global:
     ## @param global.pulsarCluster.name The required name of the Pulsar cluster
     ##
     name: "pulsar-cluster-1"
+
+
+  ## @section Common values
+  ## @descriptionStart
+  ## Other common values one would set globally
+  ## @descriptionEnd
+  ##
+  ## @param global.storageClass [string,nullable] The storage class used by all sub charts when using persistence.
+  ##
+  storageClass:
+
+  ## @param global.kubeVersion [string,nullable] Override Kubernetes version
+  ##
+  kubeVersion: ""
+
+  ## @param global.clusterDomain [string,nullable] Default Kubernetes cluster domain
+  ##
+  clusterDomain: cluster.local
+
+  ## @param global.namespaceOverride [string,nullable] Override the release namespace
+  ##
+  namespaceOverride: ""
+
+  ## @param global.commonLabels [array,nullable] Labels to add to all deployed objects
+  ##
+  commonLabels:
+    app.kubernetes.io/part-of: apache-pulsar
+
+  ## @param global.commonAnnotations [object,nullable] Annotations to add to all deployed objects
+  ##
+  commonAnnotations: {}

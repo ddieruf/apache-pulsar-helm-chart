@@ -1,10 +1,6 @@
-# Apache Pulsar Broker
+# Apache Pulsar Broker Subchart
 
-
-
-## Introduction
-
-## Prerequisites
+This is a sub chart to a parent chart which installs an Apache Pulsar cluster. This sub chart can not be installed individually. Below are the chart's values. Refer to the [chart's wiki](https://github.com/ddieruf/apache-pulsar-helm-chart/wiki) for more information.
 
 ## Parameters
 
@@ -334,9 +330,10 @@ Component application controller service and service account parameters. Note th
 
 | Name                           | Description                                                                                                     | Value               |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `logPersistence.enabled`       | Enable log persistence                                                                                          | `false`             |
 | `logPersistence.mountPath`     | Mount path of Pulsar home                                                                                       | `/pulsar/logs`      |
 | `logPersistence.size`          | PVC storage size                                                                                                | `5Gi`               |
-| `logPersistence.storageClass`  | PVC Storage Class for Kafka data volume                                                                         | `nil`               |
+| `logPersistence.storageClass`  | PVC Storage Class for data volume                                                                               | `nil`               |
 | `logPersistence.existingClaim` | A manually managed Persistent Volume and Claim                                                                  | `""`                |
 | `logPersistence.accessModes`   | Persistent Volume Access Modes                                                                                  | `["ReadWriteOnce"]` |
 | `logPersistence.annotations`   | Annotations for the PVC                                                                                         | `{}`                |
