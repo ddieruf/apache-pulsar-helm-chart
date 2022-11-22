@@ -37,7 +37,7 @@ on:
 
 jobs:
   LogEnv:
-    if: inputs.log-level == "debug"
+    if: inputs.log-level == 'debug'
     runs-on: ubuntu-latest
     steps:
       - name: Add pong in comment
