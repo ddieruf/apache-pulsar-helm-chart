@@ -51,8 +51,8 @@ jobs:
     secrets:
       BOT_ACTION_TOKEN: ${{ github.token }}
     with:
-      repository: ${{ repository.name }} #The calling repo
-      sender-login: ${{ actor.login }}
+      repository: ${{ github.repository.name }} #The calling repo
+      sender-login: ${{ github.actor.login }}
       comment-id: ${{ inputs.comment-id }}
 
 #  ProcessUnitTestCommand:
