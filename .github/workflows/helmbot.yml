@@ -36,8 +36,16 @@ on:
 # https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token
 
 jobs:
+  LogEnv:
+    if: inputs.log-level == "debug"
+    env:
+      gh: ${{ toJson(github) }}
+    run: |
+      env
+      echo ${gh}
+
   AddSeenReaction:
-    if: github.event.inputs.comment-id
+    if: inputs.comment-id
     uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/job_update-issue-comment.yml@create-workflows
     secrets:
       BOT_ACTION_TOKEN: ${{ github.token }}
@@ -46,7 +54,7 @@ jobs:
       reaction-type: eyes
 
   ProcessPingCommand:
-    if: github.event.inputs.cmd == 'ping'
+    if: inputs.cmd == 'ping'
     uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/command_ping.yml@create-workflows
     secrets:
       BOT_ACTION_TOKEN: ${{ github.token }}
