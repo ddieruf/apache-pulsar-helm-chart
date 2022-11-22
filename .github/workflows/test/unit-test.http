@@ -1,0 +1,19 @@
+### Should run unit-test successfully
+POST https://api.github.com/repos/ddieruf/apache-pulsar-helm-chart/actions/workflows/helmbot.yml/dispatches
+Content-Type: application/json
+Accept: application/vnd.github+json
+Authorization: Bearer {{gh-token}}
+
+{
+  "ref": "create-workflows",
+  "inputs": {
+    "cmd": "unit-test",
+    "log-level": "debug"
+  }
+}
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 204, "Response status is not 204");
+});
+%}

@@ -1,0 +1,73 @@
+name: Unit test Command
+on:
+  workflow_call:
+    inputs:
+      repository:
+        required: true
+        type: string
+      comment-id:
+        required: false
+        type: string
+    secrets:
+      BOT_ACTION_TOKEN:
+        required: true
+
+jobs:
+  default:
+    run:
+      shell: bash
+      
+  AddGettingReadyStatus:
+    if: inputs.comment-id
+    uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/job_update-issue-comment.yml@create-workflows
+    secrets:
+      BOT_ACTION_TOKEN: ${{ secrets.BOT_ACTION_TOKEN }}
+    with:
+      comment-id: ${{ inputs.comment-id }}
+      repository: ${{ inputs.repository }}
+      message: |
+        > Getting environment ready
+
+  BuildComponentList:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.value }}
+    steps:
+      - id: matrix
+        run: |
+          echo '::set-output name=value::[\"broker\", \"data-store\", \"metadata-store\", \"proxy\"]'
+
+  UnitTestAllComponents:
+    runs-on: ubuntu-latest
+    needs: BuildComponentList
+    strategy:
+      matrix:
+        value: ${{fromJson(needs.BuildComponentList.outputs.matrix)}}
+    uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/job_unit-test-component.yml@create-workflows
+    with:
+      component-name: ${{ matrix.value }}
+
+  AddSuccessReaction:
+    if: github.event.inputs.comment-id && success()
+    needs: UnitTest
+    uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/job_update-issue-comment.yml@create-workflows
+    secrets:
+      BOT_ACTION_TOKEN: ${{ secrets.BOT_ACTION_TOKEN }}
+    with:
+      comment-id: ${{ inputs.comment-id }}
+      repository: ${{ inputs.repository }}
+      reaction-type: horray
+      message: |
+        > Success
+
+  AddFailReaction:
+    if: github.event.inputs.comment-id && failure()
+    uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/job_update-issue-comment.yml@create-workflows
+    secrets:
+      BOT_ACTION_TOKEN: ${{ secrets.BOT_ACTION_TOKEN }}
+    with:
+      comment-id: ${{ inputs.comment-id }}
+      repository: ${{ inputs.repository }}
+      reaction-type: confused
+      message: |
+        > Failed

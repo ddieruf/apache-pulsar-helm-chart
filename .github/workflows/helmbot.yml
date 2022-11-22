@@ -7,7 +7,7 @@ on:
         type: choice
         options:
           - ping
-#          - unit-test
+          - unit-test
 #          - lint
 #          - helm-test
 #          - helm-dry-run
@@ -26,9 +26,6 @@ on:
       comment-id:
         description: 'The comment-id of the command'
         required: false
-      pr-id:
-        description: 'The pr-id of the command'
-        required: false
       k8s-versions:
         description: 'A comma delimited string of Kubernetes versions to run tests against'
         required: false
@@ -40,8 +37,7 @@ jobs:
     if: inputs.log-level == 'debug'
     runs-on: ubuntu-latest
     steps:
-      - name: Print env values
-        env:
+      - env:
           gh: ${{ toJson(github) }}
         run: |
           env
@@ -49,12 +45,12 @@ jobs:
           echo ${gh}
 
   AddSeenReaction:
-    if: github.event.inputs.comment-id
     uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/job_update-issue-comment.yml@create-workflows
     secrets:
       BOT_ACTION_TOKEN: ${{ github.token }}
     with:
-      repository: ${{ github.repository }} #The calling repo
+      comment-id: ${{ github.event.inputs.comment-id }}
+      repository: ${{ github.repository }}
       reaction-type: eyes
 
   ProcessPingCommand:
@@ -63,18 +59,18 @@ jobs:
     secrets:
       BOT_ACTION_TOKEN: ${{ github.token }}
     with:
-      repository: ${{ github.repository }} #The calling repo
-      sender-login: ${{ github.triggering_actor }}
       comment-id: ${{ github.event.inputs.comment-id }}
+      repository: ${{ github.repository }}
+      sender-login: ${{ github.triggering_actor }}
 
-#  ProcessUnitTestCommand:
-#    if: github.event.inputs.cmd == 'unit-test'
-#    uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/unit-test-command.yml
-#    secrets: inherit
-#    with:
-#      comment-id: ${{ inputs.comment-id }}
-#      pr-id: ${{ inputs.pr-id }}
-#
+  ProcessUnitTestCommand:
+    if: github.event.inputs.cmd == 'unit-test'
+    uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/command_unit-test.yml@create-workflows
+    secrets: inherit
+    with:
+      comment-id: ${{ github.event.inputs.comment-id }}
+      repository: ${{ github.repository }}
+
 #  ProcessLintCommand:
 #    if: github.event.inputs.cmd == 'lint'
 #    uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/lint-command.yml

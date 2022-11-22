@@ -17,11 +17,12 @@ on:
         type: string
     secrets:
       BOT_ACTION_TOKEN:
-        required: true
+        required: false
 
 jobs:
   AddMessageToComment:
-    permissions:
+    if: inputs.comment-id != '' && inputs.repository != ''
+    permissions: # assuming the bot and action are all within the same repo
       issues: write
       pull-requests: write
     runs-on: ubuntu-latest
@@ -34,3 +35,10 @@ jobs:
           comment-id: ${{ inputs.comment-id }}
           reaction-type: ${{ inputs.reaction-type }}
           body: ${{ inputs.message }}
+
+  EchoMessage:
+    if: inputs.comment-id == '' || inputs.repository == ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo message
+        run: echo "[${{ inputs.reaction-type }}] ${{ inputs.message }}"
