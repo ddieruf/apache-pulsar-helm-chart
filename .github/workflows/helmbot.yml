@@ -40,31 +40,32 @@ jobs:
     if: inputs.log-level == 'debug'
     runs-on: ubuntu-latest
     steps:
-      - name: Add pong in comment
+      - name: Print env values
         env:
           gh: ${{ toJson(github) }}
         run: |
           env
+          echo "------------------------------------------"
           echo ${gh}
 
   AddSeenReaction:
-    if: inputs.comment-id
+    if: github.event.inputs.comment-id
     uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/job_update-issue-comment.yml@create-workflows
     secrets:
       BOT_ACTION_TOKEN: ${{ github.token }}
     with:
-      repository: ${{ github.repository.name }} #The calling repo
+      repository: ${{ github.repository }} #The calling repo
       reaction-type: eyes
 
   ProcessPingCommand:
-    if: inputs.cmd == 'ping'
+    if: github.event.inputs.cmd == 'ping'
     uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/command_ping.yml@create-workflows
     secrets:
       BOT_ACTION_TOKEN: ${{ github.token }}
     with:
-      repository: ${{ github.repository.name }} #The calling repo
-      sender-login: ${{ github.actor.login }}
-      comment-id: ${{ inputs.comment-id }}
+      repository: ${{ github.repository }} #The calling repo
+      sender-login: ${{ github.triggering_actor }}
+      comment-id: ${{ github.event.inputs.comment-id }}
 
 #  ProcessUnitTestCommand:
 #    if: github.event.inputs.cmd == 'unit-test'
