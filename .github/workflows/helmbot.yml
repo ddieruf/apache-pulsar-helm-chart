@@ -38,7 +38,7 @@ on:
 jobs:
   AddSeenReaction:
     if: github.event.inputs.comment-id
-    uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/job_update-issue-comment.yml
+    uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/job_update-issue-comment.yml@create-workflows
     secrets:
       BOT_ACTION_TOKEN: ${{ github.token }}
     with:
@@ -47,7 +47,7 @@ jobs:
 
   ProcessPingCommand:
     if: github.event.inputs.cmd == 'ping'
-    uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/command_ping.yml
+    uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/command_ping.yml@create-workflows
     secrets:
       BOT_ACTION_TOKEN: ${{ github.token }}
     with:
