@@ -1,0 +1,40 @@
+name: Ping Command
+
+on:
+  workflow_call:
+    inputs:
+      sender-login:
+        required: true
+        type: string
+      repository:
+        required: true
+        type: string
+      comment-id:
+        required: false
+        type: string
+    secrets:
+      BOT_ACTION_TOKEN:
+        required: true
+
+jobs:
+  PingCommand:
+    permissions:
+      issues: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    steps:
+      - if: inputs.comment-id == ''
+        run: exit 1
+
+      - if: inputs.repository == ''
+        run: exit 1
+
+      - name: Add pong
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          token: ${{ secrets.BOT_ACTION_TOKEN }}
+          repository: ${{inputs.repository }}
+          comment-id: ${{ inputs.comment-id }}
+          reaction-type: hooray
+          body: |
+            > Hi @${{ inputs.sender-login }}. Pong.

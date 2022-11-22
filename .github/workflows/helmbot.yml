@@ -1,0 +1,67 @@
+name: Helmbot
+on:
+  workflow_dispatch:
+    inputs:
+      cmd:
+        required: true
+        type: choice
+        options:
+          - ping
+#          - unit-test
+#          - lint
+#          - helm-test
+#          - helm-dry-run
+#          - gen-params
+#          - create-release
+        default: ping
+        description: "What command helmbot should execute"
+      log-level:
+        required: true
+        type: choice
+        options:
+          - error
+          - info
+          - debug
+        description: "How chatty is helmbot"
+      comment-id:
+        description: 'The comment-id of the command'
+        required: false
+      pr-id:
+        description: 'The pr-id of the command'
+        required: false
+      k8s-versions:
+        description: 'A comma delimited string of Kubernetes versions to run tests against'
+        required: false
+
+# https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token
+
+jobs:
+  AddSeenReaction:
+    if: github.event.inputs.comment-id
+    uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/job_update-issue-comment.yml
+    secrets:
+      BOT_ACTION_TOKEN: ${{ github.token }}
+    with:
+      repository: ${{ github.repository.name }} #The calling repo
+      reaction-type: eyes
+
+  ProcessPingCommand:
+    if: github.event.inputs.cmd == 'ping'
+    uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/command_ping.yml
+    secrets:
+      BOT_ACTION_TOKEN: ${{ github.token }}
+    with:
+      sender-login: ${{ github.actor.login }}
+      comment-id: ${{ inputs.comment-id }}
+
+#  ProcessUnitTestCommand:
+#    if: github.event.inputs.cmd == 'unit-test'
+#    uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/unit-test-command.yml
+#    secrets: inherit
+#    with:
+#      comment-id: ${{ inputs.comment-id }}
+#      pr-id: ${{ inputs.pr-id }}
+#
+#  ProcessLintCommand:
+#    if: github.event.inputs.cmd == 'lint'
+#    uses: ddieruf/apache-pulsar-helm-chart/.github/workflows/lint-command.yml
