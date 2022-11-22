@@ -4,17 +4,17 @@ on:
   workflow_call:
     inputs:
       sender-login:
-        required: true
+        required: false
         type: string
       repository:
-        required: true
+        required: false
         type: string
       comment-id:
         required: false
         type: string
     secrets:
       BOT_ACTION_TOKEN:
-        required: true
+        required: false
 
 jobs:
   PingCommand:
@@ -23,13 +23,8 @@ jobs:
       pull-requests: read
     runs-on: ubuntu-latest
     steps:
-      - if: inputs.comment-id == ''
-        run: exit 1
-
-      - if: inputs.repository == ''
-        run: exit 1
-
-      - name: Add pong
+      - name: Add pong in comment
+        if: inputs.comment-id != ""
         uses: peter-evans/create-or-update-comment@v2
         with:
           token: ${{ secrets.BOT_ACTION_TOKEN }}
@@ -38,3 +33,7 @@ jobs:
           reaction-type: hooray
           body: |
             > Hi @${{ inputs.sender-login }}. Pong.
+
+      - name: Echo pong
+        if: inputs.comment-id == ""
+        run: Hi @${{ inputs.sender-login }}. Pong.
