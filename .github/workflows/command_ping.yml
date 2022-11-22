@@ -36,4 +36,4 @@ jobs:
 
       - name: Echo pong
         if: inputs.comment-id == ''
-        run: Hi @${{ inputs.sender-login }}. Pong.
+        run: echo "Hi @${{ inputs.sender-login }}. Pong."
