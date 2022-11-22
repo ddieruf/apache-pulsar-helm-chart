@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Add pong in comment
-        if: inputs.comment-id != ""
+        if: inputs.comment-id != ''
         uses: peter-evans/create-or-update-comment@v2
         with:
           token: ${{ secrets.BOT_ACTION_TOKEN }}
@@ -35,5 +35,5 @@ jobs:
             > Hi @${{ inputs.sender-login }}. Pong.
 
       - name: Echo pong
-        if: inputs.comment-id == ""
+        if: inputs.comment-id == ''
         run: Hi @${{ inputs.sender-login }}. Pong.
